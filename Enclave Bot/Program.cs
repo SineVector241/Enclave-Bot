@@ -1,5 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
 
 public class EnclaveBot
@@ -43,6 +42,12 @@ public class EnclaveBot
     {
         var message = msg as SocketUserMessage;
         if (message == null) return;
-        Console.WriteLine(message);
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine($"{message} => {message.Channel.Name}");
+
+        if (message.Author.Id != 804252826976256021 && message.Content == "cs!hello")
+        {
+            await message.Channel.SendMessageAsync("hello");
+        }
     }
 }
