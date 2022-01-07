@@ -55,7 +55,7 @@ namespace Enclave_Bot
         private async Task Client_Ready()
         {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"{Client.CurrentUser.Username} is ready");
+            Console.WriteLine($"{DateTime.Now}: {Client.CurrentUser.Username} is ready");
             Console.ForegroundColor = ConsoleColor.White;
             await Client.SetGameAsync($"{Config.bot.Prefix}help");
             await Client.SetStatusAsync(UserStatus.Online);

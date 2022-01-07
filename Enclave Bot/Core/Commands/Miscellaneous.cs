@@ -17,5 +17,13 @@ namespace Enclave_Bot.Core.Commands
         {
             await Context.Channel.SendMessageAsync($"Pong: {Context.Client.Latency} ms");
         }
+
+        [Command("Test")]
+        [Alias("testy")]
+        [Summary("Does testing stuff")]
+        public async Task Test()
+        {
+            
+        }
     }
 }
