@@ -1,53 +1,10 @@
-﻿using Discord;
-using Discord.WebSocket;
+﻿using System;
 
-public class EnclaveBot
+namespace Enclave_Bot
 {
-    private DiscordSocketClient _client;
-    public static Task Main(string[] args) => new EnclaveBot().MainAsync();
-
-    public async Task MainAsync()
+    class Program
     {
-        _client = new DiscordSocketClient();
-
-        var _config = new DiscordSocketConfig { MessageCacheSize = 100 };
-        _client = new DiscordSocketClient(_config);
-
-        _client.Log += LogAsync;
-        _client.MessageReceived += Messaged;
-        _client.Ready += () =>
-        {
-            Console.WriteLine("Bot is connected!");
-            return Task.CompletedTask;
-        };
-
-        //  You can assign your bot token to a string, and pass that in to connect.
-        //  This is, however, insecure, particularly if you plan to have your code hosted in a public repository.
-        var token = "ODA0MjUyODI2OTc2MjU2MDIx.YBJo0A.ZZ7WKrxzym-gJk3ZIOOS9Hjrt78";
-
-        await _client.LoginAsync(TokenType.Bot, token);
-        await _client.StartAsync();
-
-        // Block this task until the program is closed.
-        await Task.Delay(-1);
-    }
-
-    private Task LogAsync(LogMessage message)
-    {
-        Console.WriteLine(message);
-        return Task.CompletedTask;
-    }
-
-    private async Task Messaged(SocketMessage msg)
-    {
-        var message = msg as SocketUserMessage;
-        if (message == null) return;
-        Console.ForegroundColor = ConsoleColor.Blue;
-        Console.WriteLine($"{message} => {message.Channel.Name}");
-
-        if (message.Author.Id != 804252826976256021 && message.Content == "cs!hello")
-        {
-            await message.Channel.SendMessageAsync("hello");
-        }
+        static void Main(string[] args) =>
+            new Bot().MainAsync().GetAwaiter().GetResult();
     }
 }
