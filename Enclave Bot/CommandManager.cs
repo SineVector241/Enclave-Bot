@@ -57,7 +57,7 @@ namespace Enclave_Bot
                     Embed.WithTitle("Error");
                     Embed.WithDescription(Result.ErrorReason);
                 }
-                await Context.Channel.SendMessageAsync(embed: Embed.Build());
+                await Context.Channel.SendMessageAsync("",embed: Embed.Build());
             }
         }
 
