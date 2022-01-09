@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using Fergun.Interactive;
 
 namespace Enclave_Bot
 {
@@ -71,6 +72,7 @@ namespace Enclave_Bot
             return new ServiceCollection()
                 .AddSingleton(_client)
                 .AddSingleton(_commands)
+                .AddSingleton<InteractiveService>()
                 .BuildServiceProvider();
         }
     }

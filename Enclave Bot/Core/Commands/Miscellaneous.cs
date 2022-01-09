@@ -9,11 +9,14 @@ using System.Net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Serilog;
+using Fergun.Interactive;
 
 namespace Enclave_Bot.Core.Commands
 {
     public class Miscellaneous : ModuleBase<SocketCommandContext>
     {
+        public InteractiveService Interactive { get; set; }
+
         [Command("ping")]
         [Alias("latency")]
         [Summary("Displays the bots current latency")]
@@ -67,6 +70,16 @@ namespace Enclave_Bot.Core.Commands
                 Log.Error(String.Format("{0} - {1}", e.InnerException?.Message ?? e.Message, e.StackTrace));
                 await Context.Channel.SendMessageAsync("An Error Occurred");
             }
+        }
+
+        [Command("test")]
+        [Alias("test")]
+        [Summary("Sends a message with message components(buttons)")]
+        public async Task ButtonTest()
+        {
+            var msg = await ReplyAsync("Waiting for a message...");
+            var result = await Interactive.NextMessageAsync(x => x.Channel.Id == Context.Channel.Id, timeout: TimeSpan.FromSeconds(30));
+            await ReplyAsync(result.Value.Content);
         }
     }
 }
