@@ -49,7 +49,7 @@ namespace Enclave_Bot
         private Task Client_Log(LogMessage Message)
         {
             Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine($"{DateTime.Now} At {Message.Source}: {Message.Message}");
+            Console.WriteLine($"{DateTime.Now} => [{Message.Source}]: {Message.Message}");
             Console.ForegroundColor = ConsoleColor.White;
             return Task.CompletedTask;
         }

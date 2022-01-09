@@ -25,6 +25,7 @@ namespace Enclave_Bot
 
         public Task InitAsync()
         {
+            //Create Event Listeners Here
             Client.MessageReceived += Message_Event;
             Client.Ready += Client_Ready;
             return Task.CompletedTask;
@@ -33,7 +34,7 @@ namespace Enclave_Bot
         private async Task Client_Ready()
         {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"{DateTime.Now}: {Client.CurrentUser.Username} is ready");
+            Console.WriteLine($"{DateTime.Now} => [READY EVENT]: {Client.CurrentUser.Username} is ready");
             Console.ForegroundColor = ConsoleColor.White;
             await Client.SetGameAsync($"{Config.bot.Prefix}help");
             await Client.SetStatusAsync(UserStatus.Online);
