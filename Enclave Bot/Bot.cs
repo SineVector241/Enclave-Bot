@@ -7,6 +7,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using System.Reflection;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Enclave_Bot
 {
@@ -14,6 +15,7 @@ namespace Enclave_Bot
     {
         private DiscordSocketClient Client;
         private CommandService Commands;
+        private IServiceProvider Services;
 
         public Bot()
         {
@@ -28,16 +30,16 @@ namespace Enclave_Bot
                 DefaultRunMode = RunMode.Async,
                 LogLevel = LogSeverity.Debug
             });
+            Services = BuildServiceProvider();
         }
 
         public async Task MainAsync()
         {
-            CommandManager cmdManager = new CommandManager(Client, Commands);
-            await cmdManager.InitializeAsync();
+            await new CommandManager(Services).InitializeAsync();
+            await new EventHandler(Services).InitAsync();
 
-            Client.Ready += Client_Ready;
             Client.Log += Client_Log;
-            if (Config.bot.Token == "" || Config.bot.Token == null) return;
+            if (string.IsNullOrWhiteSpace(Config.bot.Token)) return;
 
             await Client.LoginAsync(TokenType.Bot, Config.bot.Token);
             await Client.StartAsync();
@@ -52,13 +54,12 @@ namespace Enclave_Bot
             return Task.CompletedTask;
         }
 
-        private async Task Client_Ready()
+        private ServiceProvider BuildServiceProvider()
         {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"{DateTime.Now}: {Client.CurrentUser.Username} is ready");
-            Console.ForegroundColor = ConsoleColor.White;
-            await Client.SetGameAsync($"{Config.bot.Prefix}help");
-            await Client.SetStatusAsync(UserStatus.Online);
+            return new ServiceCollection()
+                .AddSingleton(Client)
+                .AddSingleton(Commands)
+                .BuildServiceProvider();
         }
     }
 }
