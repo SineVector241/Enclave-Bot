@@ -19,7 +19,7 @@ namespace Enclave_Bot.Core.Commands
         }
 
         [Command("help")]
-        [Alias("command","commands")]
+        [Alias("command", "commands")]
         [Summary("Display all commands or displays a specific command")]
         public async Task Help([Remainder] string Command = "")
         {
@@ -31,18 +31,18 @@ namespace Enclave_Bot.Core.Commands
             };
             if (Command == "")
             {
-                foreach(var module in _Service.Modules)
+                foreach (var module in _Service.Modules)
                 {
                     string description = "";
-                    foreach(var cmd in module.Commands)
+                    foreach (var cmd in module.Commands)
                     {
                         description += $"{prefix}{cmd.Aliases.First()}\n";
                     }
 
-                    if(!string.IsNullOrWhiteSpace(description))
+                    if (!string.IsNullOrWhiteSpace(description))
                     {
                         string name = module.Name;
-                        embed.AddField(name, description,false);
+                        embed.AddField(name, description, false);
                     }
                 }
                 await ReplyAsync(embed: embed.Build());
@@ -50,9 +50,9 @@ namespace Enclave_Bot.Core.Commands
             else
             {
                 var result = _Service.Search(Context, Command);
-                if(!result.IsSuccess)
+                if (!result.IsSuccess)
                 {
-                    await ReplyAsync($"Error: Could not find **{Command}**");
+                    await ReplyAsync($"Error: Could not find command **{Command}**");
                 }
 
                 var Embed = new EmbedBuilder()
@@ -61,7 +61,7 @@ namespace Enclave_Bot.Core.Commands
                     Description = $"Similar Commands To **{Command}**"
                 };
 
-                foreach(var match in result.Commands)
+                foreach (var match in result.Commands)
                 {
                     var cmd = match.Command;
                     Embed.AddField(x =>
