@@ -67,8 +67,8 @@ namespace Enclave_Bot.Core.Commands
                     Embed.AddField(x =>
                     {
                         x.Name = String.Join(", ", cmd.Aliases);
-                        x.Value = $"Paramaters {string.Join(", ", cmd.Parameters.Select(p => p.Name))}\n" +
-                        $"Summary {cmd.Summary}";
+                        x.Value = $"Paramaters: {string.Join(", ", cmd.Parameters.Select(p => p.Name))}\n" +
+                        $"Summary: {cmd.Summary}";
                         x.IsInline = false;
                     });
                 }
