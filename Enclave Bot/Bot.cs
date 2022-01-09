@@ -8,41 +8,53 @@ using Discord.WebSocket;
 using System.Reflection;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 
 namespace Enclave_Bot
 {
     public class Bot
     {
-        private DiscordSocketClient Client;
-        private CommandService Commands;
-        private IServiceProvider Services;
+        private DiscordSocketClient _client;
+        private CommandService _commands;
+        private IServiceProvider _services;
 
         public Bot()
         {
-            Client = new DiscordSocketClient(new DiscordSocketConfig
+            _client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Debug
             });
 
-            Commands = new CommandService(new CommandServiceConfig
+            _commands = new CommandService(new CommandServiceConfig
             {
                 CaseSensitiveCommands = true,
                 DefaultRunMode = RunMode.Async,
                 LogLevel = LogSeverity.Debug
             });
-            Services = BuildServiceProvider();
+
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.Console()
+                .WriteTo.RollingFile(".\\Logs\\Enclave Bot-{Date}.txt")
+                .CreateLogger();
+            _services = BuildServiceProvider();
         }
 
         public async Task MainAsync()
         {
-            await new CommandManager(Services).InitializeAsync();
-            await new EventHandler(Services).InitAsync();
+            await new CommandManager(_services).InitializeAsync();
+            await new EventHandler(_services).InitAsync();
 
-            Client.Log += Client_Log;
-            if (string.IsNullOrWhiteSpace(Config.bot.Token)) return;
+            _client.Log += Client_Log;
 
-            await Client.LoginAsync(TokenType.Bot, Config.bot.Token);
-            await Client.StartAsync();
+            if (string.IsNullOrWhiteSpace(Config.BotConfiguration.Token))
+            {
+                Log.Error("BotConfiguration Token is blank.");
+                return;
+            }
+
+            await _client.LoginAsync(TokenType.Bot, Config.BotConfiguration.Token);
+            await _client.StartAsync();
             await Task.Delay(-1);
         }
 
@@ -57,8 +69,8 @@ namespace Enclave_Bot
         private ServiceProvider BuildServiceProvider()
         {
             return new ServiceCollection()
-                .AddSingleton(Client)
-                .AddSingleton(Commands)
+                .AddSingleton(_client)
+                .AddSingleton(_commands)
                 .BuildServiceProvider();
         }
     }

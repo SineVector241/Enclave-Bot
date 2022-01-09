@@ -8,6 +8,7 @@ using Discord.Commands;
 using System.Net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Serilog;
 
 namespace Enclave_Bot.Core.Commands
 {
@@ -18,11 +19,14 @@ namespace Enclave_Bot.Core.Commands
         [Summary("Displays the bots current latency")]
         public async Task PingCommand()
         {
-            var embed = new EmbedBuilder();
-            embed.Title = "Pong!";
-            embed.Description = $"Bots ping is: {Context.Client.Latency} ms";
-            embed.Color = Context.Client.Latency <= 100 ? Color.Green : Color.Red;
-            embed.Footer = new EmbedFooterBuilder().WithText(Context.User.Username).WithIconUrl(Context.User.GetAvatarUrl());
+            EmbedBuilder embed = new EmbedBuilder()
+            {
+                Title = "Pong!",
+                Description = $"Bots ping is: {Context.Client.Latency} ms",
+                Color = Context.Client.Latency <= 100 ? Color.Green : Color.Red,
+                Footer = new EmbedFooterBuilder().WithText(Context.User.Username).WithIconUrl(Context.User.GetAvatarUrl())
+            };
+
             await Context.Channel.SendMessageAsync(embed: embed.Build());
         }
 
@@ -34,14 +38,15 @@ namespace Enclave_Bot.Core.Commands
             {
                 WebRequest request = WebRequest.Create("https://v2.jokeapi.dev/joke/Any?blacklistFlags=nsfw,religious,political,racist,sexist");
                 request.Method = "GET";
-                using var webResponse = request.GetResponse();
-                using var webStream = webResponse.GetResponseStream();
+                using WebResponse webResponse = request.GetResponse();
+                using Stream webStream = webResponse.GetResponseStream();
 
-                using var reader = new StreamReader(webStream);
-                var data = reader.ReadToEnd();
+                using StreamReader reader = new StreamReader(webStream);
+                string data = reader.ReadToEnd();
                 JObject jsonData = JObject.Parse(data);
                 dynamic Data = JsonConvert.DeserializeObject(data);
                 EmbedBuilder embed = new EmbedBuilder();
+
                 if (Data["type"] == "twopart")
                 {
                     embed.Title = Data["setup"];
@@ -57,8 +62,9 @@ namespace Enclave_Bot.Core.Commands
                     await Context.Channel.SendMessageAsync(embed: embed.Build());
                 }
             }
-            catch
+            catch (Exception e)
             {
+                Log.Error(String.Format("{0} - {1}", e.InnerException?.Message ?? e.Message, e.StackTrace));
                 await Context.Channel.SendMessageAsync("An Error Occurred");
             }
         }

@@ -8,36 +8,45 @@ using Discord.Commands;
 using Discord.WebSocket;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 
 namespace Enclave_Bot
 {
     public class CommandManager
     {
-        private readonly DiscordSocketClient Client;
-        private readonly CommandService Commands;
-        private readonly IServiceProvider _Services;
+        private readonly DiscordSocketClient _client;
+        private readonly CommandService _commands;
+        private readonly IServiceProvider _services;
 
         public CommandManager(IServiceProvider Services)
         {
-            Client = Services.GetRequiredService<DiscordSocketClient>();
-            Commands = Services.GetRequiredService<CommandService>();
-            _Services = Services;
+            _client = Services.GetRequiredService<DiscordSocketClient>();
+            _commands = Services.GetRequiredService<CommandService>();
+            _services = Services;
         }
 
         public async Task InitializeAsync()
         {
-            await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), _Services);
-            foreach (var cmd in Commands.Commands)
+            try
             {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"{DateTime.Now} => [COMMANDS]: {cmd.Name} loaded");
+                await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+
+                foreach (CommandInfo cmd in _commands.Commands)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Log.Debug($"{DateTime.Now} => [COMMANDS]: {cmd.Name} loaded");
+                }
+                _commands.Log += Command_Log;
             }
-            Commands.Log += Command_Log;
+            catch (Exception e)
+            {
+                Log.Error(string.Format("{0} - {1}", e.InnerException?.Message ?? e.Message, e.StackTrace));
+            }
         }
 
-        private Task Command_Log(LogMessage Command)
+        private Task Command_Log(LogMessage command)
         {
-            Console.WriteLine(Command.Message);
+            Log.Debug(command.Message);
             return Task.CompletedTask;
         }
     }

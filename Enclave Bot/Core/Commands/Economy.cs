@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Newtonsoft.Json;
+using Serilog;
 
 namespace Enclave_Bot.Core.Commands
 {
@@ -24,16 +25,27 @@ namespace Enclave_Bot.Core.Commands
     {
         private const string _economyFolder = "Resources";
         private const string _economyFile = "economy.json";
-        private static EconomyFile Economy;
+        private static EconomyFile _economy;
 
         static EconomyConfig()
         {
-            if (!Directory.Exists(_economyFolder)) Directory.CreateDirectory(_economyFile);
-            if (File.Exists(_economyFolder + "/" + _economyFile))
+            try
             {
-                Economy = new EconomyFile();
-                string json = JsonConvert.SerializeObject(Economy, Formatting.Indented);
-                File.Create(_economyFolder + "/" + _economyFile);
+                if (!Directory.Exists(_economyFolder))
+                {
+                    Directory.CreateDirectory(_economyFile);
+                }
+
+                if (File.Exists(_economyFolder + "/" + _economyFile))
+                {
+                    _economy = new EconomyFile();
+                    string economyJson = JsonConvert.SerializeObject(_economy, Formatting.Indented);
+                    File.Create(_economyFolder + "/" + _economyFile);
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error(string.Format("{0} - {1}", e.InnerException?.Message ?? e.Message, e.StackTrace));
             }
         }
 
