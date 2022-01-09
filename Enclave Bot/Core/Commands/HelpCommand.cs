@@ -7,72 +7,82 @@ using Discord;
 using Discord.Commands;
 using System.Threading.Tasks;
 using System.Reflection;
+using Serilog;
 
 namespace Enclave_Bot.Core.Commands
 {
     public class HelpCommand : ModuleBase<SocketCommandContext>
     {
-        private readonly CommandService _Service;
-        public HelpCommand(CommandService Service)
+        private readonly CommandService _service;
+        public HelpCommand(CommandService service)
         {
-            _Service = Service;
+            _service = service;
         }
 
         [Command("help")]
         [Alias("command", "commands")]
         [Summary("Display all commands or displays a specific command")]
-        public async Task Help([Remainder] string Command = "")
+        public async Task Help([Remainder] string command = "")
         {
-            string prefix = Config.bot.Prefix;
-            var embed = new EmbedBuilder()
+            try
             {
-                Color = Color.Orange,
-                Description = "These are the available commands"
-            };
-            if (Command == "")
-            {
-                foreach (var module in _Service.Modules)
+                string prefix = Config.BotConfiguration.Prefix;
+                EmbedBuilder defaultHelpEmbedBuilder = new EmbedBuilder()
                 {
-                    string description = "";
-                    foreach (var cmd in module.Commands)
-                    {
-                        description += $"{prefix}{cmd.Aliases.First()}\n";
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(description))
-                    {
-                        string name = module.Name;
-                        embed.AddField(name, description, false);
-                    }
-                }
-                await ReplyAsync(embed: embed.Build());
-            }
-            else
-            {
-                var result = _Service.Search(Context, Command);
-                if (!result.IsSuccess)
-                {
-                    await ReplyAsync($"Error: Could not find command **{Command}**");
-                }
-
-                var Embed = new EmbedBuilder()
+                    Color = Color.Orange,
+                    Description = "These are the available commands"
+                };
+                EmbedBuilder commandHelpEmbedBuilder = new EmbedBuilder()
                 {
                     Color = Color.Blue,
-                    Description = $"Similar Commands To **{Command}**"
+                    Description = $"Similar Commands To **{command}**"
                 };
 
-                foreach (var match in result.Commands)
+                if (string.IsNullOrWhiteSpace(command))
                 {
-                    var cmd = match.Command;
-                    Embed.AddField(x =>
+                    foreach (ModuleInfo module in _service.Modules)
                     {
-                        x.Name = String.Join(", ", cmd.Aliases);
-                        x.Value = $"Paramaters: {string.Join(", ", cmd.Parameters.Select(p => p.Name))}\n" +
-                        $"Summary: {cmd.Summary}";
-                        x.IsInline = false;
-                    });
+                        string description = "";
+                        foreach (CommandInfo cmd in module.Commands)
+                        {
+                            description += $"{prefix}{cmd.Aliases.First()}\n";
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(description))
+                        {
+                            string name = module.Name;
+                            defaultHelpEmbedBuilder.AddField(name, description, false);
+                        }
+                    }
+                    await ReplyAsync(embed: defaultHelpEmbedBuilder.Build());
                 }
-                await ReplyAsync(embed: Embed.Build());
+                else
+                {
+                    SearchResult result = _service.Search(Context, command);
+
+                    if (!result.IsSuccess)
+                    {
+                        await ReplyAsync($"Error: Could not find command **{command}**");
+                    }
+
+                    foreach (CommandMatch match in result.Commands)
+                    {
+                        CommandInfo cmd = match.Command;
+                        commandHelpEmbedBuilder.AddField(x =>
+                        {
+                            x.Name = String.Join(", ", cmd.Aliases);
+                            x.Value = $"Paramaters: {string.Join(", ", cmd.Parameters.Select(p => p.Name))}\n" +
+                            $"Summary: {cmd.Summary}";
+                            x.IsInline = false;
+                        });
+                    }
+                    await ReplyAsync(embed: commandHelpEmbedBuilder.Build());
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error(string.Format("{0} - {1}", e.InnerException?.Message ?? e.Message, e.StackTrace));
+                await Context.Channel.SendMessageAsync("An Error Occurred");
             }
         }
     }

@@ -5,29 +5,40 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using Newtonsoft.Json;
+using Serilog;
 
 namespace Enclave_Bot
 {
     class Config
     {
-        private const string configFolder = "Resources";
-        private const string configFile = "config.json";
-        public static BotConfig bot;
+        private const string _configFolder = "Resources";
+        private const string _configFile = "config.json";
+        public static BotConfig BotConfiguration;
 
         static Config()
         {
-            if(!Directory.Exists(configFolder))
-                Directory.CreateDirectory(configFolder);
-            if(!File.Exists(configFolder + "/" + configFile))
+            try
             {
-                bot = new BotConfig();
-                string json = JsonConvert.SerializeObject(bot, Formatting.Indented);
-                File.WriteAllText(configFolder + "/" + configFile, json);
+                if (!Directory.Exists(_configFolder))
+                {
+                    Directory.CreateDirectory(_configFolder);
+                }
+
+                if (!File.Exists(_configFolder + "/" + _configFile))
+                {
+                    BotConfiguration = new BotConfig();
+                    string botConfigJson = JsonConvert.SerializeObject(BotConfiguration, Formatting.Indented);
+                    File.WriteAllText(_configFolder + "/" + _configFile, botConfigJson);
+                }
+                else
+                {
+                    string botConfigJson = File.ReadAllText(_configFolder + "/" + _configFile);
+                    BotConfiguration = JsonConvert.DeserializeObject<BotConfig>(botConfigJson);
+                }
             }
-            else
+            catch (Exception e)
             {
-                string json = File.ReadAllText(configFolder + "/" + configFile);
-                bot = JsonConvert.DeserializeObject<BotConfig>(json);
+                Log.Error(string.Format("{0} - {1}", e.InnerException?.Message ?? e.Message, e.StackTrace));
             }
         }
     }
