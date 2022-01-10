@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Serilog;
 using Fergun.Interactive;
+using Discord.WebSocket;
 
 namespace Enclave_Bot.Core.Commands
 {
