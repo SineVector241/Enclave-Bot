@@ -78,9 +78,10 @@ namespace Enclave_Bot.Core.Commands
         [Summary("Sends a message with message components(buttons)")]
         public async Task ButtonTest()
         {
-            var msg = await ReplyAsync("Waiting for a message...");
-            var result = await Interactive.NextMessageAsync(x => x.Channel.Id == Context.Channel.Id, timeout: TimeSpan.FromSeconds(30));
-            await ReplyAsync(result.Value.Content);
+            var builder = new ComponentBuilder()
+                .WithButton("label", "custom-id", ButtonStyle.Danger);
+
+            await Context.Channel.SendMessageAsync("Here is a button!", components: builder.Build());
         }
     }
 }
