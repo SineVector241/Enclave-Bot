@@ -73,15 +73,23 @@ namespace Enclave_Bot.Core.Commands
             }
         }
 
-        [Command("test")]
-        [Alias("test")]
-        [Summary("Sends a message with message components(buttons)")]
-        public async Task ButtonTest()
+        [Command("embed")]
+        [Summary("Sends an embed message")]
+        public async Task Embedder(string Title, [Remainder]string Description = null)
         {
-            var builder = new ComponentBuilder()
-                .WithButton("label", "custom-id", ButtonStyle.Danger);
+            var embed = new EmbedBuilder() { Title = Title, Description = Description, Color = randomColor()};
+            await Context.Channel.SendMessageAsync(embed: embed.Build());
+        }
 
-            await Context.Channel.SendMessageAsync("Here is a button!", components: builder.Build());
+        Random rnd = new Random();
+        private Color randomColor()
+        {
+            Color randomColor = new Color(GenerateRandomInt(rnd), GenerateRandomInt(rnd), GenerateRandomInt(rnd));
+            return randomColor;
+        }
+        public static int GenerateRandomInt(Random rnd)
+        {
+            return rnd.Next(256);
         }
     }
 }
