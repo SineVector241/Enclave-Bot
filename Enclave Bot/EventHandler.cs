@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Enclave_Bot.Core.Database;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
@@ -202,6 +203,8 @@ namespace Enclave_Bot
         {
             try
             {
+                
+                Database db = new Database();
                 SocketUserMessage message = messageParameter as SocketUserMessage;
                 SocketCommandContext context = new SocketCommandContext(_client, message);
 
@@ -213,6 +216,17 @@ namespace Enclave_Bot
                 if (context.User.IsBot)
                 {
                     return;
+                }
+                if(!db.HasAccount(context.User.Id))
+                {
+                    db.CreateAccount(new User
+                    {
+                        DiscordID = context.User.Id,
+                        Wallet = 0,
+                        Bank = 200,
+                        Level = 0,
+                        XP = 0
+                    });
                 }
 
                 int argPos = 0;
