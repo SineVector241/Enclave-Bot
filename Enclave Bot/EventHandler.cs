@@ -137,8 +137,8 @@ namespace Enclave_Bot
                 var wrong9 = await arg.Message.GetReactionUsersAsync(new Emoji("9️⃣"), 1).FlattenAsync();
                 var wrong10 = await arg.Message.GetReactionUsersAsync(new Emoji("🔟"), 1).FlattenAsync();
 
-                string[] wrongs = { 
-                    wrong1.First().ToString(), 
+                string[] wrongs = {
+                    wrong1.First().ToString(),
                     wrong2.First().ToString(),
                     wrong3.First().ToString(),
                     wrong4.First().ToString(),
@@ -153,9 +153,9 @@ namespace Enclave_Bot
                 var embed = new EmbedBuilder();
                 embed.Title = "Application Rejected";
                 embed.Description = "The following questions to why your application was rejected are\n";
-                for(int i = 0; i < 10; i++)
+                for (int i = 0; i < 10; i++)
                 {
-                    if(wrongs[i] != _client.CurrentUser.ToString())
+                    if (wrongs[i] != _client.CurrentUser.ToString())
                     {
                         embed.Description += $"Question: {i + 1}\n";
                     }
@@ -164,6 +164,28 @@ namespace Enclave_Bot
                 await arg.Message.DeleteAsync();
                 await arg.Channel.SendMessageAsync($"Denied User: {User.Mention}");
                 await arg.RespondAsync(options: RequestOptions.Default);
+            }
+
+            if (arg.Data.CustomId.Contains("SAccept:"))
+            {
+                ulong Id = ulong.Parse(arg.Data.CustomId.Replace("SAccept:", ""));
+                SocketGuild guild = _client.GetGuild(749358542145716275);
+                SocketGuildUser UserPressed = arg.User as SocketGuildUser;
+                SocketGuildUser User = guild.GetUser(Id);
+                if (!UserPressed.GuildPermissions.Administrator)
+                {
+                    await arg.User.SendMessageAsync("Error: You do not have the correct permissions.");
+                    await arg.RespondAsync(options: RequestOptions.Default);
+                    return;
+                }
+
+                if (User == null)
+                {
+                    await arg.Message.DeleteAsync();
+                    await arg.Channel.SendMessageAsync($"Error: Could not find user");
+                    await arg.RespondAsync(options: RequestOptions.Default);
+                    return;
+                }
             }
         }
 
