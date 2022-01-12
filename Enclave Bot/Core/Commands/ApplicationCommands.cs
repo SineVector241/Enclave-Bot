@@ -68,7 +68,7 @@ namespace Enclave_Bot.Core.Commands
                     await Context.User.SendMessageAsync("Application Timed Out. Execute the command again to redo the application");
                     return;
                 }
-                Embed.AddField(question, answer.Value.Content);
+                Embed.AddField($"{counter}. {question}", answer.Value.Content);
             }
             await Context.Guild.GetTextChannel(757581056470679672).SendMessageAsync(embed: Embed.Build(),components: builder.Build());
             embed.Title = "Application Successfully Sent";

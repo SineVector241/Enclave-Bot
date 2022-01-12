@@ -35,7 +35,7 @@ namespace Enclave_Bot
 
         private async Task Button_Executed(SocketMessageComponent arg)
         {
-            if(arg.Data.CustomId.Contains("Accept:"))
+            if (arg.Data.CustomId.Contains("Accept:"))
             {
                 ulong Id = ulong.Parse(arg.Data.CustomId.Replace("Accept:", ""));
                 SocketGuild guild = _client.GetGuild(749358542145716275);
@@ -62,6 +62,107 @@ namespace Enclave_Bot
                 await arg.Message.DeleteAsync();
                 await arg.Channel.SendMessageAsync($"Accepted User: {User.Mention}");
                 await User.SendMessageAsync("Congrats, you were approved, make sure to go to <#789161172528005140>🔮🏹. \n\nYou’re on your own from here, and no, we don’t have any corn 🌽");
+                await arg.RespondAsync(options: RequestOptions.Default);
+            }
+
+            if (arg.Data.CustomId.Contains("Deny:"))
+            {
+                ulong Id = ulong.Parse(arg.Data.CustomId.Replace("Deny:", ""));
+                SocketGuild guild = _client.GetGuild(749358542145716275);
+                SocketGuildUser UserPressed = arg.User as SocketGuildUser;
+                SocketGuildUser User = guild.GetUser(Id);
+                if (!UserPressed.GuildPermissions.Administrator)
+                {
+                    await arg.User.SendMessageAsync("Error: You do not have the correct permissions.");
+                    await arg.RespondAsync(options: RequestOptions.Default);
+                    return;
+
+                }
+
+                if (User == null)
+                {
+                    await arg.Message.DeleteAsync();
+                    await arg.Channel.SendMessageAsync($"Error: Could not find user");
+                    await arg.RespondAsync(options: RequestOptions.Default);
+                    return;
+                }
+                var builder = new ComponentBuilder();
+                builder.WithButton("Deny Application", $"Continue:{Id}", ButtonStyle.Danger);
+                IEmote[] emotes = {
+                    new Emoji("1️⃣"),
+                    new Emoji("2️⃣"),
+                    new Emoji("3️⃣"),
+                    new Emoji("4️⃣"),
+                    new Emoji("5️⃣"),
+                    new Emoji("6️⃣"),
+                    new Emoji("7️⃣"),
+                    new Emoji("8️⃣"),
+                    new Emoji("9️⃣"),
+                    new Emoji("🔟")};
+                await arg.Message.ModifyAsync(x => x.Components = builder.Build());
+                await arg.Message.AddReactionsAsync(emotes);
+                await arg.RespondAsync(options: RequestOptions.Default);
+            }
+
+            if (arg.Data.CustomId.Contains("Continue:"))
+            {
+                ulong Id = ulong.Parse(arg.Data.CustomId.Replace("Continue:", ""));
+                SocketGuild guild = _client.GetGuild(749358542145716275);
+                SocketGuildUser UserPressed = arg.User as SocketGuildUser;
+                SocketGuildUser User = guild.GetUser(Id);
+                if (!UserPressed.GuildPermissions.Administrator)
+                {
+                    await arg.User.SendMessageAsync("Error: You do not have the correct permissions.");
+                    await arg.RespondAsync(options: RequestOptions.Default);
+                    return;
+
+                }
+
+                if (User == null)
+                {
+                    await arg.Message.DeleteAsync();
+                    await arg.Channel.SendMessageAsync($"Error: Could not find user");
+                    await arg.RespondAsync(options: RequestOptions.Default);
+                    return;
+                }
+
+                var wrong1 = await arg.Message.GetReactionUsersAsync(new Emoji("1️⃣"), 1).FlattenAsync();
+                var wrong2 = await arg.Message.GetReactionUsersAsync(new Emoji("2️⃣"), 1).FlattenAsync();
+                var wrong3 = await arg.Message.GetReactionUsersAsync(new Emoji("3️⃣"), 1).FlattenAsync();
+                var wrong4 = await arg.Message.GetReactionUsersAsync(new Emoji("4️⃣"), 1).FlattenAsync();
+                var wrong5 = await arg.Message.GetReactionUsersAsync(new Emoji("5️⃣"), 1).FlattenAsync();
+                var wrong6 = await arg.Message.GetReactionUsersAsync(new Emoji("6️⃣"), 1).FlattenAsync();
+                var wrong7 = await arg.Message.GetReactionUsersAsync(new Emoji("7️⃣"), 1).FlattenAsync();
+                var wrong8 = await arg.Message.GetReactionUsersAsync(new Emoji("8️⃣"), 1).FlattenAsync();
+                var wrong9 = await arg.Message.GetReactionUsersAsync(new Emoji("9️⃣"), 1).FlattenAsync();
+                var wrong10 = await arg.Message.GetReactionUsersAsync(new Emoji("🔟"), 1).FlattenAsync();
+
+                string[] wrongs = { 
+                    wrong1.First().ToString(), 
+                    wrong2.First().ToString(),
+                    wrong3.First().ToString(),
+                    wrong4.First().ToString(),
+                    wrong5.First().ToString(),
+                    wrong6.First().ToString(),
+                    wrong7.First().ToString(),
+                    wrong8.First().ToString(),
+                    wrong9.First().ToString(),
+                    wrong10.First().ToString()
+                };
+
+                var embed = new EmbedBuilder();
+                embed.Title = "Application Rejected";
+                embed.Description = "The following questions to why your application was rejected are\n";
+                for(int i = 0; i < 10; i++)
+                {
+                    if(wrongs[i] != _client.CurrentUser.ToString())
+                    {
+                        embed.Description += $"Question: {i + 1}\n";
+                    }
+                }
+                await User.SendMessageAsync(embed: embed.Build());
+                await arg.Message.DeleteAsync();
+                await arg.Channel.SendMessageAsync($"Denied User: {User.Mention}");
                 await arg.RespondAsync(options: RequestOptions.Default);
             }
         }
