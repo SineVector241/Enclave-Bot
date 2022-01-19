@@ -19,7 +19,17 @@ namespace Enclave_Bot.Core.Commands
         public async Task fapp()
         {
             SocketGuildUser user = Context.User as SocketGuildUser;
-            var embed = new EmbedBuilder();
+            int counter = 0;
+            var embed = new EmbedBuilder()
+                .WithColor(randomColor())
+                .WithTitle("Faction Application");
+            var selectMenu = new SelectMenuBuilder()
+                .WithCustomId("fapp")
+                .WithMaxValues(1)
+                .WithMinValues(1)
+                .WithPlaceholder("Select a question");
+            var builder = new ComponentBuilder();
+
             string[] questions = {
                 "Have you, or have you ever been banned from a server/realm? Be honest!",
                 "What is your in game name? Case Sensitive please!",
@@ -32,47 +42,23 @@ namespace Enclave_Bot.Core.Commands
                 "What system are you playing on?",
                 "How do you gather gold, and how can you spend it?"
             };
-            int counter = 0;
-            embed.Title = "Factions Application";
-            embed.Description = "Please answer the questions the bot asks you. You have 10 minutes to answer each question\n(Resets everytime you answer a question in time)";
-            embed.Color = randomColor();
-            try
+
+            for (int i = 1; i <= questions.Length; i++)
             {
-                await user.SendMessageAsync(embed: embed.Build());
-                await Context.Channel.SendMessageAsync("Please check your dm's to answer the application questions");
-            }
-            catch (Exception ex)
-            {
-                await ReplyAsync($"An error occurred.\nError Info: {ex}");
-                return;
+                selectMenu.AddOption($"Question {i}", $"Q{i}", $"Fillout Question {i}");
             }
 
-            embed.Description = null;
-            var Embed = new EmbedBuilder();
-            Embed.Title = $"New Application From {user.Username}";
-            Embed.Color = randomColor();
-
-            var builder = new ComponentBuilder()
-                .WithButton("Accept", $"Accept:{Context.User.Id}", ButtonStyle.Success)
-                .WithButton("Deny", $"Deny:{Context.User.Id}", ButtonStyle.Danger);
-
-            foreach (string question in questions)
+            foreach(string question in questions)
             {
                 counter++;
-                embed.Title = $"{counter}. {question}";
-                embed.Color = randomColor();
-                await user.SendMessageAsync(embed: embed.Build());
-                var answer = await Interactive.NextMessageAsync(x => x.Author.Id == user.Id && x.Channel.GetType().ToString() == "Discord.WebSocket.SocketDMChannel", timeout: TimeSpan.FromMinutes(10));
-                if(answer.IsTimeout)
-                {
-                    await Context.User.SendMessageAsync("Application Timed Out. Execute the command again to redo the application");
-                    return;
-                }
-                Embed.AddField($"{counter}. {question}", answer.Value.Content);
+                embed.AddField($"{counter}. {question}", "Not Answered");
             }
-            await Context.Guild.GetTextChannel(757581056470679672).SendMessageAsync(embed: Embed.Build(),components: builder.Build());
-            embed.Title = "Application Successfully Sent";
-            await user.SendMessageAsync(embed : embed.Build());
+
+            builder.WithSelectMenu(selectMenu, row: 0);
+            builder.WithButton("Submit", "Submit", ButtonStyle.Success, new Emoji("✅"), row: 1);
+
+            var msg = await user.SendMessageAsync(embed: embed.Build(), components: builder.Build());
+            await Context.Message.ReplyAsync(embed: new EmbedBuilder().WithColor(randomColor()).WithTitle("Application Sent").WithDescription($"Please check your DM's to fill out the application\n[Or Click Here]({msg.GetJumpUrl()})").Build());
         }
 
         [Command("staffapp")]

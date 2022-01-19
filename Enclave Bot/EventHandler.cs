@@ -9,6 +9,7 @@ using Discord.WebSocket;
 using Enclave_Bot.Core.Database;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using Fergun.Interactive;
 
 namespace Enclave_Bot
 {
@@ -17,6 +18,7 @@ namespace Enclave_Bot
         private DiscordSocketClient _client;
         private readonly CommandService _commands;
         private readonly IServiceProvider _services;
+        private InteractiveService Interactive { get; set; }
 
         public EventHandler(IServiceProvider Services)
         {
@@ -31,7 +33,23 @@ namespace Enclave_Bot
             _client.ButtonExecuted += Button_Executed;
             _client.MessageReceived += Message_Event;
             _client.Ready += Client_Ready;
+            _client.SelectMenuExecuted += Menu_Executed;
             return Task.CompletedTask;
+        }
+
+        private async Task Menu_Executed(SocketMessageComponent menu)
+        {
+            if(menu.Data.CustomId == "fapp")
+            {
+                switch(menu.Data.Values.First().ToString())
+                {
+                    case "Q1":
+                        var ms = await Interactive.NextMessageAsync(x => x.Author.Id == menu.User.Id);
+                        Console.WriteLine(menu.Message.Embeds.First().Fields.ElementAt(0).Name);
+                        break;
+                }
+                await menu.RespondAsync(options: RequestOptions.Default);
+            }
         }
 
         private async Task Button_Executed(SocketMessageComponent arg)

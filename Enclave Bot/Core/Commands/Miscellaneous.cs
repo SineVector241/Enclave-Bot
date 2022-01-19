@@ -75,9 +75,9 @@ namespace Enclave_Bot.Core.Commands
 
         [Command("embed")]
         [Summary("Sends an embed message")]
-        public async Task Embedder(string Title, [Remainder]string Description = null)
+        public async Task Embedder(string Title, [Remainder] string Description = null)
         {
-            var embed = new EmbedBuilder() { Title = Title, Description = Description, Color = randomColor()};
+            var embed = new EmbedBuilder() { Title = Title, Description = Description, Color = randomColor() };
             await Context.Channel.SendMessageAsync(embed: embed.Build());
         }
 
