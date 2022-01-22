@@ -10,6 +10,7 @@ using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Fergun.Interactive;
+using Discord.Interactions;
 
 namespace Enclave_Bot
 {
@@ -18,6 +19,7 @@ namespace Enclave_Bot
         private DiscordSocketClient _client;
         private CommandService _commands;
         private IServiceProvider _services;
+        private InteractionService _interactionService;
 
         public Bot()
         {
@@ -29,7 +31,12 @@ namespace Enclave_Bot
             _commands = new CommandService(new CommandServiceConfig
             {
                 CaseSensitiveCommands = true,
-                DefaultRunMode = RunMode.Async,
+                DefaultRunMode = Discord.Commands.RunMode.Async,
+                LogLevel = LogSeverity.Debug
+            });
+
+            _interactionService = new InteractionService(_client.Rest, new InteractionServiceConfig
+            {
                 LogLevel = LogSeverity.Debug
             });
 
@@ -45,6 +52,7 @@ namespace Enclave_Bot
         {
             await new CommandManager(_services).InitializeAsync();
             await new EventHandler(_services).InitAsync();
+            await new InteractionManager(_services).InitializeAsync();
 
             _client.Log += Client_Log;
 
@@ -73,6 +81,7 @@ namespace Enclave_Bot
                 .AddSingleton(_client)
                 .AddSingleton(_commands)
                 .AddSingleton<InteractiveService>()
+                .AddSingleton(_interactionService)
                 .BuildServiceProvider();
         }
     }

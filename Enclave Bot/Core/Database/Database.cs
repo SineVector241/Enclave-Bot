@@ -22,6 +22,7 @@ namespace Enclave_Bot.Core.Database
         public ulong WelcomeChannel { get; set; }
         public ulong ApplicationChannel { get; set; }
         public ulong StaffApplicationChannel { get; set; }
+        public ulong VerifiedRole { get; set; }
     }
 
     public class Database
@@ -36,7 +37,7 @@ namespace Enclave_Bot.Core.Database
         {
             string query = "CREATE TABLE IF NOT EXISTS users (id varchar(24), wallet int, bank int, level int, xp int)";
             SQLiteCommand cmd = new SQLiteCommand(query, db.MyConnection);
-            string query2 = "CREATE TABLE IF NOT EXISTS settings (loggingchannel varchar(24), welcomechannel varchar(24), fappchannel varchar(24), sappchannel varchar(24))";
+            string query2 = "CREATE TABLE IF NOT EXISTS settings (loggingchannel varchar(24), welcomechannel varchar(24), fappchannel varchar(24), sappchannel varchar(24), verifiedlevel varchar(24))";
             SQLiteCommand cmd2 = new SQLiteCommand(query, db.MyConnection);
             db.OpenConnection();
             cmd.Prepare();
@@ -95,6 +96,7 @@ namespace Enclave_Bot.Core.Database
                     settings.WelcomeChannel = Convert.ToUInt32(result["welcomechannel"]);
                     settings.ApplicationChannel = Convert.ToUInt32(result["fappchannel"]);
                     settings.StaffApplicationChannel = Convert.ToUInt32(result["sappchannel"]);
+                    settings.VerifiedRole = Convert.ToUInt32(result["verifiedrole"]);
                 }
             return settings;
         }

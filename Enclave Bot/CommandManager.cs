@@ -33,7 +33,6 @@ namespace Enclave_Bot
 
                 foreach (CommandInfo cmd in _commands.Commands)
                 {
-                    Console.ForegroundColor = ConsoleColor.Green;
                     Log.Debug($"{DateTime.Now} => [COMMANDS]: {cmd.Name} loaded");
                 }
                 _commands.Log += Command_Log;

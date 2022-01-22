@@ -18,19 +18,20 @@ namespace Enclave_Bot.Core.Commands
         [Summary("Application command to become a member of the server")]
         public async Task fapp()
         {
-            SocketGuildUser user = Context.User as SocketGuildUser;
-            int counter = 0;
-            var embed = new EmbedBuilder()
-                .WithColor(randomColor())
-                .WithTitle("Faction Application");
-            var selectMenu = new SelectMenuBuilder()
-                .WithCustomId("fapp")
-                .WithMaxValues(1)
-                .WithMinValues(1)
-                .WithPlaceholder("Select a question");
-            var builder = new ComponentBuilder();
+            try
+            {
+                int counter = 0;
+                var embed = new EmbedBuilder()
+                    .WithColor(randomColor())
+                    .WithTitle("Faction Application");
+                var selectMenu = new SelectMenuBuilder()
+                    .WithCustomId("fapp")
+                    .WithMaxValues(1)
+                    .WithMinValues(1)
+                    .WithPlaceholder("Select a question");
+                var builder = new ComponentBuilder();
 
-            string[] questions = {
+                string[] questions = {
                 "Have you, or have you ever been banned from a server/realm? Be honest!",
                 "What is your in game name? Case Sensitive please!",
                 "Have you put in your gamertag inside of gamer-tag?",
@@ -43,22 +44,27 @@ namespace Enclave_Bot.Core.Commands
                 "How do you gather gold, and how can you spend it?"
             };
 
-            for (int i = 1; i <= questions.Length; i++)
-            {
-                selectMenu.AddOption($"Question {i}", $"Q{i}", $"Fillout Question {i}");
+                for (int i = 1; i <= questions.Length; i++)
+                {
+                    selectMenu.AddOption($"Question {i}", $"{i}.", $"Fillout Question {i}");
+                }
+
+                foreach (string question in questions)
+                {
+                    counter++;
+                    embed.AddField($"{counter}. {question}", "Not Answered");
+                }
+
+                selectMenu.AddOption("Submit", "Submit", "Submits the application", new Emoji("✅"));
+                builder.WithSelectMenu(selectMenu, row: 0);
+
+                var msg = await Context.User.SendMessageAsync(embed: embed.Build(), components: builder.Build());
+                await Context.Message.ReplyAsync(embed: new EmbedBuilder().WithColor(randomColor()).WithTitle("Application Sent").WithDescription($"Please check your DM's to fill out the application\n[Or Click Here]({msg.GetJumpUrl()})").Build());
             }
-
-            foreach(string question in questions)
+            catch
             {
-                counter++;
-                embed.AddField($"{counter}. {question}", "Not Answered");
+                await Context.Channel.SendMessageAsync("Error. Could not send message. Please make sure your settings allow direct messages from anyone");
             }
-
-            builder.WithSelectMenu(selectMenu, row: 0);
-            builder.WithButton("Submit", "Submit", ButtonStyle.Success, new Emoji("✅"), row: 1);
-
-            var msg = await user.SendMessageAsync(embed: embed.Build(), components: builder.Build());
-            await Context.Message.ReplyAsync(embed: new EmbedBuilder().WithColor(randomColor()).WithTitle("Application Sent").WithDescription($"Please check your DM's to fill out the application\n[Or Click Here]({msg.GetJumpUrl()})").Build());
         }
 
         [Command("staffapp")]
@@ -99,6 +105,7 @@ namespace Enclave_Bot.Core.Commands
                 counter++;
                 embed.Description = question;
                 embed.Title = $"Question: {counter}";
+                embed.Footer = new EmbedFooterBuilder().WithText(Context.User.Id.ToString());
                 await User.SendMessageAsync(embed: embed.Build());
                 var answer = await Interactive.NextMessageAsync(x => x.Author.Id == User.Id && x.Channel.GetType().ToString() == "Discord.WebSocket.SocketDMChannel", timeout: TimeSpan.FromMinutes(10));
                 Embed.AddField(counter.ToString(), $"**{question}**\n{answer.Value.Content}");
