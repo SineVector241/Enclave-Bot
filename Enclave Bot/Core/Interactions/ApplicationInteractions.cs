@@ -177,8 +177,7 @@ namespace Enclave_Bot.Core.Interactions
 
                 await user.SendMessageAsync(embed: embedBuilder.Build());
                 await user.SendMessageAsync(embed: embed, components: builder.Build());
-                await Context.Channel.SendMessageAsync($"Denied Application {user.Mention}");
-                await Context.Interaction.Message.DeleteAsync();
+                await Context.Interaction.Message.ModifyAsync(x => { x.Components = new ComponentBuilder().Build(); x.Content = $"Denied Application {user.Mention}"; });
                 await RespondAsync();
             }
             catch
