@@ -21,9 +21,9 @@ namespace Enclave_Bot.Core.Interactions
             {
                 if (e.First() == "Submit")
                 {
-                    await Context.Client.GetGuild(749358542145716275).GetTextChannel(757581056470679672).SendMessageAsync($"{Context.User.Mention}", embed: Context.Interaction.Message.Embeds.First(), components: new ComponentBuilder().WithButton("Accept", $"FappAccept:{Context.User.Id}", ButtonStyle.Success, new Emoji("✅")).WithButton("Deny", $"FappDeny:{Context.User.Id}", ButtonStyle.Danger, new Emoji("❌")).Build());
+                    await Context.Client.GetGuild(749358542145716275).GetTextChannel(757581056470679672).SendMessageAsync($"<@&796252628837335040>: New Application {Context.User.Mention}", embed: Context.Interaction.Message.Embeds.First(), components: new ComponentBuilder().WithButton("Accept", $"FappAccept:{Context.User.Id}", ButtonStyle.Success, new Emoji("✅")).WithButton("Deny", $"FappDeny:{Context.User.Id}", ButtonStyle.Danger, new Emoji("❌")).WithButton("KickDeny", $"KickDeny:{Context.User.Id}", ButtonStyle.Secondary, new Emoji("❌")).Build());
                     await Context.Interaction.Message.DeleteAsync();
-                    await RespondAsync("✅ Successfully Sent Application");
+                    await Context.User.SendMessageAsync("✅ Successfully Sent Application");
                 }
                 _ = Task.Run(async () => { await RespondAsync(); });
                 EmbedBuilder embed = new EmbedBuilder()
@@ -100,9 +100,9 @@ namespace Enclave_Bot.Core.Interactions
             {
                 var builder = new ComponentBuilder();
                 string DSselect = "";
-                foreach(ActionRowComponent row in Context.Interaction.Message.Components)
+                foreach (ActionRowComponent row in Context.Interaction.Message.Components)
                 {
-                    foreach(ButtonComponent buttonComponent in row.Components)
+                    foreach (ButtonComponent buttonComponent in row.Components)
                     {
                         var button = buttonComponent.ToBuilder();
                         if (button.CustomId == $"FappSelectDeny:{id}" && button.Style is ButtonStyle.Secondary)
@@ -183,6 +183,27 @@ namespace Enclave_Bot.Core.Interactions
             catch
             {
 
+            }
+        }
+
+        [ComponentInteraction("KickDeny:*")]
+        public async Task KickDeny(string id)
+        {
+            try
+            {
+                SocketGuildUser user = Context.Guild.GetUser((ulong)Convert.ToInt64(id));
+                try
+                {
+                    await user.SendMessageAsync("Your application has been denied and you have been kicked from the server for failing the application too many times");
+                }
+                catch
+                { }
+                await user.KickAsync();
+                await Context.Interaction.Message.ModifyAsync(x => { x.Components = new ComponentBuilder().Build(); x.Content = $"Denied Application {user.Mention}"; });
+                await RespondAsync();
+            }
+            catch (Exception ex)
+            {
             }
         }
     }

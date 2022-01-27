@@ -100,17 +100,6 @@ namespace Enclave_Bot
                 {
                     return;
                 }
-                if(!db.HasAccount(context.User.Id))
-                {
-                    db.CreateAccount(new User
-                    {
-                        DiscordID = context.User.Id,
-                        Wallet = 0,
-                        Bank = 200,
-                        Level = 0,
-                        XP = 0
-                    });
-                }
 
                 int argPos = 0;
 
@@ -143,6 +132,7 @@ namespace Enclave_Bot
             }
             catch (Exception e)
             {
+                Console.WriteLine(e);
                 Log.Error(string.Format("[0} - {1}", e.InnerException?.Message ?? e.Message, e.StackTrace));
             }
         }

@@ -25,7 +25,8 @@ namespace Enclave_Bot
         {
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
-                LogLevel = LogSeverity.Debug
+                LogLevel = LogSeverity.Debug,
+                UseInteractionSnowflakeDate = false
             });
 
             _commands = new CommandService(new CommandServiceConfig
