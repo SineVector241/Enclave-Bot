@@ -100,6 +100,38 @@ namespace Enclave_Bot
                 {
                     return;
                 }
+                if (!db.HasAccount(context.User.Id))
+                {
+                    _ = Task.Run(async () => {
+                    db.CreateAccount(new User
+                    {
+                        DiscordID = context.User.Id,
+                        Wallet = 0,
+                        Bank = 200,
+                        Level = 0,
+                        XP = 0
+                    });
+                    });
+                }
+                if(context.Channel is SocketGuildChannel)
+                {
+                    if(!db.HasSettings(context.Channel.Id))
+                    {
+                        _ = Task.Run(async () => {
+                            db.CreateSettings(new Settings
+                            {
+                                GuildID = context.Channel.Id,
+                                LoggingChannel = 0,
+                                WelcomeChannel = 0,
+                                ApplicationChannel = 0,
+                                StaffApplicationChannel = 0,
+                                ParchmentCategory = 0,
+                                UnverifiedRole = 0,
+                                VerifiedRole = 0
+                            });
+                        });
+                    }
+                }
 
                 int argPos = 0;
 

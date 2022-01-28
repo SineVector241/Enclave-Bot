@@ -32,15 +32,15 @@ namespace Enclave_Bot.Core.Commands
                 var builder = new ComponentBuilder();
 
                 string[] questions = {
-                "Have you, or have you ever been banned from a server/realm? Be honest!",
+                "Have you ever been banned from a server/realm? Be honest!",
                 "What is your in game name? Case Sensitive please!",
-                "Have you put in your gamertag inside of gamer-tag?",
+                "Have you put in your gamertag in the gamer-tag channel?",
                 "What is your age?",
-                "Are you a staff member in another, or have been staff in another Discord/Realm?\n-If so, for how long and what were your responsibilities?",
+                "Are you, or have you ever been a staff member in another Discord/Realm?  -If so, for how long and what were your responsibilities?",
                 "List the Factions of this Server, and what is the MOST IMPORTANT RULE about them?",
                 "List the 3 ways to get to the Guild Hall",
                 "How do you find the realm link once your application is approved? **BE SPECIFIC**",
-                "What system are you playing on?",
+                "What platform do you usually play on?",
                 "How do you gather gold, and how can you spend it?"
             };
 

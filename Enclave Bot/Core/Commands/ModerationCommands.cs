@@ -12,6 +12,7 @@ namespace Enclave_Bot.Core.Commands
 {
     public class ModerationCommands : ModuleBase<SocketCommandContext>
     {
+        private Database.Database db = new Database.Database();
         public InteractiveService Interactive { get; set; }
 
         [Command("rrdash")]
@@ -29,6 +30,24 @@ namespace Enclave_Bot.Core.Commands
                 .WithButton("Send Reaction Setup", $"SendRR:{channel.Id},{Context.User.Id}", ButtonStyle.Success, new Emoji("✅"));
 
             await Context.Channel.SendMessageAsync(embed: embed.Build(), components: builder.Build());
+        }
+
+        [Command("settings")]
+        [Summary("Settings for the guild")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task GuildSettings()
+        {
+            var guildsettings = db.GetGuildSettingsByID(Context.Guild.Id);
+            var embed = new EmbedBuilder()
+                .WithColor(randomColor());
+            embed.AddField("Welcome Channel", guildsettings.WelcomeChannel == 0 ? "Not Set" : $"<#{guildsettings.WelcomeChannel}>");
+            embed.AddField("Logging Channel", guildsettings.LoggingChannel == 0 ? "Not Set" : $"<#{guildsettings.LoggingChannel}>");
+            embed.AddField("Application Channel", guildsettings.ApplicationChannel == 0 ? "Not Set" : $"<#{guildsettings.ApplicationChannel}>");
+            embed.AddField("Staff Application Channel", guildsettings.StaffApplicationChannel == 0 ? "Not Set" : $"<#{guildsettings.StaffApplicationChannel}>");
+            embed.AddField("Parchment Category", guildsettings.ParchmentCategory == 0 ? "Not Set" : $"<#{guildsettings.ParchmentCategory}>");
+            embed.AddField("Verified Role", guildsettings.VerifiedRole == 0 ? "Not Set" : $"<#{guildsettings.VerifiedRole}>");
+            embed.AddField("Unverified Role", guildsettings.UnverifiedRole == 0 ? "Not Set" : $"<#{guildsettings.UnverifiedRole}>");
+            await ReplyAsync(embed: embed.Build());
         }
 
         Random rnd = new Random();

@@ -25,7 +25,7 @@ namespace Enclave_Bot.Core.Interactions
                     await Context.Interaction.Message.DeleteAsync();
                     await Context.User.SendMessageAsync("✅ Successfully Sent Application");
                 }
-                _ = Task.Run(async () => { await RespondAsync(); });
+                await DeferAsync();
                 EmbedBuilder embed = new EmbedBuilder()
                     .WithTitle(Context.Interaction.Message.Embeds.First().Title)
                     .WithColor((Color)Context.Interaction.Message.Embeds.First().Color);
