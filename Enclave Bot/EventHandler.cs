@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Enclave_Bot.Core.Database;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Fergun.Interactive;
@@ -86,8 +85,6 @@ namespace Enclave_Bot
         {
             try
             {
-                
-                Database db = new Database();
                 SocketUserMessage message = messageParameter as SocketUserMessage;
                 SocketCommandContext context = new SocketCommandContext(_client, message);
 
@@ -99,38 +96,6 @@ namespace Enclave_Bot
                 if (context.User.IsBot)
                 {
                     return;
-                }
-                if (!db.HasAccount(context.User.Id))
-                {
-                    _ = Task.Run(async () => {
-                    db.CreateAccount(new User
-                    {
-                        DiscordID = context.User.Id,
-                        Wallet = 0,
-                        Bank = 200,
-                        Level = 0,
-                        XP = 0
-                    });
-                    });
-                }
-                if(context.Channel is SocketGuildChannel)
-                {
-                    if(!db.HasSettings(context.Channel.Id))
-                    {
-                        _ = Task.Run(async () => {
-                            db.CreateSettings(new Settings
-                            {
-                                GuildID = context.Channel.Id,
-                                LoggingChannel = 0,
-                                WelcomeChannel = 0,
-                                ApplicationChannel = 0,
-                                StaffApplicationChannel = 0,
-                                ParchmentCategory = 0,
-                                UnverifiedRole = 0,
-                                VerifiedRole = 0
-                            });
-                        });
-                    }
                 }
 
                 int argPos = 0;
