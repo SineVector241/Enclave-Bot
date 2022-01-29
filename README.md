@@ -2,10 +2,14 @@
 - [X] Joke Command
 - [X] Help Command
 - [X] Logging - Serilog
-- [ ] Settings command and database file (DO THIS FIRST BEFORE WORKING ON DISCORD LOGGING)
+- [X] Database
+- [X] Settings command and database file (DO THIS FIRST BEFORE WORKING ON DISCORD LOGGING)
 - [ ] Discord Logging
-- [ ] Moderation Commands
+- [X] Moderation Commands
 - [ ] Economy Commands (SETUP THE DB FILE FIRST)
+- [X] Reaction Role Dasboard
+- [ ] Reaction Role Dashboard(With Settings)
+- [ ] More Fun Commands 
 
 ## How to Contribute/Develop ##
 Requirements:
