@@ -86,6 +86,16 @@ namespace Enclave_Bot.Core.Commands
             await ReplyAsync(embed: embed.Build());
         }
 
+        [Command("setwelcomechannel")]
+        [Summary("Sets the welcome channel")]
+        [RequireUserPermission(GuildPermission.ManageGuild)]
+        public async Task SetWelcomeChannel(SocketTextChannel channel)
+        {
+            var settings = await db.GetGuildSettingsById(Context.Guild.Id);
+            settings.WelcomeChannel = channel.Id;
+            await db.EditGuildSettings(settings);
+        }
+
         Random rnd = new Random();
         private Color randomColor()
         {

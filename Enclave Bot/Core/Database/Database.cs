@@ -57,12 +57,22 @@ namespace Enclave_Bot.Core.Database
             cmd.ExecuteNonQuery();
             db.CloseConnection();
             await cmd.DisposeAsync();
+        }
 
+        public async Task EditGuildSettings(GuildSettings settings)
+        {
+            string query = $"UPDATE settings SET LoggingChannel = {settings.LoggingChannel}, WelcomeChannel = {settings.WelcomeChannel}, ApplicationChannel = {settings.ApplicationChannel}, StaffApplicationChannel = {settings.StaffApplicationChannel}, ParchmentCategory = {settings.ParchmentCategory}, VerifiedRole = {settings.VerifiedRole}, UnverifiedRole = {settings.UnverifiedRole} WHERE ID = {settings.GuildID}";
+            SQLiteCommand cmd = new SQLiteCommand(query, db.MyConnection);
+            cmd.Prepare();
+            db.OpenConnection();
+            cmd.ExecuteNonQuery();
+            db.CloseConnection();
+            await cmd.DisposeAsync();
         }
 
         public async Task<GuildSettings> GetGuildSettingsById(ulong id)
         {
-            string query = $"SELECT * FROM settings";
+            string query = $"SELECT * FROM settings WHERE ID = {id}";
             SQLiteCommand cmd = new SQLiteCommand(query, db.MyConnection);
             cmd.Prepare();
             db.OpenConnection();
@@ -84,6 +94,7 @@ namespace Enclave_Bot.Core.Database
             await result.DisposeAsync();
             return settings;
         }
+
         public async Task<bool> GuildHasSettings(ulong id)
         {
             string query = $"SELECT * FROM settings WHERE ID = {id}";
