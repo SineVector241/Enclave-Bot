@@ -55,7 +55,7 @@ namespace Enclave_Bot.Core.Commands
                     embed.AddField($"{counter}. {question}", "Not Answered");
                 }
 
-                selectMenu.AddOption("Submit", "Submit", "Submits the application", new Emoji("✅"));
+                selectMenu.AddOption("Submit", $"Submit:{Context.Guild.Id}", "Submits the application", new Emoji("✅"));
                 builder.WithSelectMenu(selectMenu, row: 0);
 
                 var msg = await Context.User.SendMessageAsync(embed: embed.Build(), components: builder.Build());

@@ -13,38 +13,48 @@ namespace Enclave_Bot.Core.Interactions
     public class ApplicationInteractions : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
     {
         public InteractiveService Interactive { get; set; }
+        private Database.Database db = new Database.Database();
 
         [ComponentInteraction("fapp")]
         public async Task FactionApplication(string[] e)
         {
-            if (Context.Channel is SocketDMChannel)
+            try
             {
-                if (e.First() == "Submit")
+                if (Context.Channel is SocketDMChannel)
                 {
-                    await Context.Client.GetGuild(749358542145716275).GetTextChannel(757581056470679672).SendMessageAsync($"<@&796252628837335040>: New Application {Context.User.Mention}", embed: Context.Interaction.Message.Embeds.First(), components: new ComponentBuilder().WithButton("Accept", $"FappAccept:{Context.User.Id}", ButtonStyle.Success, new Emoji("✅")).WithButton("Deny", $"FappDeny:{Context.User.Id}", ButtonStyle.Danger, new Emoji("❌")).WithButton("KickDeny", $"KickDeny:{Context.User.Id}", ButtonStyle.Secondary, new Emoji("❌")).Build());
-                    await Context.Interaction.Message.DeleteAsync();
-                    await Context.User.SendMessageAsync("✅ Successfully Sent Application");
-                }
-                await DeferAsync();
-                EmbedBuilder embed = new EmbedBuilder()
-                    .WithTitle(Context.Interaction.Message.Embeds.First().Title)
-                    .WithColor((Color)Context.Interaction.Message.Embeds.First().Color);
+                    if (e.First().Contains("Submit:"))
+                    {
+                        ulong guild = (ulong)Convert.ToInt64(e.First().Replace("Submit:", ""));
+                        var guildsettings = await db.GetGuildSettingsById(guild);
+                        await Context.Client.GetGuild(guild).GetTextChannel(guildsettings.ApplicationChannel).SendMessageAsync($"<@&796252628837335040>: New Application {Context.User.Mention}", embed: Context.Interaction.Message.Embeds.First(), components: new ComponentBuilder().WithButton("Accept", $"FappAccept:{Context.User.Id}", ButtonStyle.Success, new Emoji("✅")).WithButton("Deny", $"FappDeny:{Context.User.Id}", ButtonStyle.Danger, new Emoji("❌")).WithButton("KickDeny", $"KickDeny:{Context.User.Id}", ButtonStyle.Secondary, new Emoji("❌")).Build());
+                        await Context.Interaction.Message.DeleteAsync();
+                        await Context.User.SendMessageAsync("✅ Successfully Sent Application");
+                    }
+                    await DeferAsync();
+                    EmbedBuilder embed = new EmbedBuilder()
+                        .WithTitle(Context.Interaction.Message.Embeds.First().Title)
+                        .WithColor((Color)Context.Interaction.Message.Embeds.First().Color);
 
-                foreach (var field in Context.Interaction.Message.Embeds.First().Fields)
-                {
-                    if (field.Name.Contains(e.First()))
+                    foreach (var field in Context.Interaction.Message.Embeds.First().Fields)
                     {
-                        var msg = await Context.Interaction.Message.ReplyAsync(field.Name);
-                        var answer = await Interactive.NextMessageAsync(x => x.Channel is SocketDMChannel && x.Author.Id == Context.User.Id, timeout: TimeSpan.FromMinutes(5));
-                        embed.AddField(field.Name, answer.IsSuccess == true ? answer.Value.Content : field.Value);
-                        await msg.DeleteAsync();
+                        if (field.Name.Contains(e.First()))
+                        {
+                            var msg = await Context.Interaction.Message.ReplyAsync(field.Name);
+                            var answer = await Interactive.NextMessageAsync(x => x.Channel is SocketDMChannel && x.Author.Id == Context.User.Id, timeout: TimeSpan.FromMinutes(5));
+                            embed.AddField(field.Name, answer.IsSuccess == true ? answer.Value.Content : field.Value);
+                            await msg.DeleteAsync();
+                        }
+                        else
+                        {
+                            embed.AddField(field.Name, field.Value);
+                        }
                     }
-                    else
-                    {
-                        embed.AddField(field.Name, field.Value);
-                    }
+                    await Context.Interaction.Message.ModifyAsync(x => x.Embed = embed.Build());
                 }
-                await Context.Interaction.Message.ModifyAsync(x => x.Embed = embed.Build());
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
             }
         }
 
@@ -171,7 +181,7 @@ namespace Enclave_Bot.Core.Interactions
 
                 for (int i = 1; i <= questions.Length; i++) selectMenu.AddOption($"Question {i}", $"{i}.", $"Fillout Question {i}");
 
-                selectMenu.AddOption("Submit", "Submit", "Submits the application", new Emoji("✅"));
+                selectMenu.AddOption("Submit", $"Submit:{Context.Guild.Id}", "Submits the application", new Emoji("✅"));
                 builder.WithSelectMenu(selectMenu, row: 0);
                 embedBuilder.WithDescription($"The following questions that denied your application were: {deniedquestions}");
 

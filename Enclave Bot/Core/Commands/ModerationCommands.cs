@@ -43,7 +43,7 @@ namespace Enclave_Bot.Core.Commands
             var msgs = await channel.GetMessagesAsync(limit: amount).FlattenAsync();
             await Context.Message.DeleteAsync();
             await channel.DeleteMessagesAsync(msgs);
-            await Interactive.DelayedSendMessageAndDeleteAsync(channel, null, TimeSpan.FromSeconds(5),null,$"Deleted **{amount}** Messages");
+            await Interactive.DelayedSendMessageAndDeleteAsync(channel, null, TimeSpan.FromSeconds(5), null, $"Deleted **{amount}** Messages");
         }
 
         [Command("kick")]
@@ -64,7 +64,7 @@ namespace Enclave_Bot.Core.Commands
         [RequireBotPermission(GuildPermission.BanMembers)]
         public async Task BanUser(SocketGuildUser user, string reason = null)
         {
-            await user.BanAsync(1,reason);
+            await user.BanAsync(1, reason);
             await Context.Channel.SendMessageAsync($"**Banned User:** {user.Username} \n**Reason:** {reason}");
         }
 
@@ -86,14 +86,42 @@ namespace Enclave_Bot.Core.Commands
             await ReplyAsync(embed: embed.Build());
         }
 
-        [Command("setwelcomechannel")]
-        [Summary("Sets the welcome channel")]
+        [Command("chansetting")]
+        [Alias("cset","channelset","chanset")]
+        [Summary("Sets a channel for a channel setting")]
         [RequireUserPermission(GuildPermission.ManageGuild)]
-        public async Task SetWelcomeChannel(SocketTextChannel channel)
+        public async Task SetWelcomeChannel(string setting, SocketTextChannel? channel = null)
         {
+            setting = setting.ToLower();
             var settings = await db.GetGuildSettingsById(Context.Guild.Id);
-            settings.WelcomeChannel = channel.Id;
+            if (channel != null)
+            {
+                switch (setting)
+                {
+                    case "welcome":
+                        settings.WelcomeChannel = channel.Id;
+                        break;
+                    case "logging":
+                        settings.LoggingChannel = channel.Id;
+                        break;
+                    case "application":
+                        settings.ApplicationChannel = channel.Id;
+                        break;
+                    case "staffapplication":
+                        settings.StaffApplicationChannel = channel.Id;
+                        break;
+                    default:
+                        await Context.Channel.SendMessageAsync(embed: new EmbedBuilder().WithTitle("Incorrect Setting").WithDescription("That setting doesn't exist. The available settings are: \n\n**Welcome** : Sets the welcome channel\n**Logging** : Sets the logging channel where the bot sends logging messages\n**Application** : Sets where the normal application messages gets sent\n**StaffApplication** : Sets where the staff application messages gets sent").WithColor(randomColor()).Build());
+                        return;
+                }
+            }
+            else
+            {
+                await Context.Channel.SendMessageAsync("Please select a channel");
+                return;
+            }
             await db.EditGuildSettings(settings);
+            await Context.Channel.SendMessageAsync($"Successfully set {setting} channel to {channel.Mention}");
         }
 
         Random rnd = new Random();
