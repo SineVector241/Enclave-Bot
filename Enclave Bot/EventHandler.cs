@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Fergun.Interactive;
 using Discord.Interactions;
+using Enclave_Bot.Core.Database;
 
 namespace Enclave_Bot
 {
@@ -19,6 +20,7 @@ namespace Enclave_Bot
         private readonly CommandService _commands;
         private readonly IServiceProvider _services;
         private readonly InteractionService _interactionService;
+        private Database db = new Database();
 
         public EventHandler(IServiceProvider Services)
         {
@@ -96,6 +98,20 @@ namespace Enclave_Bot
                 if (context.User.IsBot)
                 {
                     return;
+                }
+
+                if(context.Channel is SocketTextChannel && !await db.GuildHasSettings(context.Guild.Id))
+                {
+                    await db.CreateGuildSettings(new GuildSettings { 
+                        GuildID = context.Guild.Id,
+                        LoggingChannel = 0,
+                        WelcomeChannel = 0,
+                        ApplicationChannel = 0,
+                        StaffApplicationChannel = 0,
+                        ParchmentCategory = 0,
+                        VerifiedRole = 0,
+                        UnverifiedRole = 0
+                    });
                 }
 
                 int argPos = 0;

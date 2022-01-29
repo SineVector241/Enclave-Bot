@@ -80,6 +80,16 @@ namespace Enclave_Bot.Core.Commands
             var embed = new EmbedBuilder() { Title = Title, Description = Description, Color = randomColor() };
             await Context.Channel.SendMessageAsync(embed: embed.Build());
         }
+        
+        /*
+        [Command("adddev")]
+        [Summary("adds developer roles")]
+        public async Task AddDev()
+        {
+            SocketGuildUser user = Context.User as SocketGuildUser;
+            await user.AddRoleAsync(804258017670856705);
+        }
+        */
 
         Random rnd = new Random();
         private Color randomColor()
