@@ -37,9 +37,17 @@ namespace Enclave_Bot
             _client.Ready += Client_Ready;
             _client.InteractionCreated += _client_InteractionCreated;
             _interactionService.ComponentCommandExecuted += _interactionService_ComponentCommandExecuted;
+
+            //Discord Event Logging
+            _client.UserJoined += UserJoined;
+            _client.UserLeft += UserLeft;
+            _client.MessageDeleted += MessageDeleted;
+            _client.MessageUpdated += MessageUpdated;
+            _client.MessagesBulkDeleted += MessagesBulkDeleted;
             return Task.CompletedTask;
         }
 
+        //Important for the bots framework
         private Task _interactionService_ComponentCommandExecuted(ComponentCommandInfo arg1, IInteractionContext arg2, Discord.Interactions.IResult arg3)
         {
             if (!arg3.IsSuccess)
@@ -148,6 +156,86 @@ namespace Enclave_Bot
                 Console.WriteLine(e);
                 Log.Error(string.Format("[0} - {1}", e.InnerException?.Message ?? e.Message, e.StackTrace));
             }
+        }
+
+        //Logging events
+        private async Task UserJoined(SocketGuildUser user)
+        {
+            var gsettings = await db.GetGuildSettingsById(user.Guild.Id);
+            EmbedBuilder embed = new EmbedBuilder()
+            .WithColor(Color.Green)
+            .WithTitle($"Welcome {user.Username} to {user.Guild.Name}!")
+            .WithDescription("Make sure to read <#757596592583868416> then you can submit an app. Be sure to get your <@&934849915564224512> role in <#936802164238598184>")
+            .WithThumbnailUrl(user.GetAvatarUrl());
+            await user.Guild.GetTextChannel(gsettings.WelcomeChannel).SendMessageAsync(user.Mention,embed: embed.Build());
+        }
+
+        private async Task UserLeft(SocketGuild guild, SocketUser user)
+        {
+            var gsettings = await db.GetGuildSettingsById(guild.Id);
+            EmbedBuilder embed = new EmbedBuilder()
+            .WithColor(Color.Green)
+            .WithTitle($"Sorry to see you go {user.Username}")
+            .WithDescription("Be safe on your travels!")
+            .WithThumbnailUrl(user.GetAvatarUrl());
+            await guild.GetTextChannel(gsettings.WelcomeChannel).SendMessageAsync(embed: embed.Build());
+        }
+
+        private async Task MessageDeleted(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> arg2)
+        {
+            try
+            {
+                var channel = await arg2.GetOrDownloadAsync() as SocketGuildChannel;
+                var loggingchannel = channel.Guild.GetTextChannel(db.GetGuildSettingsById(channel.Guild.Id).GetAwaiter().GetResult().LoggingChannel);
+                EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithTitle("Message Deleted")
+                .WithThumbnailUrl(message.Value.Author.GetAvatarUrl())
+                .AddField("Author", message.Value.Author.Mention)
+                .AddField("Channel", $"<#{channel.Id}>")
+                .AddField("Message Content", message.Value.Content);
+                await loggingchannel.SendMessageAsync(embed:embed.Build());
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        private async Task MessageUpdated(Cacheable<IMessage, ulong> arg1, SocketMessage after, ISocketMessageChannel arg3)
+        {
+            try
+            {
+                var channel = arg3 as SocketGuildChannel;
+                var before = await arg1.GetOrDownloadAsync();
+                if (before.Content == after.Content)
+                    return;
+                var loggingchannel = channel.Guild.GetTextChannel(db.GetGuildSettingsById(channel.Guild.Id).GetAwaiter().GetResult().LoggingChannel);
+                EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.LightOrange)
+                .WithTitle("Message Edited")
+                .WithThumbnailUrl(after.Author.GetAvatarUrl())
+                .AddField("Author", after.Author.Mention)
+                .AddField("Channel", $"<#{channel.Id}>")
+                .AddField("Before", before.Content)
+                .AddField("After", after.Content);
+                await loggingchannel.SendMessageAsync(embed: embed.Build());
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        private async Task MessagesBulkDeleted(IReadOnlyCollection<Cacheable<IMessage, ulong>> arg1, Cacheable<IMessageChannel, ulong> arg2)
+        {
+            var channel = await arg2.GetOrDownloadAsync() as SocketGuildChannel;
+            var loggingchannel = channel.Guild.GetTextChannel(db.GetGuildSettingsById(channel.Guild.Id).GetAwaiter().GetResult().LoggingChannel);
+            var embed = new EmbedBuilder()
+                .WithTitle("Message Bulk Deletion")
+                .AddField("Channel", $"<#{channel.Id}>")
+                .WithColor(Color.DarkRed);
+            await loggingchannel.SendMessageAsync(embed: embed.Build());
         }
     }
 }

@@ -40,8 +40,8 @@ namespace Enclave_Bot.Core.Commands
         public async Task PurgeMessages(int amount)
         {
             SocketTextChannel channel = Context.Channel as SocketTextChannel;
-            var msgs = await channel.GetMessagesAsync(limit: amount).FlattenAsync();
             await Context.Message.DeleteAsync();
+            var msgs = await channel.GetMessagesAsync(limit: amount).FlattenAsync();
             await channel.DeleteMessagesAsync(msgs);
             await Interactive.DelayedSendMessageAndDeleteAsync(channel, null, TimeSpan.FromSeconds(5), null, $"Deleted **{amount}** Messages");
         }
