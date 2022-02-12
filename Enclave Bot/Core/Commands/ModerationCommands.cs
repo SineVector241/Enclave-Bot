@@ -81,8 +81,8 @@ namespace Enclave_Bot.Core.Commands
             embed.AddField("Application Channel", settings.ApplicationChannel == 0 ? "Not Set" : $"<#{settings.ApplicationChannel}>");
             embed.AddField("Staff Application Channel", settings.StaffApplicationChannel == 0 ? "Not Set" : $"<#{settings.StaffApplicationChannel}>");
             embed.AddField("Parchment Category", settings.ParchmentCategory == 0 ? "Not Set" : $"<#{settings.ParchmentCategory}>");
-            embed.AddField("Verified Role", settings.VerifiedRole == 0 ? "Not Set" : $"<#{settings.VerifiedRole}>");
-            embed.AddField("Unverified Role", settings.UnverifiedRole == 0 ? "Not Set" : $"<#{settings.UnverifiedRole}>");
+            embed.AddField("Verified Role", settings.VerifiedRole == 0 ? "Not Set" : $"<@&{settings.VerifiedRole}>");
+            embed.AddField("Unverified Role", settings.UnverifiedRole == 0 ? "Not Set" : $"<@&{settings.UnverifiedRole}>");
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -90,7 +90,7 @@ namespace Enclave_Bot.Core.Commands
         [Alias("cset","channelset","chanset")]
         [Summary("Sets a channel for a channel setting")]
         [RequireUserPermission(GuildPermission.ManageGuild)]
-        public async Task SetWelcomeChannel(string setting, SocketTextChannel? channel = null)
+        public async Task SetGuildChannelSettings(string setting, SocketTextChannel? channel = null)
         {
             setting = setting.ToLower();
             var settings = await db.GetGuildSettingsById(Context.Guild.Id);
@@ -111,17 +111,84 @@ namespace Enclave_Bot.Core.Commands
                         settings.StaffApplicationChannel = channel.Id;
                         break;
                     default:
-                        await Context.Channel.SendMessageAsync(embed: new EmbedBuilder().WithTitle("Incorrect Setting").WithDescription("That setting doesn't exist. The available settings are: \n\n**Welcome** : Sets the welcome channel\n**Logging** : Sets the logging channel where the bot sends logging messages\n**Application** : Sets where the normal application messages gets sent\n**StaffApplication** : Sets where the staff application messages gets sent").WithColor(randomColor()).Build());
+                        await Context.Message.ReplyAsync(embed: new EmbedBuilder().WithTitle("Incorrect Setting").WithDescription("That setting doesn't exist. The available settings are: \n\n**Welcome** : Sets the welcome channel\n**Logging** : Sets the logging channel where the bot sends logging messages\n**Application** : Sets where the normal application messages gets sent\n**StaffApplication** : Sets where the staff application messages gets sent").WithColor(randomColor()).Build());
                         return;
                 }
             }
             else
             {
-                await Context.Channel.SendMessageAsync("Please select a channel");
+                await Context.Message.ReplyAsync("Please select a channel");
                 return;
             }
             await db.EditGuildSettings(settings);
             await Context.Channel.SendMessageAsync($"Successfully set {setting} channel to {channel.Mention}");
+        }
+
+        [Command("setparchmentcategory")]
+        [Alias("spc")]
+        [Summary("Sets the parchment category where all parchment channels go")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task SetParchmentCategory(ulong id)
+        {
+            try
+            {
+                var category = Context.Guild.GetCategoryChannel(id);
+                var settings = await db.GetGuildSettingsById(Context.Guild.Id);
+                settings.ParchmentCategory = id;
+                await db.EditGuildSettings(settings);
+                await Context.Message.ReplyAsync($"Successfully set parchment category to {category.Name}");
+            }
+            catch
+            {
+                await Context.Message.ReplyAsync("An Error has occured");
+            }
+        }
+
+        [Command("setverifiedrole")]
+        [Alias("svr")]
+        [Summary("Sets the parchment category where all parchment channels go")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task SetVerifiedRole(SocketRole role)
+        {
+            try
+            {
+                var settings = await db.GetGuildSettingsById(Context.Guild.Id);
+                settings.VerifiedRole = role.Id;
+                await db.EditGuildSettings(settings);
+                await Context.Message.ReplyAsync($"Successfully set verified role to {role.Name}");
+            }
+            catch
+            {
+                await Context.Message.ReplyAsync("An Error has occured");
+            }
+        }
+
+        [Command("setunverifiedrole")]
+        [Alias("suvr")]
+        [Summary("Sets the parchment category where all parchment channels go")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task SetUnVerifiedRole(SocketRole role)
+        {
+            try
+            {
+                var settings = await db.GetGuildSettingsById(Context.Guild.Id);
+                settings.UnverifiedRole = role.Id;
+                await db.EditGuildSettings(settings);
+                await Context.Message.ReplyAsync($"Successfully set unverified role to {role.Name}");
+            }
+            catch
+            {
+                await Context.Message.ReplyAsync("An Error has occured");
+            }
+        }
+
+        [Command("parchmentsetup")]
+        [Alias("psetup")]
+        [Summary("Sets the message for parchment ticket opener")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task SetupParchmentMessage()
+        {
+            await ReplyAsync("Parchment", components: new ComponentBuilder().WithButton("Open Parchment", "OpenParchment", ButtonStyle.Success).Build());
         }
 
         Random rnd = new Random();

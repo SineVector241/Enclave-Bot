@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
-using Newtonsoft.Json;
-using Serilog;
+﻿using Newtonsoft.Json;
 
 namespace Enclave_Bot
 {
@@ -36,9 +29,9 @@ namespace Enclave_Bot
                     BotConfiguration = JsonConvert.DeserializeObject<BotConfig>(botConfigJson);
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Log.Error(string.Format("{0} - {1}", e.InnerException?.Message ?? e.Message, e.StackTrace));
+                Console.WriteLine($"\u001b[97m[{DateTime.Now}]: [\u001b[31mERROR\u001b[97m] => An error occured in Config.cs \nError Info:\n{ex}");
             }
         }
     }
@@ -46,6 +39,5 @@ namespace Enclave_Bot
     public struct BotConfig
     {
         public string Token { get; set; }
-        public string Prefix { get; set; }
     }
 }

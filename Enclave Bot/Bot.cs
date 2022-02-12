@@ -8,7 +8,6 @@ using Discord.WebSocket;
 using System.Reflection;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
-using Serilog;
 using Fergun.Interactive;
 using Discord.Interactions;
 
@@ -16,14 +15,13 @@ namespace Enclave_Bot
 {
     public class Bot
     {
-        private DiscordSocketClient _client;
-        private CommandService _commands;
-        private IServiceProvider _services;
-        private InteractionService _interactionService;
+        private DiscordSocketClient Client;
+        private IServiceProvider ServiceProvider;
+        private InteractionService Interactions;
 
         public Bot()
         {
-            _client = new DiscordSocketClient(new DiscordSocketConfig
+            Client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Debug,
                 UseInteractionSnowflakeDate = false,
@@ -31,60 +29,49 @@ namespace Enclave_Bot
                 GatewayIntents = GatewayIntents.All
             });
 
-            _commands = new CommandService(new CommandServiceConfig
-            {
-                CaseSensitiveCommands = true,
-                DefaultRunMode = Discord.Commands.RunMode.Async,
-                LogLevel = LogSeverity.Debug
-            });
-
-            _interactionService = new InteractionService(_client.Rest, new InteractionServiceConfig
+            Interactions = new InteractionService(Client.Rest, new InteractionServiceConfig
             {
                 LogLevel = LogSeverity.Debug
             });
 
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.Console()
-                .WriteTo.RollingFile(".\\Logs\\Enclave Bot-{Date}.txt")
-                .CreateLogger();
-            _services = BuildServiceProvider();
+            ServiceProvider = BuildServiceProvider();
         }
 
         public async Task MainAsync()
         {
-            await new CommandManager(_services).InitializeAsync();
-            await new EventHandler(_services).InitAsync();
-            await new InteractionManager(_services).InitializeAsync();
+            await new EventHandler(ServiceProvider).Initialize();
+            await new InteractionManager(ServiceProvider).Initialize();
 
-            _client.Log += Client_Log;
-
+            Client.Log += ClientLog;
+            System.AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             if (string.IsNullOrWhiteSpace(Config.BotConfiguration.Token))
             {
-                Log.Error("BotConfiguration Token is blank.");
+                Console.WriteLine("\u001b[41mBOT CONFIGURATION TOKEN IS BLANK\u001b[40m");
                 return;
             }
 
-            await _client.LoginAsync(TokenType.Bot, Config.BotConfiguration.Token);
-            await _client.StartAsync();
+            await Client.LoginAsync(TokenType.Bot, Config.BotConfiguration.Token);
+            await Client.StartAsync();
             await Task.Delay(-1);
         }
 
-        private Task Client_Log(LogMessage Message)
+        private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine($"{DateTime.Now} => [{Message.Source}]: {Message.Message}");
-            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine($"Error: Sender: {sender}\nUnhandled Event: e");
+        }
+
+        private Task ClientLog(LogMessage msg)
+        {
+            Console.WriteLine($"\u001b[97m[{DateTime.Now}]: [\u001b[93m{msg.Source}\u001b[97m] => {msg.Message}");
             return Task.CompletedTask;
         }
 
         private ServiceProvider BuildServiceProvider()
         {
             return new ServiceCollection()
-                .AddSingleton(_client)
-                .AddSingleton(_commands)
+                .AddSingleton(Client)
                 .AddSingleton<InteractiveService>()
-                .AddSingleton(_interactionService)
+                .AddSingleton(Interactions)
                 .BuildServiceProvider();
         }
     }
