@@ -8,7 +8,6 @@ using Discord.Commands;
 using System.Net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Serilog;
 using Fergun.Interactive;
 using Discord.WebSocket;
 
@@ -68,7 +67,6 @@ namespace Enclave_Bot.Core.Commands
             }
             catch (Exception e)
             {
-                Log.Error(String.Format("{0} - {1}", e.InnerException?.Message ?? e.Message, e.StackTrace));
                 await Context.Channel.SendMessageAsync("An Error Occurred");
             }
         }
