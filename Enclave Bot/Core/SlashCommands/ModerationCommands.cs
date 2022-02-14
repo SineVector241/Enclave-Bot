@@ -145,10 +145,23 @@ namespace Enclave_Bot.Core.SlashCommands
         [RequireBotPermission(ChannelPermission.ManageMessages)]
         public async Task Purge(int Amount)
         {
-            SocketTextChannel channel = Context.Channel as SocketTextChannel;
-            var msgs = await channel.GetMessagesAsync(limit: Amount).FlattenAsync();
-            await channel.DeleteMessagesAsync(msgs);
-            await RespondAsync($"Successfully cleared {Amount} messages");
+            try
+            {
+                await DeferAsync();
+                SocketTextChannel channel = Context.Channel as SocketTextChannel;
+                var msgs = await channel.GetMessagesAsync(limit: Amount+1).FlattenAsync();
+                await channel.DeleteMessagesAsync(msgs);
+                await Context.Channel.SendMessageAsync($"Successfully cleared {Amount} messages");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await Context.Channel.SendMessageAsync(embed: embed.Build());
+            }
         }
 
         [SlashCommand("kick", "Kicks a user from the guild")]
@@ -156,17 +169,41 @@ namespace Enclave_Bot.Core.SlashCommands
         [RequireBotPermission(GuildPermission.KickMembers)]
         public async Task Kick(SocketGuildUser User, string Reason = "No Reason")
         {
-            await User.KickAsync(Reason);
-            await RespondAsync($"**Kicked User:** {User.Username} \n**Reason:** {Reason}");
+            try
+            {
+                await User.KickAsync(Reason);
+                await RespondAsync($"**Kicked User:** {User.Username} \n**Reason:** {Reason}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await RespondAsync(embed: embed.Build());
+            }
         }
 
-        [SlashCommand("ban","Bans a user")]
+        [SlashCommand("ban","Bans a user from the guild")]
         [RequireUserPermission(GuildPermission.BanMembers)]
         [RequireBotPermission(GuildPermission.BanMembers)]
         public async Task Ban(SocketGuildUser User, string Reason = "No Reason")
         {
-            await User.BanAsync(1, Reason);
-            await RespondAsync($"**Banned User:** {User.Username} \n**Reason:** {Reason}");
+            try
+            {
+                await User.BanAsync(1, Reason);
+                await RespondAsync($"**Banned User:** {User.Username} \n**Reason:** {Reason}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await RespondAsync(embed: embed.Build());
+            }
         }
     }
 }
