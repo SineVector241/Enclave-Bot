@@ -166,6 +166,7 @@ namespace Enclave_Bot.Core.Interactions
                         await user.SendMessageAsync(embed: embed.Build());
                         await user.SendMessageAsync(embed: embedApp.Build(), components: builder.Build());
                         await Context.Interaction.Message.ModifyAsync(x => { x.Content = $"Denied User {user.Mention}. Denied by {Context.User.Mention}"; x.Components = new ComponentBuilder().Build(); });
+                        return;
                     }
                     selections += $"Question: {selection}\n";
                 }
