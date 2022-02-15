@@ -205,5 +205,24 @@ namespace Enclave_Bot.Core.SlashCommands
                 await RespondAsync(embed: embed.Build());
             }
         }
+
+        [SlashCommand("embed","Sends an embedded message")]
+        public async Task Embed(string title, string description = null)
+        {
+            try
+            {
+                var embed = new EmbedBuilder().WithTitle(title).WithDescription(description).WithColor(utils.randomColor());
+                await RespondAsync(embed: embed.Build());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await RespondAsync(embed: embed.Build());
+            }
+        }
     }
 }

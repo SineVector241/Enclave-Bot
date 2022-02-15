@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Data.SQLite;
+﻿using System.Data.SQLite;
 
 namespace Enclave_Bot.Core.Database
 {
     public class SQLiteDBContext
     {
+        Config config = new Config();
         public SQLiteConnection MyConnection;
         public SQLiteDBContext()
         {
