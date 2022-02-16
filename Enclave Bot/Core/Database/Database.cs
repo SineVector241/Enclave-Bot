@@ -92,6 +92,7 @@ namespace Enclave_Bot.Core.Database
             UserProfile profile = new UserProfile();
             if(result.HasRows) while (result.Read())
                 {
+                    profile.UserID = id;
                     profile.Wallet = Convert.ToInt32(result["Wallet"]);
                     profile.Bank = Convert.ToInt32(result["Bank"]);
                     profile.XP = Convert.ToInt32(result["XP"]);

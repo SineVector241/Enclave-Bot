@@ -70,5 +70,20 @@ namespace Enclave_Bot.Core.SlashCommands
                 await RespondAsync(embed: embed.Build());
             }
         }
+
+        [SlashCommand("cooldowns","Check your cooldowns")]
+        public async Task Cooldowns()
+        {
+            int beg = utils.CheckCooldown(Context.User, "Beg", 30).Seconds;
+            int deposit = utils.CheckCooldown(Context.User, "Deposit", 60).Seconds;
+            int withdraw = utils.CheckCooldown(Context.User, "Withdraw", 60).Seconds;
+            var embed = new EmbedBuilder()
+                .WithTitle($"{Context.User.Username}'s cooldowns")
+                .AddField("Beg", $"{ (beg <= 0? "Ready": beg + " Seconds")}")
+                .AddField("Deposit", $"{(deposit <= 0 ? "Ready": deposit + " Seconds")}")
+                .AddField("Withdraw", $"{(withdraw <= 0 ? "Ready" : withdraw + " Seconds")}")
+                .WithColor(utils.randomColor());
+            await RespondAsync(embed: embed.Build());
+        }
     }
 }

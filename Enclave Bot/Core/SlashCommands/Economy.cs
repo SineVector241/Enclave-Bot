@@ -135,5 +135,152 @@ namespace Enclave_Bot.Core.SlashCommands
                 await Context.Channel.SendMessageAsync(embed: embed.Build());
             }
         }
+
+        [SlashCommand("beg", "Random amount of money you get given by a stranger")]
+        public async Task Beg()
+        {
+            try
+            {
+                var cooldown = utils.Cooldown(new UserCooldown() { CooldownType = "Beg", UserID = Context.User.Id }, 30);
+                if (cooldown.CooledDown)
+                {
+                    if (await db.UserHasProfile(Context.User.Id))
+                    {
+                        var profile = await db.GetUserProfileById(Context.User.Id);
+                        int rnd = new Random().Next(30);
+                        profile.Wallet += rnd;
+                        await db.UpdateUserProfile(profile);
+                        await RespondAsync($"A random person gave you ${rnd}. You now have {profile.Wallet} in your wallet");
+                    }
+                    else
+                    {
+                        await RespondAsync("Please create an account first! */createaccount*");
+                    }
+                }
+                else
+                {
+                    await RespondAsync($"You are on cooldown for this command! Try again in {cooldown.Seconds} seconds");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await Context.Channel.SendMessageAsync(embed: embed.Build());
+            }
+        }
+
+        [SlashCommand("deposit", "Deposits all or a set amount of money into your bank")]
+        public async Task Deposit([Summary("Amount", "The amount you want to deposit")] int Amount = 0)
+        {
+            try
+            {
+                var cooldown = utils.Cooldown(new UserCooldown() { CooldownType = "Deposit", UserID = Context.User.Id }, 60);
+                if (cooldown.CooledDown)
+                {
+                    if (await db.UserHasProfile(Context.User.Id))
+                    {
+                        var profile = await db.GetUserProfileById(Context.User.Id);
+                        if (Amount == 0)
+                        {
+                            int wallet = profile.Wallet;
+                            profile.Bank += profile.Wallet;
+                            profile.Wallet = 0;
+                            await db.UpdateUserProfile(profile);
+                            await RespondAsync($"Deposited ${wallet}(All) into your bank");
+                        }
+                        else
+                        {
+                            if(profile.Wallet < Amount)
+                            {
+                                await RespondAsync("You don't have that much money in your wallet!");
+                            }
+                            else
+                            {
+                                profile.Bank += Amount;
+                                profile.Wallet -= Amount;
+                                await db.UpdateUserProfile(profile);
+                                await RespondAsync($"Deposited ${Amount} into your bank. You now have ${profile.Wallet} in your wallet");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        await RespondAsync("Please create an account first! */createaccount*");
+                    }
+                }
+                else
+                {
+                    await RespondAsync($"You are on cooldown for this command! Try again in {cooldown.Seconds} seconds");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await Context.Channel.SendMessageAsync(embed: embed.Build());
+            }
+        }
+
+        [SlashCommand("withdraw", "Withdraws all or a set amount of money into your wallet")]
+        public async Task Withdraw([Summary("Amount", "The amount you want to withdraw")] int Amount = 0)
+        {
+            try
+            {
+                var cooldown = utils.Cooldown(new UserCooldown() { CooldownType = "Deposit", UserID = Context.User.Id }, 60);
+                if (cooldown.CooledDown)
+                {
+                    if (await db.UserHasProfile(Context.User.Id))
+                    {
+                        var profile = await db.GetUserProfileById(Context.User.Id);
+                        if (Amount == 0)
+                        {
+                            int bank = profile.Bank;
+                            profile.Wallet += profile.Bank;
+                            profile.Bank = 0;
+                            await db.UpdateUserProfile(profile);
+                            await RespondAsync($"Withdrawed ${bank}(All) into your wallet");
+                        }
+                        else
+                        {
+                            if (profile.Bank < Amount)
+                            {
+                                await RespondAsync("You don't have that much money in your bank!");
+                            }
+                            else
+                            {
+                                profile.Wallet += Amount;
+                                profile.Bank -= Amount;
+                                await db.UpdateUserProfile(profile);
+                                await RespondAsync($"Withdrawed ${Amount} into your wallet. You now have ${profile.Wallet} in your wallet");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        await RespondAsync("Please create an account first! */createaccount*");
+                    }
+                }
+                else
+                {
+                    await RespondAsync($"You are on cooldown for this command! Try again in {cooldown.Seconds} seconds");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await Context.Channel.SendMessageAsync(embed: embed.Build());
+            }
+        }
     }
 }
