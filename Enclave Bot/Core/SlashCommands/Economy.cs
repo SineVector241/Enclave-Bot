@@ -233,7 +233,7 @@ namespace Enclave_Bot.Core.SlashCommands
         {
             try
             {
-                var cooldown = utils.Cooldown(new UserCooldown() { CooldownType = "Deposit", UserID = Context.User.Id }, 60);
+                var cooldown = utils.Cooldown(new UserCooldown() { CooldownType = "Withdraw", UserID = Context.User.Id }, 60);
                 if (cooldown.CooledDown)
                 {
                     if (await db.UserHasProfile(Context.User.Id))
@@ -270,6 +270,84 @@ namespace Enclave_Bot.Core.SlashCommands
                 else
                 {
                     await RespondAsync($"You are on cooldown for this command! Try again in {cooldown.Seconds} seconds");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await Context.Channel.SendMessageAsync(embed: embed.Build());
+            }
+        }
+
+        [SlashCommand("steal","Steal a certain amount of money from a player. 20% chance to be caught")]
+        public async Task Steal(SocketGuildUser User)
+        {
+            try
+            {
+                if(User.Id == Context.User.Id)
+                {
+                    await RespondAsync("You can't steal from yourself dummy");
+                    return;
+                }
+                var cooldown = utils.Cooldown(new UserCooldown() { CooldownType = "Steal", UserID = Context.User.Id }, 60);
+                var cooldownvictim = utils.CheckCooldown(User, "Stolen", 300);
+                int rnd = new Random().Next(1, 10);
+                if (!await db.UserHasProfile(Context.User.Id))
+                {
+                    await RespondAsync("Please create an account first! */createaccount*");
+                    return;
+                }
+
+                if(!await db.UserHasProfile(User.Id))
+                {
+                    await RespondAsync("This user does not have an account!");
+                    return;
+                }
+
+                if (!cooldownvictim.CooledDown)
+                {
+                    await RespondAsync("This user has already been stolen from in the past 5 minutes. Give it a break!");
+                    return;
+                }
+
+                if(!cooldown.CooledDown)
+                {
+                    await RespondAsync($"You are on cooldown for this command! Try again in {cooldown.Seconds} seconds");
+                    return;
+                }
+
+                var stealer = await db.GetUserProfileById(Context.User.Id);
+                var victim = await db.GetUserProfileById(User.Id);
+
+                if(stealer.Wallet < 100)
+                {
+                    await RespondAsync("You must have atleast $100 in your wallet before you steal someone. Get a good meal before stealing");
+                    return;
+                }
+
+                if(victim.Wallet < 100)
+                {
+                    await RespondAsync("This user does not have $100 in their wallet. It's not worth it man");
+                    return;
+                }
+
+                utils.Cooldown(new UserCooldown() { CooldownType = "Stolen", UserID = User.Id }, 300);
+                if (rnd > 2)
+                {
+                    int amount = new Random().Next(1, victim.Wallet);
+                    stealer.Wallet += amount;
+                    victim.Wallet -= amount;
+                    await RespondAsync($"Noice steal. You stole ${amount} from {User.Mention}");
+                }
+                else
+                {
+                    stealer.Wallet -= 100;
+                    victim.Wallet += 100;
+                    await RespondAsync($"LOLS. You got caught trying to pickpocket {User.Mention}'s wallet and payed a fine of $100 to ${User.Mention}");
                 }
             }
             catch (Exception ex)

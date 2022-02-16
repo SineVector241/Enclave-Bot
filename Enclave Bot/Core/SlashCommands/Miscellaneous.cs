@@ -77,11 +77,15 @@ namespace Enclave_Bot.Core.SlashCommands
             int beg = utils.CheckCooldown(Context.User, "Beg", 30).Seconds;
             int deposit = utils.CheckCooldown(Context.User, "Deposit", 60).Seconds;
             int withdraw = utils.CheckCooldown(Context.User, "Withdraw", 60).Seconds;
+            int steal = utils.CheckCooldown(Context.User, "Steal", 60).Seconds;
+            int stolen = utils.CheckCooldown(Context.User, "Stolen", 300).Seconds;
             var embed = new EmbedBuilder()
                 .WithTitle($"{Context.User.Username}'s cooldowns")
                 .AddField("Beg", $"{ (beg <= 0? "Ready": beg + " Seconds")}")
                 .AddField("Deposit", $"{(deposit <= 0 ? "Ready": deposit + " Seconds")}")
                 .AddField("Withdraw", $"{(withdraw <= 0 ? "Ready" : withdraw + " Seconds")}")
+                .AddField("Steal", $"{(steal <= 0 ? "Ready" : steal + " Seconds")}")
+                .AddField("Stolen", $"{(stolen <= 0 ? "Ready" : stolen + " Seconds")}")
                 .WithColor(utils.randomColor());
             await RespondAsync(embed: embed.Build());
         }

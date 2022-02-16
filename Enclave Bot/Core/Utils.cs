@@ -67,9 +67,9 @@ namespace Enclave_Bot.Core
             var tempUser = users.FirstOrDefault(x => x.UserID == user.Id && x.CooldownType == cooldownType);
             if (tempUser.UserID != 0)
             {
-                return new CooldownResponse() { Seconds = Seconds - (int)(DateTime.Now - tempUser.DateTime).TotalSeconds };
+                return new CooldownResponse() { Seconds = Seconds - (int)(DateTime.Now - tempUser.DateTime).TotalSeconds, CooledDown = Seconds - (int)(DateTime.Now - tempUser.DateTime).TotalSeconds == 0 ? true: false};
             }
-            return new CooldownResponse() { Seconds = 0 };
+            return new CooldownResponse() { Seconds = 0, CooledDown = true};
         }
 
         public Color randomColor()
