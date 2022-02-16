@@ -26,6 +26,7 @@ namespace Enclave_Bot.Core.Database
         public int Bank { get; set; }
         public int XP { get; set; }
         public int Level { get; set; }
+        public string WorkType { get; set; }
     }
 
     public class Database
@@ -40,7 +41,7 @@ namespace Enclave_Bot.Core.Database
         private async Task CreateTable()
         {
             string query = "CREATE TABLE IF NOT EXISTS settings (ID varchar(18), LoggingChannel varchar(18), WelcomeChannel varchar(18), ApplicationChannel varchar(18), StaffApplicationChannel varchar(18), ParchmentCategory varchar(18), VerifiedRole varchar(18), UnverifiedRole varchar(18))";
-            string query2 = "CREATE TABLE IF NOT EXISTS users (ID varchar(18), Wallet int, Bank int, XP int, Level int)";
+            string query2 = "CREATE TABLE IF NOT EXISTS users (ID varchar(18), Wallet int, Bank int, XP int, Level int, WorkType string)";
             SQLiteCommand cmd = new SQLiteCommand(query, db.MyConnection);
             SQLiteCommand cmd2 = new SQLiteCommand(query2, db.MyConnection);
             cmd.Prepare();
@@ -57,13 +58,14 @@ namespace Enclave_Bot.Core.Database
         //User Information
         public async Task CreateUserProfile(UserProfile profile)
         {
-            string query = "INSERT INTO users (ID, Wallet, Bank, XP, Level) VALUES (@ID, @Wallet, @Bank, @XP, @Level)";
+            string query = "INSERT INTO users (ID, Wallet, Bank, XP, Level, WorkType) VALUES (@ID, @Wallet, @Bank, @XP, @Level, @WorkType)";
             SQLiteCommand cmd = new SQLiteCommand(query, db.MyConnection);
             cmd.Parameters.AddWithValue("@ID", profile.UserID);
             cmd.Parameters.AddWithValue("@Wallet",profile.Wallet);
             cmd.Parameters.AddWithValue("@Bank",profile.Bank);
             cmd.Parameters.AddWithValue("@XP", profile.XP);
             cmd.Parameters.AddWithValue("@Level", profile.Level);
+            cmd.Parameters.AddWithValue("@WorkType", profile.WorkType);
             cmd.Prepare();
             db.OpenConnection();
             cmd.ExecuteNonQuery();
@@ -73,7 +75,7 @@ namespace Enclave_Bot.Core.Database
 
         public async Task UpdateUserProfile(UserProfile profile)
         {
-            string query = $"UPDATE users SET Wallet = {profile.Wallet}, Bank = {profile.Bank}, XP = {profile.XP}, Level = {profile.Level} WHERE ID = {profile.UserID}";
+            string query = $"UPDATE users SET Wallet = {profile.Wallet}, Bank = {profile.Bank}, XP = {profile.XP}, Level = {profile.Level}, WorkType = \"{profile.WorkType}\" WHERE ID = {profile.UserID}";
             SQLiteCommand cmd = new SQLiteCommand(query, db.MyConnection);
             cmd.Prepare();
             db.OpenConnection();
@@ -97,6 +99,7 @@ namespace Enclave_Bot.Core.Database
                     profile.Bank = Convert.ToInt32(result["Bank"]);
                     profile.XP = Convert.ToInt32(result["XP"]);
                     profile.Level = Convert.ToInt32(result["Level"]);
+                    profile.WorkType = result["WorkType"].ToString();
                 }
             db.CloseConnection();
             await cmd.DisposeAsync();

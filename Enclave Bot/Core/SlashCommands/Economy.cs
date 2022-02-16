@@ -8,6 +8,33 @@ namespace Enclave_Bot.Core.SlashCommands
     {
         private Database.Database db = new Database.Database();
         private Utils utils = new Utils();
+
+        [SlashCommand("createaccount", "Creates your profile in the bot")]
+        public async Task CreateProfile()
+        {
+            try
+            {
+                if (!await db.UserHasProfile(Context.User.Id))
+                {
+                    await db.CreateUserProfile(new Database.UserProfile { UserID = Context.User.Id, Wallet = 0, Bank = 200, XP = 0, Level = 0, WorkType = "None" });
+                    await RespondAsync("Created your account!");
+                }
+                else
+                {
+                    await RespondAsync("You already have an account!");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await Context.Channel.SendMessageAsync(embed: embed.Build());
+            }
+        }
+
         [SlashCommand("balance", "Displays yours or another users bank and wallet balance")]
         public async Task Balance([Summary("User", "User you want to target")] SocketGuildUser User = null)
         {
@@ -110,32 +137,6 @@ namespace Enclave_Bot.Core.SlashCommands
             }
         }
 
-        [SlashCommand("createaccount", "Creates your profile in the bot")]
-        public async Task CreateProfile()
-        {
-            try
-            {
-                if (!await db.UserHasProfile(Context.User.Id))
-                {
-                    await db.CreateUserProfile(new Database.UserProfile { UserID = Context.User.Id, Wallet = 0, Bank = 200, XP = 0, Level = 0 });
-                    await RespondAsync("Created your account!");
-                }
-                else
-                {
-                    await RespondAsync("You already have an account!");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-                var embed = new EmbedBuilder()
-                    .WithTitle("An error has occured")
-                    .WithDescription($"Error Message: {ex.Message}")
-                    .WithColor(Color.DarkRed);
-                await Context.Channel.SendMessageAsync(embed: embed.Build());
-            }
-        }
-
         [SlashCommand("beg", "Random amount of money you get given by a stranger")]
         public async Task Beg()
         {
@@ -194,7 +195,7 @@ namespace Enclave_Bot.Core.SlashCommands
                         }
                         else
                         {
-                            if(profile.Wallet < Amount)
+                            if (profile.Wallet < Amount)
                             {
                                 await RespondAsync("You don't have that much money in your wallet!");
                             }
@@ -283,12 +284,12 @@ namespace Enclave_Bot.Core.SlashCommands
             }
         }
 
-        [SlashCommand("steal","Steal a certain amount of money from a player. 20% chance to be caught")]
+        [SlashCommand("steal", "Steal a certain amount of money from a player. 20% chance to be caught")]
         public async Task Steal(SocketGuildUser User)
         {
             try
             {
-                if(User.Id == Context.User.Id)
+                if (User.Id == Context.User.Id)
                 {
                     await RespondAsync("You can't steal from yourself dummy");
                     return;
@@ -302,7 +303,7 @@ namespace Enclave_Bot.Core.SlashCommands
                     return;
                 }
 
-                if(!await db.UserHasProfile(User.Id))
+                if (!await db.UserHasProfile(User.Id))
                 {
                     await RespondAsync("This user does not have an account!");
                     return;
@@ -314,7 +315,7 @@ namespace Enclave_Bot.Core.SlashCommands
                     return;
                 }
 
-                if(!cooldown.CooledDown)
+                if (!cooldown.CooledDown)
                 {
                     await RespondAsync($"You are on cooldown for this command! Try again in {cooldown.Seconds} seconds");
                     return;
@@ -323,13 +324,13 @@ namespace Enclave_Bot.Core.SlashCommands
                 var stealer = await db.GetUserProfileById(Context.User.Id);
                 var victim = await db.GetUserProfileById(User.Id);
 
-                if(stealer.Wallet < 100)
+                if (stealer.Wallet < 100)
                 {
                     await RespondAsync("You must have atleast $100 in your wallet before you steal someone. Get a good meal before stealing");
                     return;
                 }
 
-                if(victim.Wallet < 100)
+                if (victim.Wallet < 100)
                 {
                     await RespondAsync("This user does not have $100 in their wallet. It's not worth it man");
                     return;
@@ -349,6 +350,90 @@ namespace Enclave_Bot.Core.SlashCommands
                     victim.Wallet += 100;
                     await RespondAsync($"LOLS. You got caught trying to pickpocket {User.Mention}'s wallet and payed a fine of $100 to ${User.Mention}");
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await Context.Channel.SendMessageAsync(embed: embed.Build());
+            }
+        }
+
+        [SlashCommand("work", "Work for your job per hour")]
+        public async Task Work()
+        {
+            try
+            {
+                if (!await db.UserHasProfile(Context.User.Id))
+                {
+                    await RespondAsync("Please create an account first! */createaccount*");
+                    return;
+                }
+                var profile = await db.GetUserProfileById(Context.User.Id);
+                if (profile.WorkType == "None")
+                {
+                    await RespondAsync("You don't have a job! select one using /jobs");
+                    return;
+                }
+                var cooldown = utils.Cooldown(new UserCooldown() { CooldownType = "Work", UserID = Context.User.Id }, 3600);
+                if (!cooldown.CooledDown)
+                {
+                    await RespondAsync($"You are on cooldown for this command! Try again in {cooldown.Seconds} seconds");
+                    return;
+                }
+                int payamount = 0;
+                switch (profile.WorkType)
+                {
+                    case "DiscordMod": break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await Context.Channel.SendMessageAsync(embed: embed.Build());
+            }
+        }
+
+        [SlashCommand("jobs", "Shows available jobs depending on your level")]
+        public async Task SelectJob()
+        {
+            try
+            {
+                if (!await db.UserHasProfile(Context.User.Id))
+                {
+                    await RespondAsync("Please create an account first! */createaccount*");
+                    return;
+                }
+                List<List<string>> jobs = new List<List<string>> { new List<string> { "DiscordMod", "$20" }, new List<string> { "DiscordAdmin", "$40" } };
+                var profile = await db.GetUserProfileById(Context.User.Id);
+                var embed = new EmbedBuilder().WithTitle("Available Jobs").WithColor(utils.randomColor());
+                var menu = new SelectMenuBuilder()
+                    .WithPlaceholder("Select a job")
+                    .WithCustomId($"SelectJob:{Context.User.Id}");
+                int lvlrq = 0;
+                foreach(var job in jobs)
+                {
+                    if(profile.Level >= lvlrq)
+                    {
+                        menu.AddOption(job[0], job[0], $"Work as a {job[0]}");
+                        embed.AddField(job[0], $"{job[1]} per hour");
+                    }
+                    else
+                    {
+                        break;
+                    }
+                    lvlrq += 5;
+                }
+                var builder = new ComponentBuilder()
+                    .WithSelectMenu(menu);
+                await RespondAsync(embed: embed.Build(), components: builder.Build());
             }
             catch (Exception ex)
             {
