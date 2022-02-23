@@ -13,7 +13,7 @@ namespace Enclave_Bot.Core.SlashCommands
 
         [SlashCommand("settings", "Gets or sets the bot settings for this guild")]
         [RequireUserPermission(GuildPermission.Administrator)]
-        public async Task Settings([Choice("Welcome Channel", "Welcome Channel"), Choice("Logging Channel", "Logging Channel"), Choice("Application Channel", "Application Channel"), Choice("Staff Application Channel", "Staff Application Channel"), Choice("Verified Role", "Verified Role"), Choice("Unverified Role", "Unverified Role")] string Setting = "Settings", [ChannelTypes(ChannelType.Text)] IGuildChannel Channel = null, IRole Role = null)
+        public async Task Settings([Choice("Welcome Channel", "Welcome Channel"), Choice("Logging Channel", "Logging Channel"), Choice("Application Channel", "Application Channel"), Choice("Staff Application Channel", "Staff Application Channel"), Choice("Verified Role", "Verified Role"), Choice("Unverified Role", "Unverified Role"), Choice("Welcome Message", "Welcome Message"), Choice("Leave Message", "Leave Message")] string Setting = "Settings", [ChannelTypes(ChannelType.Text)] IGuildChannel Channel = null, IRole Role = null, [Summary(description: "When using this. you can use [user] or [guild] to display the name.")]string Message = null)
         {
             try
             {
@@ -31,6 +31,8 @@ namespace Enclave_Bot.Core.SlashCommands
                         embed.AddField("Parchment Category", settings.ParchmentCategory == 0 ? "Not Set" : $"<#{settings.ParchmentCategory}>");
                         embed.AddField("Verified Role", settings.VerifiedRole == 0 ? "Not Set" : $"<@&{settings.VerifiedRole}>");
                         embed.AddField("Unverified Role", settings.UnverifiedRole == 0 ? "Not Set" : $"<@&{settings.UnverifiedRole}>");
+                        embed.AddField("WelcomeMessage", settings.WelcomeMessage);
+                        embed.AddField("LeaveMessage", settings.LeaveMessage);
                         break;
 
                     case "Welcome Channel":
@@ -73,6 +75,20 @@ namespace Enclave_Bot.Core.SlashCommands
                         await db.EditGuildSettings(settings);
                         embed.WithTitle($"Successfully set setting {Setting}");
                         embed.WithDescription($"Set {Setting} to <@&{Role.Id}>");
+                        break;
+
+                    case "Welcome Message":
+                        settings.WelcomeMessage = Message;
+                        await db.EditGuildSettings(settings);
+                        embed.WithTitle($"Successfully set setting {Setting}");
+                        embed.WithDescription($"Set {Setting} message to **{Message}**");
+                        break;
+
+                    case "Leave Message":
+                        settings.LeaveMessage = Message;
+                        await db.EditGuildSettings(settings);
+                        embed.WithTitle($"Successfully set setting {Setting}");
+                        embed.WithDescription($"Set {Setting} message to **{Message}**");
                         break;
                 }
                 await RespondAsync(embed: embed.Build());

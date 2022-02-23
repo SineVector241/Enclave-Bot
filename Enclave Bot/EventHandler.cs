@@ -27,8 +27,41 @@ namespace Enclave_Bot
             Client.InteractionCreated += InteractionCreated;
 
             //Discord Event Logging
+            Client.UserJoined += UserJoined;
+            Client.UserLeft += UserLeft;
             return Task.CompletedTask;
         }
+
+        private Task UserLeft(SocketGuild guild, SocketUser user)
+        {
+            _ = Task.Run(async () =>
+            {
+                var gsettings = await db.GetGuildSettingsById(guild.Id);
+                EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Green)
+                .WithTitle($"{user.Username} has left!")
+                .WithDescription(gsettings.LeaveMessage.Replace("[user]", user.Username).Replace("[guild]", guild.Name))
+                .WithThumbnailUrl(user.GetAvatarUrl());
+                await guild.GetTextChannel(gsettings.WelcomeChannel).SendMessageAsync(embed: embed.Build());
+            });
+            return Task.CompletedTask;
+        }
+
+        private Task UserJoined(SocketGuildUser user)
+        {
+            _ = Task.Run(async () =>
+            {
+                var gsettings = await db.GetGuildSettingsById(user.Guild.Id);
+                EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Green)
+                .WithTitle($"Welcome {user.Username} to {user.Guild.Name}!")
+                .WithDescription(gsettings.WelcomeMessage.Replace("[user]",user.Username).Replace("[guild]", user.Guild.Name))
+                .WithThumbnailUrl(user.GetAvatarUrl());
+                await user.Guild.GetTextChannel(gsettings.WelcomeChannel).SendMessageAsync(user.Mention, embed: embed.Build());
+            });
+            return Task.CompletedTask;
+        }
+
 
         //Important for the bots framework
         private async Task InteractionCreated(SocketInteraction interaction)
@@ -51,7 +84,9 @@ namespace Enclave_Bot
                                 ParchmentCategory = 0,
                                 StaffApplicationChannel = 0,
                                 UnverifiedRole = 0,
-                                VerifiedRole = 0
+                                VerifiedRole = 0,
+                                WelcomeMessage = "Welcome to [guild] **[user]**",
+                                LeaveMessage = "We are sorry to see you go **[user]**"
                             });
                         }
                     }

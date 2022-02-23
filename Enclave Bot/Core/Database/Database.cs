@@ -17,6 +17,8 @@ namespace Enclave_Bot.Core.Database
         public ulong ParchmentCategory { get; set; }
         public ulong VerifiedRole { get; set; }
         public ulong UnverifiedRole { get; set; }
+        public string WelcomeMessage { get; set; }
+        public string LeaveMessage { get; set; }
     }
 
     public struct UserProfile
@@ -40,7 +42,7 @@ namespace Enclave_Bot.Core.Database
 
         private async Task CreateTable()
         {
-            string query = "CREATE TABLE IF NOT EXISTS settings (ID varchar(18), LoggingChannel varchar(18), WelcomeChannel varchar(18), ApplicationChannel varchar(18), StaffApplicationChannel varchar(18), ParchmentCategory varchar(18), VerifiedRole varchar(18), UnverifiedRole varchar(18))";
+            string query = "CREATE TABLE IF NOT EXISTS settings (ID varchar(18), LoggingChannel varchar(18), WelcomeChannel varchar(18), ApplicationChannel varchar(18), StaffApplicationChannel varchar(18), ParchmentCategory varchar(18), VerifiedRole varchar(18), UnverifiedRole varchar(18), WelcomeMessage string, LeaveMessage string)";
             string query2 = "CREATE TABLE IF NOT EXISTS users (ID varchar(18), Wallet int, Bank int, XP int, Level int, WorkType string)";
             SQLiteCommand cmd = new SQLiteCommand(query, db.MyConnection);
             SQLiteCommand cmd2 = new SQLiteCommand(query2, db.MyConnection);
@@ -125,7 +127,7 @@ namespace Enclave_Bot.Core.Database
         //Guild Information
         public async Task CreateGuildSettings(GuildSettings settings)
         {
-            string query = "INSERT INTO settings (ID, LoggingChannel, WelcomeChannel, ApplicationChannel, StaffApplicationChannel, ParchmentCategory, VerifiedRole, UnverifiedRole) VALUES (@ID, @LoggingChannel, @WelcomeChannel, @ApplicationChannel, @StaffApplicationChannel, @ParchmentCategory, @VerifiedRole, @UnverifiedRole)";
+            string query = "INSERT INTO settings (ID, LoggingChannel, WelcomeChannel, ApplicationChannel, StaffApplicationChannel, ParchmentCategory, VerifiedRole, UnverifiedRole, WelcomeMessage, LeaveMessage) VALUES (@ID, @LoggingChannel, @WelcomeChannel, @ApplicationChannel, @StaffApplicationChannel, @ParchmentCategory, @VerifiedRole, @UnverifiedRole, @WelcomeMessage, @LeaveMessage)";
             SQLiteCommand cmd = new SQLiteCommand(query, db.MyConnection);
             cmd.Parameters.AddWithValue("@ID", settings.GuildID);
             cmd.Parameters.AddWithValue("@LoggingChannel", settings.LoggingChannel);
@@ -135,6 +137,8 @@ namespace Enclave_Bot.Core.Database
             cmd.Parameters.AddWithValue("@ParchmentCategory", settings.ParchmentCategory);
             cmd.Parameters.AddWithValue("@VerifiedRole", settings.VerifiedRole);
             cmd.Parameters.AddWithValue("@UnverifiedRole", settings.UnverifiedRole);
+            cmd.Parameters.AddWithValue("@WelcomeMessage", settings.WelcomeMessage);
+            cmd.Parameters.AddWithValue("LeaveMessage", settings.LeaveMessage);
             cmd.Prepare();
             db.OpenConnection();
             cmd.ExecuteNonQuery();
@@ -144,7 +148,7 @@ namespace Enclave_Bot.Core.Database
 
         public async Task EditGuildSettings(GuildSettings settings)
         {
-            string query = $"UPDATE settings SET LoggingChannel = {settings.LoggingChannel}, WelcomeChannel = {settings.WelcomeChannel}, ApplicationChannel = {settings.ApplicationChannel}, StaffApplicationChannel = {settings.StaffApplicationChannel}, ParchmentCategory = {settings.ParchmentCategory}, VerifiedRole = {settings.VerifiedRole}, UnverifiedRole = {settings.UnverifiedRole} WHERE ID = {settings.GuildID}";
+            string query = $"UPDATE settings SET LoggingChannel = {settings.LoggingChannel}, WelcomeChannel = {settings.WelcomeChannel}, ApplicationChannel = {settings.ApplicationChannel}, StaffApplicationChannel = {settings.StaffApplicationChannel}, ParchmentCategory = {settings.ParchmentCategory}, VerifiedRole = {settings.VerifiedRole}, UnverifiedRole = {settings.UnverifiedRole}, WelcomeMessage = \"{settings.WelcomeMessage}\", LeaveMessage = \"{settings.LeaveMessage}\" WHERE ID = {settings.GuildID}";
             SQLiteCommand cmd = new SQLiteCommand(query, db.MyConnection);
             cmd.Prepare();
             db.OpenConnection();
@@ -171,6 +175,8 @@ namespace Enclave_Bot.Core.Database
                     settings.ParchmentCategory = (ulong)Convert.ToInt64(result["ParchmentCategory"]);
                     settings.VerifiedRole = (ulong)Convert.ToInt64(result["VerifiedRole"]);
                     settings.UnverifiedRole = (ulong)Convert.ToInt64(result["UnverifiedRole"]);
+                    settings.WelcomeMessage = result["WelcomeMessage"].ToString();
+                    settings.LeaveMessage = result["LeaveMessage"].ToString();
                 }
             db.CloseConnection();
             await cmd.DisposeAsync();

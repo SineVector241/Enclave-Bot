@@ -394,13 +394,16 @@ namespace Enclave_Bot.Core.SlashCommands
                     case "DiscordMod":
                         payamount = 20;
                         break;
+                    case "DiscordAdmin":
+                        payamount = 40;
+                        break;
                 }
 
                 bool success = false;
-                switch (new Random().Next(5))
+                switch (new Random().Next(1, 1))
                 {
                     case 1:
-                        string[] emotes = { "unamused", "joy", "smile", "smirk", "rofl" };
+                        string[] emotes = { "unamused", "joy", "smile", "smirk", "rofl", "scream", "rage", "sunglasses", "innocent", "grimacing" };
                         int randomemote = new Random().Next(0, emotes.Count());
                         var builder = new ComponentBuilder();
                         builder.WithButton("😒", "unamused");
@@ -408,20 +411,30 @@ namespace Enclave_Bot.Core.SlashCommands
                         builder.WithButton("😄", "smile");
                         builder.WithButton("😏", "smirk");
                         builder.WithButton("🤣", "rofl");
+                        builder.WithButton("😱", "scream", row: 1);
+                        builder.WithButton("😡", "rage", row: 1);
+                        builder.WithButton("😎", "sunglasses", row: 1);
+                        builder.WithButton("😇", "innocent", row: 1);
+                        builder.WithButton("😬", "grimacing", row: 1);
                         var message = await FollowupAsync($"Select the right emote corresponding to it's name\nEmote Name: {emotes[randomemote]}", components: builder.Build());
-                        var choice = await Interactive.NextInteractionAsync(x => x.Channel.Id == Context.Channel.Id && x.User.Id == Context.User.Id, timeout: TimeSpan.FromSeconds(10));
-                        if (!choice.IsSuccess)
-                        {
-                            await message.ModifyAsync(x => { x.Components = new ComponentBuilder().Build(); x.Content = "You failed the job. You get $0"; });
-                            return;
-                        }
-                        var button = choice.Value.Data as ButtonComponent;
-                        if(button.CustomId == emotes[randomemote])
+                        var choice = await Interactive.NextMessageComponentAsync(x => x.Channel.Id == Context.Channel.Id && x.User.Id == Context.User.Id, timeout: TimeSpan.FromSeconds(10));
+                        if (choice.IsSuccess && choice.Value.Data.CustomId == emotes[randomemote])
                         {
                             await message.ModifyAsync(x => { x.Components = new ComponentBuilder().Build(); x.Content = $"Good work! you got payed {payamount}"; });
                             success = true;
                         }
+                        else
+                        {
+                            await message.ModifyAsync(x => { x.Components = new ComponentBuilder().Build(); x.Content = $"Terrible work! You got payed nothing!"; });
+                            success = false;
+                        }
                         break;
+                }
+
+                if (success)
+                {
+                    profile.Wallet += payamount;
+                    await db.UpdateUserProfile(profile);
                 }
             }
             catch (Exception ex)
