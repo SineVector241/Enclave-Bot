@@ -1,6 +1,7 @@
 ﻿using Discord.Interactions;
 using Discord.WebSocket;
 using Discord;
+using Fergun.Interactive;
 
 namespace Enclave_Bot.Core.SlashCommands
 {
@@ -8,6 +9,7 @@ namespace Enclave_Bot.Core.SlashCommands
     {
         private Database.Database db = new Database.Database();
         private Utils utils = new Utils();
+        public InteractiveService Interactive { get; set; }
 
         [SlashCommand("createaccount", "Creates your profile in the bot")]
         public async Task CreateProfile()
@@ -384,10 +386,42 @@ namespace Enclave_Bot.Core.SlashCommands
                     await RespondAsync($"You are on cooldown for this command! Try again in {cooldown.Seconds} seconds");
                     return;
                 }
+
+                await DeferAsync();
                 int payamount = 0;
                 switch (profile.WorkType)
                 {
-                    case "DiscordMod": break;
+                    case "DiscordMod":
+                        payamount = 20;
+                        break;
+                }
+
+                bool success = false;
+                switch (new Random().Next(5))
+                {
+                    case 1:
+                        string[] emotes = { "unamused", "joy", "smile", "smirk", "rofl" };
+                        int randomemote = new Random().Next(0, emotes.Count());
+                        var builder = new ComponentBuilder();
+                        builder.WithButton("😒", "unamused");
+                        builder.WithButton("😂", "joy");
+                        builder.WithButton("😄", "smile");
+                        builder.WithButton("😏", "smirk");
+                        builder.WithButton("🤣", "rofl");
+                        var message = await FollowupAsync($"Select the right emote corresponding to it's name\nEmote Name: {emotes[randomemote]}", components: builder.Build());
+                        var choice = await Interactive.NextInteractionAsync(x => x.Channel.Id == Context.Channel.Id && x.User.Id == Context.User.Id, timeout: TimeSpan.FromSeconds(10));
+                        if (!choice.IsSuccess)
+                        {
+                            await message.ModifyAsync(x => { x.Components = new ComponentBuilder().Build(); x.Content = "You failed the job. You get $0"; });
+                            return;
+                        }
+                        var button = choice.Value.Data as ButtonComponent;
+                        if(button.CustomId == emotes[randomemote])
+                        {
+                            await message.ModifyAsync(x => { x.Components = new ComponentBuilder().Build(); x.Content = $"Good work! you got payed {payamount}"; });
+                            success = true;
+                        }
+                        break;
                 }
             }
             catch (Exception ex)
