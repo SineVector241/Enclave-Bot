@@ -448,6 +448,38 @@ namespace Enclave_Bot.Core.SlashCommands
             }
         }
 
+        [SlashCommand("quitjob", "Quits your current job")]
+        public async Task QuitJob()
+        {
+            try
+            {
+                if (!await db.UserHasProfile(Context.User.Id))
+                {
+                    await RespondAsync("Please create an account first! */createaccount*");
+                    return;
+                }
+                var profile = await db.GetUserProfileById(Context.User.Id);
+                if(profile.WorkType == "None")
+                {
+                    await RespondAsync("You don't have a job :thinking:");
+                    return;
+                }
+                profile.WorkType = "None";
+                await db.UpdateUserProfile(profile);
+                utils.Cooldown(new UserCooldown() { CooldownType = "QuitJob", UserID = Context.User.Id }, 3600);
+                await RespondAsync("You have quit your job. You must wait 1 Hour before applying for a new job");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await Context.Channel.SendMessageAsync(embed: embed.Build());
+            }
+        }
+
         [SlashCommand("jobs", "Shows available jobs depending on your level")]
         public async Task SelectJob()
         {
@@ -456,6 +488,12 @@ namespace Enclave_Bot.Core.SlashCommands
                 if (!await db.UserHasProfile(Context.User.Id))
                 {
                     await RespondAsync("Please create an account first! */createaccount*");
+                    return;
+                }
+                var cooldown = utils.CheckCooldown(Context.User, "QuitJob", 3600);
+                if (!cooldown.CooledDown)
+                {
+                    await RespondAsync($"You have recently quit a previous job in the past hour. Please try again in {cooldown.Seconds}");
                     return;
                 }
                 List<List<string>> jobs = new List<List<string>> { new List<string> { "DiscordMod", "$200" }, new List<string> { "DiscordAdmin", "$400" } };
