@@ -551,6 +551,8 @@ namespace Enclave_Bot.Core.SlashCommands
                 var embed = new EmbedBuilder()
                 .WithTitle("Price Guide")
                 .WithDescription("Stone: $1\nIron: $10\nDiamond: $30\nYou can only mine 4 blocks each mine")
+                .WithFooter("Blocks Mined:0")
+                .AddField("Money Earned", "$0")
                 .WithColor(utils.randomColor());
                 var builder = new ComponentBuilder();
 
@@ -563,15 +565,6 @@ namespace Enclave_Bot.Core.SlashCommands
                     }
                 }
                 var msg = await FollowupAsync(embed: embed.Build(), components: builder.Build());
-                for(int i = 0; i < 4; i++)
-                {
-                    var choice = await Interactive.NextMessageComponentAsync(x => x.Channel.Id == Context.Channel.Id && x.User.Id == Context.User.Id, timeout: TimeSpan.FromSeconds(10));
-                    if(!choice.IsSuccess)
-                    {
-                        await msg.ModifyAsync(x => { x.Content = "Timed out. You fell asleep and fell into a ravine"; x.Components = new ComponentBuilder().Build(); x.Embeds = null; });
-                        break;
-                    }
-                }
             }
             catch (Exception ex)
             {
