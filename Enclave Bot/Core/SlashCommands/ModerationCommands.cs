@@ -13,7 +13,7 @@ namespace Enclave_Bot.Core.SlashCommands
 
         [SlashCommand("settings", "Gets or sets the bot settings for this guild")]
         [RequireUserPermission(GuildPermission.Administrator)]
-        public async Task Settings([Choice("Welcome Channel", "Welcome Channel"), Choice("Logging Channel", "Logging Channel"), Choice("Application Channel", "Application Channel"), Choice("Staff Application Channel", "Staff Application Channel"), Choice("Bounty Channel", "Bounty Channel"), Choice("Verified Role", "Verified Role"), Choice("Unverified Role", "Unverified Role"), Choice("Welcome Message", "Welcome Message"), Choice("Leave Message", "Leave Message")] string Setting = "Settings", SocketTextChannel Channel = null, IRole Role = null, [Summary(description: "When using this. you can use [user] or [guild] to display the name.")]string Message = null)
+        public async Task Settings([Choice("Welcome Channel", "Welcome Channel"), Choice("Logging Channel", "Logging Channel"), Choice("Application Channel", "Application Channel"), Choice("Staff Application Channel", "Staff Application Channel"), Choice("Bounty Channel", "Bounty Channel"), Choice("Verified Role", "Verified Role"), Choice("Unverified Role", "Unverified Role"), Choice("Welcome Message", "Welcome Message"), Choice("Leave Message", "Leave Message")] string Setting = "Settings", SocketTextChannel Channel = null, IRole Role = null, [Summary(description: "When using this. you can use [user] or [guild] to display the name.")] string Message = null)
         {
             try
             {
@@ -173,7 +173,7 @@ namespace Enclave_Bot.Core.SlashCommands
             {
                 await DeferAsync();
                 SocketTextChannel channel = Context.Channel as SocketTextChannel;
-                var msgs = await channel.GetMessagesAsync(limit: Amount+1).FlattenAsync();
+                var msgs = await channel.GetMessagesAsync(limit: Amount + 1).FlattenAsync();
                 await channel.DeleteMessagesAsync(msgs);
                 await Context.Channel.SendMessageAsync($"Successfully cleared {Amount} messages");
             }
@@ -209,7 +209,7 @@ namespace Enclave_Bot.Core.SlashCommands
             }
         }
 
-        [SlashCommand("ban","Bans a user from the guild")]
+        [SlashCommand("ban", "Bans a user from the guild")]
         [RequireUserPermission(GuildPermission.BanMembers)]
         [RequireBotPermission(GuildPermission.BanMembers)]
         public async Task Ban(SocketGuildUser User, string Reason = "No Reason")
@@ -230,13 +230,32 @@ namespace Enclave_Bot.Core.SlashCommands
             }
         }
 
-        [SlashCommand("embed","Sends an embedded message")]
+        [SlashCommand("embed", "Sends an embedded message")]
         public async Task Embed(string title, string description = null)
         {
             try
             {
                 var embed = new EmbedBuilder().WithTitle(title).WithDescription(description).WithColor(utils.randomColor());
                 await RespondAsync(embed: embed.Build());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await RespondAsync(embed: embed.Build());
+            }
+        }
+
+        [SlashCommand("emoteinfo", "Information about a custom emoji")]
+        public async Task EmoteInfo(string emote)
+        {
+            try
+            {
+                var emoji = Emote.Parse(emote);
+                await RespondAsync($"Emoji ID `{emote}`");
             }
             catch (Exception ex)
             {

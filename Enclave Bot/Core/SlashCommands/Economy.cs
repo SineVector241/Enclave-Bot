@@ -530,5 +530,58 @@ namespace Enclave_Bot.Core.SlashCommands
                 await Context.Channel.SendMessageAsync(embed: embed.Build());
             }
         }
+
+        [SlashCommand("mine","Mining ores")]
+        public async Task Mine()
+        {
+            try
+            {
+                await DeferAsync();
+                if (!await db.UserHasProfile(Context.User.Id))
+                {
+                    await FollowupAsync("Please create an account first! */createaccount*");
+                    return;
+                }
+                var cooldown = utils.Cooldown(new UserCooldown() { CooldownType = "Mine", UserID = Context.User.Id}, 600);
+                if (!cooldown.CooledDown)
+                {
+                    await FollowupAsync($"You are on cooldown for this command! Try again in {cooldown.Seconds} seconds");
+                    return;
+                }
+                var embed = new EmbedBuilder()
+                .WithTitle("Price Guide")
+                .WithDescription("Stone: $1\nIron: $10\nDiamond: $30\nYou can only mine 4 blocks each mine")
+                .WithColor(utils.randomColor());
+                var builder = new ComponentBuilder();
+
+                List<string> ores = new List<string> { "stone", "stone", "stone", "stone", "stone", "stone", "stone", "stone", "stone", "stone", "stone", "stone", "stone", "stone", "stone", "iron", "iron", "iron", "iron", "iron", "iron", "iron", "diamond", "diamond", "diamond" };
+                for (int i = 0; i < 5; i++)
+                {
+                    for (int j = 0; j < 5; j++)
+                    {
+                        builder.WithButton(customId:$"Mine:{Context.User.Id},{ores[new Random().Next(ores.Count-1)]},{i},{j}", emote: new Emoji("⬜"), row: i);
+                    }
+                }
+                var msg = await FollowupAsync(embed: embed.Build(), components: builder.Build());
+                for(int i = 0; i < 4; i++)
+                {
+                    var choice = await Interactive.NextMessageComponentAsync(x => x.Channel.Id == Context.Channel.Id && x.User.Id == Context.User.Id, timeout: TimeSpan.FromSeconds(10));
+                    if(!choice.IsSuccess)
+                    {
+                        await msg.ModifyAsync(x => { x.Content = "Timed out. You fell asleep and fell into a ravine"; x.Components = new ComponentBuilder().Build(); x.Embeds = null; });
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await Context.Channel.SendMessageAsync(embed: embed.Build());
+            }
+        }
     }
 }

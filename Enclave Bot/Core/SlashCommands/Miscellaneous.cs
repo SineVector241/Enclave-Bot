@@ -80,6 +80,7 @@ namespace Enclave_Bot.Core.SlashCommands
             int stolen = utils.CheckCooldown(Context.User, "Stolen", 300).Seconds;
             int work = utils.CheckCooldown(Context.User, "Work", 3600).Seconds;
             int jobhire = utils.CheckCooldown(Context.User, "QuitJob", 3600).Seconds;
+            int mine = utils.CheckCooldown(Context.User, "Mine", 600).Seconds;
             var embed = new EmbedBuilder()
                 .WithTitle($"{Context.User.Username}'s cooldowns")
                 .AddField("Beg", $"{ (beg <= 0 ? "Ready" : beg + " Seconds")}")
@@ -89,6 +90,7 @@ namespace Enclave_Bot.Core.SlashCommands
                 .AddField("Can Be Stolen From", $"{(stolen <= 0 ? "Ready" : stolen + " Seconds")}")
                 .AddField("Work", $"{(work <= 0 ? "Ready" : work + " Seconds")}")
                 .AddField("JobHire", $"{(jobhire <= 0 ? "Ready" : jobhire + " Seconds")}")
+                .AddField("Mine", $"{(mine <= 0 ? "Ready" : mine + " Seconds")}")
                 .WithColor(utils.randomColor());
             await RespondAsync(embed: embed.Build());
         }
