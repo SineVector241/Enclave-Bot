@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Discord.Interactions;
 using Enclave_Bot.Core.Database;
+using Enclave_Bot.Core;
 
 namespace Enclave_Bot
 {
@@ -12,6 +13,7 @@ namespace Enclave_Bot
         private readonly InteractionService Interactions;
         private readonly IServiceProvider ServiceProvider;
         private Database db = new Database();
+        private Utils utils = new Utils();
 
         public EventHandler(IServiceProvider Services)
         {
@@ -29,6 +31,139 @@ namespace Enclave_Bot
             //Discord Event Logging
             Client.UserJoined += UserJoined;
             Client.UserLeft += UserLeft;
+            Client.MessagesBulkDeleted += MessagesBulkDeleted;
+            Client.MessageDeleted += MessageDeleted;
+            Client.MessageUpdated += MessageUpdated;
+            Client.ChannelCreated += ChannelCreated;
+            Client.ChannelDestroyed += ChannelDestroyed;
+            return Task.CompletedTask;
+        }
+
+        private Task ChannelDestroyed(SocketChannel channel)
+        {
+            _ = Task.Run(async () =>
+            {
+                var chan = channel as SocketTextChannel;
+                var voicechan = channel as SocketVoiceChannel;
+                var category = channel as SocketCategoryChannel;
+                if (channel is not SocketGuildChannel guildchannel)
+                    return;
+                var gsetting = await db.GetGuildSettingsById(guildchannel.Guild.Id);
+                var embed = new EmbedBuilder();
+                if (chan != null)
+                {
+                    embed.WithTitle($"Text Channel Deleted");
+                    embed.AddField("Channel", chan.Name);
+                    embed.AddField("In Category", chan.Category.Name);
+                    embed.WithColor(Color.DarkRed);
+                }
+                else if (voicechan != null)
+                {
+                    embed.WithTitle($"Voice Channel Deleted");
+                    embed.AddField("Channel", voicechan.Name);
+                    embed.AddField("In Category", voicechan.Category.Name);
+                    embed.WithColor(Color.DarkRed);
+                }
+                else if (category != null)
+                {
+                    embed.WithTitle($"Category Deleted");
+                    embed.AddField("Category", category.Name);
+                    embed.WithColor(Color.DarkRed);
+                }
+                await guildchannel.Guild.GetTextChannel(gsetting.LoggingChannel).SendMessageAsync(embed: embed.Build());
+            });
+            return Task.CompletedTask;
+        }
+
+        private Task ChannelCreated(SocketChannel channel)
+        {
+            _ = Task.Run(async () =>
+            {
+                var chan = channel as SocketTextChannel;
+                var voicechan = channel as SocketVoiceChannel;
+                var category = channel as SocketCategoryChannel;
+                if (channel is not SocketGuildChannel guildchannel)
+                    return;
+                var gsetting = await db.GetGuildSettingsById(guildchannel.Guild.Id);
+                var embed = new EmbedBuilder();
+                if (chan != null)
+                {
+                    embed.WithTitle($"Text Channel Created");
+                    embed.AddField("Channel", chan.Mention);
+                    embed.AddField("In Category", chan.Category.Name);
+                    embed.WithColor(Color.Green);
+                }
+                else if (voicechan != null)
+                {
+                    embed.WithTitle($"Voice Channel Created");
+                    embed.AddField("Channel", voicechan.Mention);
+                    embed.AddField("In Category", voicechan.Category.Name);
+                    embed.WithColor(Color.Green);
+                }
+                else if (category != null)
+                {
+                    embed.WithTitle($"Category Created");
+                    embed.AddField("Category", category.Name);
+                    embed.WithColor(Color.Green);
+                }
+                await guildchannel.Guild.GetTextChannel(gsetting.LoggingChannel).SendMessageAsync(embed: embed.Build());
+            });
+            return Task.CompletedTask;
+        }
+
+        private Task MessagesBulkDeleted(IReadOnlyCollection<Cacheable<IMessage, ulong>> messages, Cacheable<IMessageChannel, ulong> channel)
+        {
+            _ = Task.Run(async () =>
+            {
+                var chan = channel.Value as SocketTextChannel;
+                if (chan == null)
+                    return;
+                var gsetting = await db.GetGuildSettingsById(chan.Guild.Id);
+                var embed = new EmbedBuilder()
+                .WithTitle($"Message Bulk Deleted")
+                .AddField("Channel", $"<#{channel.Value.Id}>")
+                .WithColor(Color.DarkRed);
+                await chan.Guild.GetTextChannel(gsetting.LoggingChannel).SendMessageAsync(embed: embed.Build());
+            });
+            return Task.CompletedTask;
+        }
+
+        private Task MessageDeleted(Cacheable<IMessage, ulong> msg, Cacheable<IMessageChannel, ulong> channel)
+        {
+            _ = Task.Run(async () =>
+            {
+                var chan = channel.Value as SocketTextChannel;
+                if (chan == null)
+                    return;
+                var gsetting = await db.GetGuildSettingsById(chan.Guild.Id);
+                var embed = new EmbedBuilder()
+                .WithTitle($"Message Deleted")
+                .AddField("Author", msg.Value.Author.Username)
+                .AddField("Channel", $"<#{channel.Value.Id}>")
+                .AddField("Content", msg.Value.Content)
+                .WithColor(Color.Red);
+                await chan.Guild.GetTextChannel(gsetting.LoggingChannel).SendMessageAsync(embed: embed.Build());
+            });
+            return Task.CompletedTask;
+        }
+
+        private Task MessageUpdated(Cacheable<IMessage, ulong> before, SocketMessage after, ISocketMessageChannel channel)
+        {
+            _ = Task.Run(async () =>
+            {
+                var chan = channel as SocketTextChannel;
+                if (chan == null && after.Content == before.Value.Content)
+                    return;
+                var gsetting = await db.GetGuildSettingsById(chan.Guild.Id);
+                var embed = new EmbedBuilder()
+                .WithTitle($"Message Edited")
+                .AddField("Author", after.Author.Username)
+                .AddField("Channel", $"<#{channel.Id}>")
+                .AddField("Before", before.Value.Content)
+                .AddField("After", after.Content)
+                .WithColor(Color.LightOrange);
+                await chan.Guild.GetTextChannel(gsetting.LoggingChannel).SendMessageAsync(embed: embed.Build());
+            });
             return Task.CompletedTask;
         }
 
@@ -83,6 +218,7 @@ namespace Enclave_Bot
                                 ApplicationChannel = 0,
                                 ParchmentCategory = 0,
                                 StaffApplicationChannel = 0,
+                                BountyChannel = 0,
                                 UnverifiedRole = 0,
                                 VerifiedRole = 0,
                                 WelcomeMessage = "Welcome to [guild] **[user]**",

@@ -1,7 +1,6 @@
 ﻿using Discord.Interactions;
 using Discord.WebSocket;
 using Discord;
-using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 
 namespace Enclave_Bot.Core.SlashCommands

@@ -392,10 +392,10 @@ namespace Enclave_Bot.Core.SlashCommands
                 switch (profile.WorkType)
                 {
                     case "DiscordMod":
-                        payamount = 20;
+                        payamount = 200;
                         break;
                     case "DiscordAdmin":
-                        payamount = 40;
+                        payamount = 400;
                         break;
                 }
 
@@ -420,7 +420,7 @@ namespace Enclave_Bot.Core.SlashCommands
                         var choice = await Interactive.NextMessageComponentAsync(x => x.Channel.Id == Context.Channel.Id && x.User.Id == Context.User.Id, timeout: TimeSpan.FromSeconds(10));
                         if (choice.IsSuccess && choice.Value.Data.CustomId == emotes[randomemote])
                         {
-                            await message.ModifyAsync(x => { x.Components = new ComponentBuilder().Build(); x.Content = $"Good work! you got payed {payamount}"; });
+                            await message.ModifyAsync(x => { x.Components = new ComponentBuilder().Build(); x.Content = $"Good work! you got payed ${payamount}"; });
                             success = true;
                         }
                         else
@@ -458,7 +458,7 @@ namespace Enclave_Bot.Core.SlashCommands
                     await RespondAsync("Please create an account first! */createaccount*");
                     return;
                 }
-                List<List<string>> jobs = new List<List<string>> { new List<string> { "DiscordMod", "$20" }, new List<string> { "DiscordAdmin", "$40" } };
+                List<List<string>> jobs = new List<List<string>> { new List<string> { "DiscordMod", "$200" }, new List<string> { "DiscordAdmin", "$400" } };
                 var profile = await db.GetUserProfileById(Context.User.Id);
                 var embed = new EmbedBuilder().WithTitle("Available Jobs").WithColor(utils.randomColor());
                 var menu = new SelectMenuBuilder()

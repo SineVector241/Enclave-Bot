@@ -13,7 +13,7 @@ namespace Enclave_Bot.Core.SlashCommands
 
         [SlashCommand("settings", "Gets or sets the bot settings for this guild")]
         [RequireUserPermission(GuildPermission.Administrator)]
-        public async Task Settings([Choice("Welcome Channel", "Welcome Channel"), Choice("Logging Channel", "Logging Channel"), Choice("Application Channel", "Application Channel"), Choice("Staff Application Channel", "Staff Application Channel"), Choice("Verified Role", "Verified Role"), Choice("Unverified Role", "Unverified Role"), Choice("Welcome Message", "Welcome Message"), Choice("Leave Message", "Leave Message")] string Setting = "Settings", [ChannelTypes(ChannelType.Text)] IGuildChannel Channel = null, IRole Role = null, [Summary(description: "When using this. you can use [user] or [guild] to display the name.")]string Message = null)
+        public async Task Settings([Choice("Welcome Channel", "Welcome Channel"), Choice("Logging Channel", "Logging Channel"), Choice("Application Channel", "Application Channel"), Choice("Staff Application Channel", "Staff Application Channel"), Choice("Bounty Channel", "Bounty Channel"), Choice("Verified Role", "Verified Role"), Choice("Unverified Role", "Unverified Role"), Choice("Welcome Message", "Welcome Message"), Choice("Leave Message", "Leave Message")] string Setting = "Settings", SocketTextChannel Channel = null, IRole Role = null, [Summary(description: "When using this. you can use [user] or [guild] to display the name.")]string Message = null)
         {
             try
             {
@@ -28,6 +28,7 @@ namespace Enclave_Bot.Core.SlashCommands
                         embed.AddField("Logging Channel", settings.LoggingChannel == 0 ? "Not Set" : $"<#{settings.LoggingChannel}>");
                         embed.AddField("Application Channel", settings.ApplicationChannel == 0 ? "Not Set" : $"<#{settings.ApplicationChannel}>");
                         embed.AddField("Staff Application Channel", settings.StaffApplicationChannel == 0 ? "Not Set" : $"<#{settings.StaffApplicationChannel}>");
+                        embed.AddField("Bounty Channel", settings.BountyChannel == 0 ? "Not Set" : $"<#{settings.BountyChannel}>");
                         embed.AddField("Parchment Category", settings.ParchmentCategory == 0 ? "Not Set" : $"<#{settings.ParchmentCategory}>");
                         embed.AddField("Verified Role", settings.VerifiedRole == 0 ? "Not Set" : $"<@&{settings.VerifiedRole}>");
                         embed.AddField("Unverified Role", settings.UnverifiedRole == 0 ? "Not Set" : $"<@&{settings.UnverifiedRole}>");
@@ -58,6 +59,13 @@ namespace Enclave_Bot.Core.SlashCommands
 
                     case "Staff Application Channel":
                         settings.StaffApplicationChannel = Channel.Id;
+                        await db.EditGuildSettings(settings);
+                        embed.WithTitle($"Successfully set setting {Setting}");
+                        embed.WithDescription($"Set {Setting} to <#{Channel.Id}>");
+                        break;
+
+                    case "Bounty Channel":
+                        settings.BountyChannel = Channel.Id;
                         await db.EditGuildSettings(settings);
                         embed.WithTitle($"Successfully set setting {Setting}");
                         embed.WithDescription($"Set {Setting} to <#{Channel.Id}>");

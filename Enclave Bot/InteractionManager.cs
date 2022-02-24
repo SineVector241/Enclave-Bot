@@ -30,6 +30,10 @@ namespace Enclave_Bot
                     Console.WriteLine($"\u001b[97m[{DateTime.Now}]: [\u001b[93mMODULES\u001b[97m] => {module.Name} \u001b[92mInitialized\u001b[97m");
                     Interactions.Log += InteractionServiceLog;
                 }
+                foreach (SlashCommandInfo cmd in Interactions.SlashCommands)
+                {
+                    Console.WriteLine($"\u001b[97m[{DateTime.Now}]: [\u001b[93mSLASHCOMMAND\u001b[97m] => {cmd.Name} \u001b[92mLoaded\u001b[97m");
+                }
             }
             catch (Exception ex)
             {
