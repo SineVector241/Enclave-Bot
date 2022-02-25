@@ -6,10 +6,11 @@
 - [X] Settings command and database file (DO THIS FIRST BEFORE WORKING ON DISCORD LOGGING)
 - [ ] Discord Logging
 - [X] Moderation Commands
-- [ ] Economy Commands (SETUP THE DB FILE FIRST)
+- [x] Economy Commands (SETUP THE DB FILE FIRST)
 - [X] Reaction Role Dasboard
-- [ ] Reaction Role Dashboard(With Settings)
-- [ ] More Fun Commands 
+- [x] Reaction Role Dashboard(With Settings)
+- [x] More Fun Commands 
+- [ ] Daily Command
 
 ## How to Contribute/Develop ##
 Requirements:
