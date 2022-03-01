@@ -70,29 +70,36 @@ namespace Enclave_Bot.Core.SlashCommands
             }
         }
 
-        [SlashCommand("cooldowns","Check your cooldowns")]
+        [SlashCommand("cooldowns", "Check your cooldowns")]
         public async Task Cooldowns()
         {
-            int beg = utils.CheckCooldown(Context.User, "Beg", 30).Seconds;
-            int deposit = utils.CheckCooldown(Context.User, "Deposit", 60).Seconds;
-            int withdraw = utils.CheckCooldown(Context.User, "Withdraw", 60).Seconds;
-            int steal = utils.CheckCooldown(Context.User, "Steal", 60).Seconds;
-            int stolen = utils.CheckCooldown(Context.User, "Stolen", 300).Seconds;
-            int work = utils.CheckCooldown(Context.User, "Work", 3600).Seconds;
-            int jobhire = utils.CheckCooldown(Context.User, "QuitJob", 3600).Seconds;
-            int mine = utils.CheckCooldown(Context.User, "Mine", 600).Seconds;
-            var embed = new EmbedBuilder()
-                .WithTitle($"{Context.User.Username}'s cooldowns")
-                .AddField("Beg", $"{ (beg <= 0 ? "Ready" : beg + " Seconds")}")
-                .AddField("Deposit", $"{(deposit <= 0 ? "Ready" : deposit + " Seconds")}")
-                .AddField("Withdraw", $"{(withdraw <= 0 ? "Ready" : withdraw + " Seconds")}")
-                .AddField("Steal", $"{(steal <= 0 ? "Ready" : steal + " Seconds")}")
-                .AddField("Can Be Stolen From", $"{(stolen <= 0 ? "Ready" : stolen + " Seconds")}")
-                .AddField("Work", $"{(work <= 0 ? "Ready" : work + " Seconds")}")
-                .AddField("JobHire", $"{(jobhire <= 0 ? "Ready" : jobhire + " Seconds")}")
-                .AddField("Mine", $"{(mine <= 0 ? "Ready" : mine + " Seconds")}")
-                .WithColor(utils.randomColor());
-            await RespondAsync(embed: embed.Build());
+            try
+            {
+                int beg = utils.CheckCooldown(Context.User, "Beg").Seconds;
+                int deposit = utils.CheckCooldown(Context.User, "Deposit").Seconds;
+                int withdraw = utils.CheckCooldown(Context.User, "Withdraw").Seconds;
+                int steal = utils.CheckCooldown(Context.User, "Steal").Seconds;
+                int stolen = utils.CheckCooldown(Context.User, "Stolen").Seconds;
+                int work = utils.CheckCooldown(Context.User, "Work").Seconds;
+                int jobhire = utils.CheckCooldown(Context.User, "QuitJob").Seconds;
+                int mine = utils.CheckCooldown(Context.User, "Mine").Seconds;
+                var embed = new EmbedBuilder()
+                    .WithTitle($"{Context.User.Username}'s cooldowns")
+                    .AddField("Beg", $"{ (beg <= 0 ? "Ready" : beg + " Seconds")}")
+                    .AddField("Deposit", $"{(deposit <= 0 ? "Ready" : deposit + " Seconds")}")
+                    .AddField("Withdraw", $"{(withdraw <= 0 ? "Ready" : withdraw + " Seconds")}")
+                    .AddField("Steal", $"{(steal <= 0 ? "Ready" : steal + " Seconds")}")
+                    .AddField("Can Be Stolen From", $"{(stolen <= 0 ? "Ready" : stolen + " Seconds")}")
+                    .AddField("Work", $"{(work <= 0 ? "Ready" : work + " Seconds")}")
+                    .AddField("JobHire", $"{(jobhire <= 0 ? "Ready" : jobhire + " Seconds")}")
+                    .AddField("Mine", $"{(mine <= 0 ? "Ready" : mine + " Seconds")}")
+                    .WithColor(utils.randomColor());
+                await RespondAsync(embed: embed.Build());
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
         }
     }
 }

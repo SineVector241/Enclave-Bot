@@ -144,7 +144,7 @@ namespace Enclave_Bot.Core.SlashCommands
         {
             try
             {
-                var cooldown = utils.Cooldown(new UserCooldown() { CooldownType = "Beg", UserID = Context.User.Id }, 30);
+                var cooldown = utils.Cooldown(Context.User, "Beg", 30);
                 if (cooldown.CooledDown)
                 {
                     if (await db.UserHasProfile(Context.User.Id))
@@ -153,7 +153,7 @@ namespace Enclave_Bot.Core.SlashCommands
                         int rnd = new Random().Next(30);
                         profile.Wallet += rnd;
                         await db.UpdateUserProfile(profile);
-                        await RespondAsync($"A random person gave you ${rnd}. You now have {profile.Wallet} in your wallet");
+                        await RespondAsync($"A random person gave you ${rnd}. You now have ${profile.Wallet} in your wallet");
                     }
                     else
                     {
@@ -181,7 +181,7 @@ namespace Enclave_Bot.Core.SlashCommands
         {
             try
             {
-                var cooldown = utils.Cooldown(new UserCooldown() { CooldownType = "Deposit", UserID = Context.User.Id }, 60);
+                var cooldown = utils.Cooldown(Context.User, "Deposit", 60);
                 if (cooldown.CooledDown)
                 {
                     if (await db.UserHasProfile(Context.User.Id))
@@ -236,7 +236,7 @@ namespace Enclave_Bot.Core.SlashCommands
         {
             try
             {
-                var cooldown = utils.Cooldown(new UserCooldown() { CooldownType = "Withdraw", UserID = Context.User.Id }, 60);
+                var cooldown = utils.Cooldown(Context.User, "Withdraw", 60);
                 if (cooldown.CooledDown)
                 {
                     if (await db.UserHasProfile(Context.User.Id))
@@ -296,8 +296,6 @@ namespace Enclave_Bot.Core.SlashCommands
                     await RespondAsync("You can't steal from yourself dummy");
                     return;
                 }
-                var cooldown = utils.Cooldown(new UserCooldown() { CooldownType = "Steal", UserID = Context.User.Id }, 60);
-                var cooldownvictim = utils.CheckCooldown(User, "Stolen", 300);
                 int rnd = new Random().Next(1, 10);
                 if (!await db.UserHasProfile(Context.User.Id))
                 {
@@ -311,15 +309,17 @@ namespace Enclave_Bot.Core.SlashCommands
                     return;
                 }
 
-                if (!cooldownvictim.CooledDown)
-                {
-                    await RespondAsync("This user has already been stolen from in the past 5 minutes. Give it a break!");
-                    return;
-                }
-
+                var cooldown = utils.Cooldown(Context.User, "Steal", 60);
                 if (!cooldown.CooledDown)
                 {
                     await RespondAsync($"You are on cooldown for this command! Try again in {cooldown.Seconds} seconds");
+                    return;
+                }
+
+                var cooldownvictim = utils.Cooldown(User, "Stolen", 300);
+                if (!cooldownvictim.CooledDown)
+                {
+                    await RespondAsync("This user has already been stolen from in the past 5 minutes. Give it a break!");
                     return;
                 }
 
@@ -338,7 +338,7 @@ namespace Enclave_Bot.Core.SlashCommands
                     return;
                 }
 
-                utils.Cooldown(new UserCooldown() { CooldownType = "Stolen", UserID = User.Id }, 300);
+                utils.Cooldown(User, "Stolen", 300);
                 if (rnd > 2)
                 {
                     int amount = new Random().Next(1, victim.Wallet);
@@ -352,6 +352,8 @@ namespace Enclave_Bot.Core.SlashCommands
                     victim.Wallet += 100;
                     await RespondAsync($"LOLS. You got caught trying to pickpocket {User.Mention}'s wallet and payed a fine of $100 to ${User.Mention}");
                 }
+                await db.UpdateUserProfile(victim);
+                await db.UpdateUserProfile(stealer);
             }
             catch (Exception ex)
             {
@@ -380,7 +382,7 @@ namespace Enclave_Bot.Core.SlashCommands
                     await RespondAsync("You don't have a job! select one using /jobs");
                     return;
                 }
-                var cooldown = utils.Cooldown(new UserCooldown() { CooldownType = "Work", UserID = Context.User.Id }, 3600);
+                var cooldown = utils.Cooldown(Context.User, "Work", 3600);
                 if (!cooldown.CooledDown)
                 {
                     await RespondAsync($"You are on cooldown for this command! Try again in {cooldown.Seconds} seconds");
@@ -459,14 +461,14 @@ namespace Enclave_Bot.Core.SlashCommands
                     return;
                 }
                 var profile = await db.GetUserProfileById(Context.User.Id);
-                if(profile.WorkType == "None")
+                if (profile.WorkType == "None")
                 {
                     await RespondAsync("You don't have a job :thinking:");
                     return;
                 }
                 profile.WorkType = "None";
                 await db.UpdateUserProfile(profile);
-                utils.Cooldown(new UserCooldown() { CooldownType = "QuitJob", UserID = Context.User.Id }, 3600);
+                utils.Cooldown(Context.User, "JobHire", 3600);
                 await RespondAsync("You have quit your job. You must wait 1 Hour before applying for a new job");
             }
             catch (Exception ex)
@@ -490,7 +492,7 @@ namespace Enclave_Bot.Core.SlashCommands
                     await RespondAsync("Please create an account first! */createaccount*");
                     return;
                 }
-                var cooldown = utils.CheckCooldown(Context.User, "QuitJob", 3600);
+                var cooldown = utils.Cooldown(Context.User, "JobHire", 3600);
                 if (!cooldown.CooledDown)
                 {
                     await RespondAsync($"You have recently quit a previous job in the past hour. Please try again in {cooldown.Seconds}");
@@ -503,9 +505,9 @@ namespace Enclave_Bot.Core.SlashCommands
                     .WithPlaceholder("Select a job")
                     .WithCustomId($"SelectJob:{Context.User.Id}");
                 int lvlrq = 0;
-                foreach(var job in jobs)
+                foreach (var job in jobs)
                 {
-                    if(profile.Level >= lvlrq)
+                    if (profile.Level >= lvlrq)
                     {
                         menu.AddOption(job[0], job[0], $"Work as a {job[0]}");
                         embed.AddField(job[0], $"{job[1]} per hour");
@@ -531,7 +533,7 @@ namespace Enclave_Bot.Core.SlashCommands
             }
         }
 
-        [SlashCommand("mine","Mining ores")]
+        [SlashCommand("mine", "Mining ores")]
         public async Task Mine()
         {
             try
@@ -542,7 +544,7 @@ namespace Enclave_Bot.Core.SlashCommands
                     await FollowupAsync("Please create an account first! */createaccount*");
                     return;
                 }
-                var cooldown = utils.Cooldown(new UserCooldown() { CooldownType = "Mine", UserID = Context.User.Id}, 600);
+                var cooldown = utils.Cooldown(Context.User, "Mine", 600);
                 if (!cooldown.CooledDown)
                 {
                     await FollowupAsync($"You are on cooldown for this command! Try again in {cooldown.Seconds} seconds");
@@ -561,10 +563,58 @@ namespace Enclave_Bot.Core.SlashCommands
                 {
                     for (int j = 0; j < 5; j++)
                     {
-                        builder.WithButton(customId:$"Mine:{Context.User.Id},{ores[new Random().Next(ores.Count-1)]},{i},{j}", emote: new Emoji("⬜"), row: i);
+                        builder.WithButton(customId: $"Mine:{Context.User.Id},{ores[new Random().Next(ores.Count - 1)]},{i},{j}", emote: new Emoji("⬜"), row: i);
                     }
                 }
                 var msg = await FollowupAsync(embed: embed.Build(), components: builder.Build());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await Context.Channel.SendMessageAsync(embed: embed.Build());
+            }
+        }
+
+        [SlashCommand("pay", "Pay a user")]
+        public async Task Pay(SocketGuildUser User, int Amount)
+        {
+            try
+            {
+                if (User.Id == Context.User.Id)
+                {
+                    await RespondAsync("You can't pay to yourself dummy");
+                    return;
+                }
+                int rnd = new Random().Next(1, 10);
+                if (!await db.UserHasProfile(Context.User.Id))
+                {
+                    await RespondAsync("Please create an account first! */createaccount*");
+                    return;
+                }
+
+                if (!await db.UserHasProfile(User.Id))
+                {
+                    await RespondAsync("This user does not have an account!");
+                    return;
+                }
+
+                var Payer = await db.GetUserProfileById(Context.User.Id);
+                if (Payer.Wallet < Amount)
+                {
+                    await RespondAsync("You don't have that much money in your wallet!");
+                    return;
+                }
+                var Reciever = await db.GetUserProfileById(User.Id);
+                Reciever.Wallet += Amount;
+                Payer.Wallet -= Amount;
+
+                await db.UpdateUserProfile(Reciever);
+                await db.UpdateUserProfile(Payer);
+                await RespondAsync($"Successfully payed {User.Mention}: ${Amount}");
             }
             catch (Exception ex)
             {

@@ -7,8 +7,8 @@ namespace Enclave_Bot.Core
 {
     public struct UserCooldown
     {
-        public string CooldownType { get; set; }
         public ulong UserID { get; set; }
+        public int CooldownSeconds { get; set; }
         public DateTime DateTime { get; set; }
     }
 
@@ -20,7 +20,15 @@ namespace Enclave_Bot.Core
     public class Utils
     {
         Random rnd = new Random();
-        private static List<UserCooldown> users = new List<UserCooldown>();
+        private static List<UserCooldown> Beg = new List<UserCooldown>();
+        private static List<UserCooldown> Deposit = new List<UserCooldown>();
+        private static List<UserCooldown> Withdraw = new List<UserCooldown>();
+        private static List<UserCooldown> Steal = new List<UserCooldown>();
+        private static List<UserCooldown> Stolen = new List<UserCooldown>();
+        private static List<UserCooldown> Work = new List<UserCooldown>();
+        private static List<UserCooldown> JobHire = new List<UserCooldown>();
+        private static List<UserCooldown> Mine = new List<UserCooldown>();
+        private static List<UserCooldown> XPCooldown = new List<UserCooldown>();
         public string GetRequest(string url)
         {
             WebRequest request = WebRequest.Create(url);
@@ -33,17 +41,39 @@ namespace Enclave_Bot.Core
             return data;
         }
 
-        public CooldownResponse Cooldown(UserCooldown user, int Seconds)
+        public CooldownResponse Cooldown(SocketUser user, string type, int Seconds = 0)
         {
-            var tempUser = users.FirstOrDefault(x => x.UserID == user.UserID && x.CooldownType == user.CooldownType);
+            var list = new List<UserCooldown>();
+            switch(type)
+            {
+                case "Beg": list = Beg;
+                    break;
+                case "Deposit": list = Deposit;
+                    break;
+                case "Withdraw": list = Withdraw;
+                    break;
+                case "Steal": list = Steal;
+                    break;
+                case "Stolen": list = Stolen;
+                    break;
+                case "Work": list = Work;
+                    break;
+                case "JobHire": list = JobHire;
+                    break;
+                case "Mine": list = Mine;
+                    break;
+                case "XP": list = XPCooldown;
+                    break;
+            }
+            UserCooldown tempUser = list.FirstOrDefault(x => x.UserID == user.Id);
             if(tempUser.UserID != 0)
             {
-                if((DateTime.Now - tempUser.DateTime).TotalSeconds >= Seconds)
+                if((DateTime.Now - tempUser.DateTime).TotalSeconds >= tempUser.CooldownSeconds)
                 {
-                    var value = users.Find(x => x.UserID == tempUser.UserID && x.CooldownType == tempUser.CooldownType);
+                    var value = list.Find(x => x.UserID == tempUser.UserID);
                     value.DateTime = DateTime.Now;
-                    users.Remove(tempUser);
-                    users.Add(value);
+                    list.Remove(tempUser);
+                    list.Add(value);
                     return new CooldownResponse() { CooledDown = true, Seconds = Seconds - (int)(DateTime.Now - tempUser.DateTime).TotalSeconds };
                 }
                 else
@@ -54,22 +84,80 @@ namespace Enclave_Bot.Core
             else
             {
                 UserCooldown NewUser = new UserCooldown();
-                NewUser.UserID = user.UserID;
-                NewUser.CooldownType = user.CooldownType;
+                NewUser.UserID = user.Id;
+                NewUser.CooldownSeconds = Seconds;
                 NewUser.DateTime = DateTime.Now;
-                users.Add(NewUser);
+                list.Add(NewUser);
                 return new CooldownResponse() { CooledDown = true, Seconds = Seconds - (int)(DateTime.Now - tempUser.DateTime).TotalSeconds };
             }
         }
 
-        public CooldownResponse CheckCooldown(SocketUser user, string cooldownType, int Seconds)
+        public CooldownResponse CheckCooldown(SocketUser user, string type)
         {
-            var tempUser = users.FirstOrDefault(x => x.UserID == user.Id && x.CooldownType == cooldownType);
+            var list = new List<UserCooldown>();
+            switch (type)
+            {
+                case "Beg": list = Beg;
+                    break;
+                case "Deposit": list = Deposit;
+                    break;
+                case "Withdraw": list = Withdraw;
+                    break;
+                case "Steal": list = Steal;
+                    break;
+                case "Stolen": list = Stolen;
+                    break;
+                case "Work": list = Work;
+                    break;
+                case "JobHire": list = JobHire;
+                    break;
+                case "Mine": list = Mine;
+                    break;
+                case "XP": list = XPCooldown;
+                    break;
+            }
+            var tempUser = list.FirstOrDefault(x => x.UserID == user.Id);
             if (tempUser.UserID != 0)
             {
-                return new CooldownResponse() { Seconds = Seconds - (int)(DateTime.Now - tempUser.DateTime).TotalSeconds, CooledDown = Seconds - (int)(DateTime.Now - tempUser.DateTime).TotalSeconds == 0 ? true: false};
+                return new CooldownResponse() { Seconds = tempUser.CooldownSeconds - (int)(DateTime.Now - tempUser.DateTime).TotalSeconds, CooledDown = tempUser.CooldownSeconds - (int)(DateTime.Now - tempUser.DateTime).TotalSeconds == 0 ? true: false};
             }
             return new CooldownResponse() { Seconds = 0, CooledDown = true};
+        }
+
+        public List<UserCooldown> CheckCooldownList(string type)
+        {
+            var list = new List<UserCooldown>();
+            switch (type)
+            {
+                case "Beg":
+                    list = Beg;
+                    break;
+                case "Deposit":
+                    list = Deposit;
+                    break;
+                case "Withdraw":
+                    list = Withdraw;
+                    break;
+                case "Steal":
+                    list = Steal;
+                    break;
+                case "Stolen":
+                    list = Stolen;
+                    break;
+                case "Work":
+                    list = Work;
+                    break;
+                case "JobHire":
+                    list = JobHire;
+                    break;
+                case "Mine":
+                    list = Mine;
+                    break;
+                case "XP":
+                    list = XPCooldown;
+                    break;
+            }
+            return list;
         }
 
         public Color randomColor()
