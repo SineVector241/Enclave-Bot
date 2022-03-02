@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using Discord;
-using Discord.Commands;
+﻿using Discord;
 using Discord.WebSocket;
-using System.Reflection;
-using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Fergun.Interactive;
 using Discord.Interactions;
@@ -23,7 +16,7 @@ namespace Enclave_Bot
         {
             Client = new DiscordSocketClient(new DiscordSocketConfig
             {
-                LogLevel = LogSeverity.Debug,
+                LogLevel = LogSeverity.Info,
                 UseInteractionSnowflakeDate = false,
                 MessageCacheSize = 100,
                 GatewayIntents = GatewayIntents.All

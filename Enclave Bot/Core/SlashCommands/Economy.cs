@@ -181,7 +181,7 @@ namespace Enclave_Bot.Core.SlashCommands
         {
             try
             {
-                if(Amount <= 0)
+                if(Amount < 0)
                 {
                     await RespondAsync("Amount must higher than $0");
                     return;
@@ -241,7 +241,7 @@ namespace Enclave_Bot.Core.SlashCommands
         {
             try
             {
-                if (Amount <= 0)
+                if (Amount < 0)
                 {
                     await RespondAsync("Amount must higher than $0");
                     return;

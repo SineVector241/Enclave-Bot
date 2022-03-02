@@ -2,12 +2,15 @@
 using Discord.WebSocket;
 using Discord;
 using Newtonsoft.Json;
+using Fergun.Interactive;
 
 namespace Enclave_Bot.Core.SlashCommands
 {
     public class Miscellaneous : InteractionModuleBase<SocketInteractionContext<SocketSlashCommand>>
     {
         Utils utils = new Utils();
+        public InteractiveService Interactive { get; set; }
+        private Database.Database db = new Database.Database();
 
         [SlashCommand("ping", "Latency of the bot")]
         public async Task Ping()
@@ -98,7 +101,7 @@ namespace Enclave_Bot.Core.SlashCommands
                     .WithColor(utils.randomColor());
                 await RespondAsync(embed: embed.Build());
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
             }

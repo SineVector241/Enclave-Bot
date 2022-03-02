@@ -203,5 +203,95 @@ namespace Enclave_Bot.Core.Interactions
                 await RespondAsync(embed: embed.Build());
             }
         }
+
+        [ComponentInteraction("SelectStaffAppQuestion")]
+        public async Task SelectStaffApplicationQuestion(string[] output)
+        {
+            try
+            {
+                await DeferAsync();
+                var embed = EmbedBuilderExtensions.ToEmbedBuilder(Context.Interaction.Message.Embeds.First());
+                var embedFields = embed.Fields;
+                int selected = Convert.ToInt16(output.First()) - 1;
+                var q = await ReplyAsync($"Question {embedFields[selected].Name}");
+                var answer = await Interactive.NextMessageAsync(x => x.Channel is SocketDMChannel && x.Author.Id == Context.User.Id, timeout: TimeSpan.FromMinutes(2));
+                if (answer.Value == null)
+                    throw new Exception("Timed out");
+                embedFields[selected].Value = answer.Value.Content;
+                await Context.Interaction.Message.ModifyAsync(x => x.Embed = embed.Build());
+                await q.DeleteAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await ReplyAsync(embed: embed.Build());
+            }
+        }
+
+        [ComponentInteraction("SubmitStaffApp:*")]
+        public async Task SubmitStaffApplication(string guildID)
+        {
+            try
+            {
+                var embed = EmbedBuilderExtensions.ToEmbedBuilder(Context.Interaction.Message.Embeds.First());
+                var guild = Context.Client.GetGuild((ulong)Convert.ToInt64(guildID));
+                var guildSettings = await db.GetGuildSettingsById(guild.Id);
+                var applicationChannel = guild.GetTextChannel(guildSettings.StaffApplicationChannel);
+                var builder = new ComponentBuilder()
+                    .WithButton("Accept", $"StaffApplicationAccept:{Context.User.Id}", ButtonStyle.Success, new Emoji("✅"))
+                    .WithButton("Deny", $"StaffApplicationDeny:{Context.User.Id}", ButtonStyle.Danger, new Emoji("❌"));
+                embed.Title = $"New Application from {Context.User.Username}";
+                await applicationChannel.SendMessageAsync($"New staff application from {Context.User.Mention}", embed: embed.Build(), components: builder.Build());
+                await RespondAsync("Successfully sent staff application ✅");
+                await Context.Interaction.Message.DeleteAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await RespondAsync(embed: embed.Build());
+            }
+        }
+
+        [ComponentInteraction("StaffApplicationAccept:*")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task StaffApplicationAccept(string userID)
+        {
+            try
+            {
+                await DeferAsync();
+                var builder = new ComponentBuilder();
+                var menu = new SelectMenuBuilder()
+                    .WithCustomId($"SelectStaffRole:{userID}")
+                    .AddOption("Baron", "757462916613144616")
+                    .AddOption("Marchion", "757463457510457396")
+                    .AddOption("Viscount", "757463208855339078");
+                builder.WithSelectMenu(menu);
+                await Context.Interaction.Message.ModifyAsync(x => { x.Components = builder.Build(); x.Content = $"Accepting user <@{userID}>: Staff Accepting: {Context.Interaction.User.Mention}"; });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await RespondAsync(embed: embed.Build());
+            }
+        }
+
+        [ComponentInteraction("SelectStaffRole:*")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task SelectStaffRole(string userID)
+        {
+
+        }
     }
 }
