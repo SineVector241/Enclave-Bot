@@ -34,6 +34,7 @@ namespace Enclave_Bot
             Client.MessagesBulkDeleted += MessagesBulkDeleted;
             Client.MessageDeleted += MessageDeleted;
             Client.MessageUpdated += MessageUpdated;
+            Client.MessageReceived += MessageReceived;
             Client.ChannelCreated += ChannelCreated;
             Client.ChannelDestroyed += ChannelDestroyed;
             return Task.CompletedTask;
@@ -256,6 +257,34 @@ namespace Enclave_Bot
             catch (Exception ex)
             {
                 Console.WriteLine($"\u001b[97m[{DateTime.Now}]: [\u001b[31mERROR\u001b[97m] => An error occured in EventHandler.cs \nError Info:\n{ex}");
+            }
+        }
+
+        private async Task MessageReceived(SocketMessage arg)
+        {
+            if(arg.Author is SocketGuildUser)
+            {
+                var author = (SocketGuildUser)arg.Author;
+                if(!utils.Cooldown(arg.Author, "XP", 10).CooledDown)
+                {
+                    return;
+                }
+                if (await db.UserHasProfile(arg.Author.Id))
+                {
+                    var user = await db.GetUserProfileById(arg.Author.Id);
+                    user.XP += 1;
+                    if (user.XP >= 2 * user.Level + 10)
+                    {
+                        user.Level += 1;
+                        user.XP = 0;
+                        await author.SendMessageAsync($"Congrats! You leveled up to level {user.Level}");
+                        await db.UpdateUserProfile(user);
+                    }
+                    else
+                    {
+                        await db.UpdateUserProfile(user);
+                    }
+                }
             }
         }
     }

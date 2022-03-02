@@ -83,6 +83,7 @@ namespace Enclave_Bot.Core.SlashCommands
                 int work = utils.CheckCooldown(Context.User, "Work").Seconds;
                 int jobhire = utils.CheckCooldown(Context.User, "QuitJob").Seconds;
                 int mine = utils.CheckCooldown(Context.User, "Mine").Seconds;
+                int XP = utils.CheckCooldown(Context.User, "XP").Seconds;
                 var embed = new EmbedBuilder()
                     .WithTitle($"{Context.User.Username}'s cooldowns")
                     .AddField("Beg", $"{ (beg <= 0 ? "Ready" : beg + " Seconds")}")
@@ -93,6 +94,7 @@ namespace Enclave_Bot.Core.SlashCommands
                     .AddField("Work", $"{(work <= 0 ? "Ready" : work + " Seconds")}")
                     .AddField("JobHire", $"{(jobhire <= 0 ? "Ready" : jobhire + " Seconds")}")
                     .AddField("Mine", $"{(mine <= 0 ? "Ready" : mine + " Seconds")}")
+                    .AddField("XPCooldown", $"{(XP <= 0 ? "Ready" : XP + " Seconds")}")
                     .WithColor(utils.randomColor());
                 await RespondAsync(embed: embed.Build());
             }

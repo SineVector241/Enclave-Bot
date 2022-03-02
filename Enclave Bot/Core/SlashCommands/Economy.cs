@@ -181,6 +181,11 @@ namespace Enclave_Bot.Core.SlashCommands
         {
             try
             {
+                if(Amount <= 0)
+                {
+                    await RespondAsync("Amount must higher than $0");
+                    return;
+                }
                 var cooldown = utils.Cooldown(Context.User, "Deposit", 60);
                 if (cooldown.CooledDown)
                 {
@@ -236,6 +241,11 @@ namespace Enclave_Bot.Core.SlashCommands
         {
             try
             {
+                if (Amount <= 0)
+                {
+                    await RespondAsync("Amount must higher than $0");
+                    return;
+                }
                 var cooldown = utils.Cooldown(Context.User, "Withdraw", 60);
                 if (cooldown.CooledDown)
                 {
@@ -584,6 +594,11 @@ namespace Enclave_Bot.Core.SlashCommands
         {
             try
             {
+                if (Amount <= 0)
+                {
+                    await RespondAsync("Amount must higher than $0");
+                    return;
+                }
                 if (User.Id == Context.User.Id)
                 {
                     await RespondAsync("You can't pay to yourself dummy");
