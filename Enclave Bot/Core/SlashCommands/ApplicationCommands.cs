@@ -28,7 +28,7 @@ namespace Enclave_Bot.Core.SlashCommands
                     };
 
                     var embed = new EmbedBuilder()
-                        .WithTitle("Enclave Verification Application")
+                        .WithTitle("Enclave Staff Application")
                         .WithColor(utils.randomColor());
                     var selectMenu = new SelectMenuBuilder()
                         .WithPlaceholder("Select a question")

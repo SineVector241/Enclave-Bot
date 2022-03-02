@@ -9,6 +9,7 @@ namespace Enclave_Bot.Core.Interactions
     {
         public InteractiveService Interactive { get; set; }
         private Database.Database db = new Database.Database();
+        private Utils utils = new Utils();
 
         [ComponentInteraction("SelectAppQuestion")]
         public async Task SelectApplicationQuestion(string[] output)
@@ -147,9 +148,9 @@ namespace Enclave_Bot.Core.Interactions
                     .WithTitle("You application has been denied")
                     .WithColor(Color.Red);
                 string selections = "";
-                foreach(var selection in output)
+                foreach (var selection in output)
                 {
-                    if(selection == "Deny")
+                    if (selection == "Deny")
                     {
                         await DeferAsync();
                         embed.Description = $"Questions that were denied in your application:\n{selections}";
@@ -170,7 +171,7 @@ namespace Enclave_Bot.Core.Interactions
                     }
                     selections += $"Question: {selection}\n";
                 }
-                await RespondAsync($"Selected questions:\n{selections}", ephemeral:true);
+                await RespondAsync($"Selected questions:\n{selections}", ephemeral: true);
             }
             catch (Exception ex)
             {
@@ -289,9 +290,82 @@ namespace Enclave_Bot.Core.Interactions
 
         [ComponentInteraction("SelectStaffRole:*")]
         [RequireUserPermission(GuildPermission.Administrator)]
-        public async Task SelectStaffRole(string userID)
+        public async Task SelectStaffRole(string userID, string[] role)
         {
+            try
+            {
+                var user = Context.Guild.GetUser((ulong)Convert.ToInt64(userID));
+                await user.AddRoleAsync((ulong)Convert.ToInt64(role.First()));
+                await RespondAsync("Accepted user", ephemeral: true);
+                await Context.Interaction.Message.ModifyAsync(x => { x.Content = $"Accepted user <@{userID}>. Accepted by: {Context.Interaction.User.Mention}"; x.Components = new ComponentBuilder().Build(); });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await RespondAsync(embed: embed.Build());
+            }
+        }
 
+        [ComponentInteraction("StaffApplicationDeny:*")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task StaffApplicationDeny(string userID)
+        {
+            try
+            {
+                await DeferAsync();
+                var msg = await FollowupAsync("Please write a response");
+                var resp = await Interactive.NextMessageAsync(x => x.Author.Id == Context.User.Id && x.Channel.Id == Context.Channel.Id, timeout: TimeSpan.FromMinutes(2));
+                if (!resp.IsSuccess)
+                {
+                    await msg.ModifyAsync(x => x.Content = "Timed Out");
+                    return;
+                }
+                string[] questions = {
+                        "What is your gamertag?",
+                        "What is your age?",
+                        "Do you have any previous experience in moderating for a discord/Minecraft server? \nIf so, please state what you did and what the discord server was focused around.",
+                        "For how long have you been a member of E.K?(Enclave Kingdoms) \n**Estimating is fine**",
+                        "What could you do to benefit Enclave Kingdoms if you were to be chosen to be apart of the White Guard?",
+                        "Do you have any background knowledge in Command blocks, add-ons, etc?",
+                        "Why do you want to be apart of the White Guard and what are your interests in being staff?",
+                        "Have you memorized all the rules and guidelines of Enclave Kingdoms? Check out **#faction rules** for information regarding the rules and guidelines of Enclave Kingdoms.",
+                        "How active would you be if chosen to be apart the White Guard? \nNote: we require considerable activity for members of the White Guard"
+                    };
+                var user = Context.Guild.GetUser((ulong)Convert.ToInt64(userID));
+                var selectMenu = new SelectMenuBuilder()
+                    .WithPlaceholder("Select a question")
+                    .WithCustomId("SelectStaffAppQuestion");
+                var embed = new EmbedBuilder()
+                    .WithTitle("You application has been denied")
+                    .WithColor(Color.Red)
+                    .WithDescription($"Staff Response/Comment:\n{resp.Value.Content}");
+                for (int i = 0; i < questions.Length; i++)
+                {
+                    selectMenu.AddOption($"Question: {i + 1}", $"{i + 1}", $"Answer question {i + 1}");
+                }
+                var builder = new ComponentBuilder()
+                    .WithSelectMenu(selectMenu, row: 0)
+                    .WithButton("Submit", $"SubmitApp:{Context.Guild.Id}", ButtonStyle.Success, new Emoji("✅"), row: 1);
+                await user.SendMessageAsync(embed: embed.Build());
+                await user.SendMessageAsync(embed: Context.Interaction.Message.Embeds.First(), components: builder.Build());
+                await resp.Value.DeleteAsync();
+                await msg.DeleteAsync();
+                await Context.Interaction.Message.ModifyAsync(x => { x.Content = $"Denied application {user.Mention}: Denied By {Context.User.Mention}"; x.Components = new ComponentBuilder().Build(); });
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await FollowupAsync(embed: embed.Build());
+            }
         }
     }
 }
