@@ -295,6 +295,8 @@ namespace Enclave_Bot.Core.Interactions
             try
             {
                 var user = Context.Guild.GetUser((ulong)Convert.ToInt64(userID));
+                var settings = await db.GetGuildSettingsById(Context.Guild.Id);
+                await user.AddRoleAsync(settings.StaffRole);
                 await user.AddRoleAsync((ulong)Convert.ToInt64(role.First()));
                 await RespondAsync("Accepted user", ephemeral: true);
                 await Context.Interaction.Message.ModifyAsync(x => { x.Content = $"Accepted user <@{userID}>. Accepted by: {Context.Interaction.User.Mention}"; x.Components = new ComponentBuilder().Build(); });
