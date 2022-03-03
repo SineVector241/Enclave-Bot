@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Data.SQLite;
+﻿using System.Data.SQLite;
 
 namespace Enclave_Bot.Core.Database
 {
@@ -33,6 +28,18 @@ namespace Enclave_Bot.Core.Database
         public string WorkType { get; set; }
     }
 
+    public struct ActivityData
+    {
+        public ulong ID { get; set; }
+        public ulong RoleID { get; set; }
+        public int TimeDays { get; set; }
+        public int Action { get; set; }
+        public ulong RemoveRole1 { get; set; }
+        public ulong RemoveRole2 { get; set; }
+        public ulong RemoveRole3 { get; set; }
+        public ulong RemoveRole4 { get; set; }
+    }
+
     public class Database
     {
         SQLiteDBContext db = new SQLiteDBContext();
@@ -46,17 +53,22 @@ namespace Enclave_Bot.Core.Database
         {
             string query = "CREATE TABLE IF NOT EXISTS settings (ID varchar(18), LoggingChannel varchar(18), WelcomeChannel varchar(18), ApplicationChannel varchar(18), StaffApplicationChannel varchar(18), BountyChannel varchar(18), ParchmentCategory varchar(18), VerifiedRole varchar(18), UnverifiedRole varchar(18), StaffRole varchar(18), WelcomeMessage string, LeaveMessage string)";
             string query2 = "CREATE TABLE IF NOT EXISTS users (ID varchar(18), Wallet int, Bank int, XP int, Level int, WorkType string)";
+            string query3 = "CREATE TABLE IF NOT EXISTS activitychecker (ID varchar(18), RoleID varchar(18), TimeDays int, Action int, RemoveRole1 varchar(18), RemoveRole2 varchar(18), RemoveRole3 varchar(18), RemoveRole4 varchar(18))";
             SQLiteCommand cmd = new SQLiteCommand(query, db.MyConnection);
             SQLiteCommand cmd2 = new SQLiteCommand(query2, db.MyConnection);
+            SQLiteCommand cmd3 = new SQLiteCommand(query3, db.MyConnection);
             cmd.Prepare();
             cmd2.Prepare();
+            cmd3.Prepare();
             db.OpenConnection();
             cmd.ExecuteNonQuery();
             cmd2.ExecuteNonQuery();
+            cmd3.ExecuteNonQuery();
             db.CloseConnection();
 
             await cmd.DisposeAsync();
             await cmd2.DisposeAsync();
+            await cmd3.DisposeAsync();
         }
 
         //User Information
@@ -65,8 +77,8 @@ namespace Enclave_Bot.Core.Database
             string query = "INSERT INTO users (ID, Wallet, Bank, XP, Level, WorkType) VALUES (@ID, @Wallet, @Bank, @XP, @Level, @WorkType)";
             SQLiteCommand cmd = new SQLiteCommand(query, db.MyConnection);
             cmd.Parameters.AddWithValue("@ID", profile.UserID);
-            cmd.Parameters.AddWithValue("@Wallet",profile.Wallet);
-            cmd.Parameters.AddWithValue("@Bank",profile.Bank);
+            cmd.Parameters.AddWithValue("@Wallet", profile.Wallet);
+            cmd.Parameters.AddWithValue("@Bank", profile.Bank);
             cmd.Parameters.AddWithValue("@XP", profile.XP);
             cmd.Parameters.AddWithValue("@Level", profile.Level);
             cmd.Parameters.AddWithValue("@WorkType", profile.WorkType);
@@ -91,12 +103,12 @@ namespace Enclave_Bot.Core.Database
         public async Task<UserProfile> GetUserProfileById(ulong id)
         {
             string query = $"SELECT * FROM users WHERE ID = {id}";
-            SQLiteCommand cmd = new SQLiteCommand(query,db.MyConnection);
+            SQLiteCommand cmd = new SQLiteCommand(query, db.MyConnection);
             cmd.Prepare();
             db.OpenConnection();
             SQLiteDataReader result = cmd.ExecuteReader();
             UserProfile profile = new UserProfile();
-            if(result.HasRows) while (result.Read())
+            if (result.HasRows) while (result.Read())
                 {
                     profile.UserID = id;
                     profile.Wallet = Convert.ToInt32(result["Wallet"]);
@@ -203,6 +215,61 @@ namespace Enclave_Bot.Core.Database
             await cmd.DisposeAsync();
             await result.DisposeAsync();
             return hasSettings;
+        }
+
+        public async Task CreateActivity(ActivityData activity)
+        {
+            string query = "INSERT INTO activitychecker (ID, RoleID, TimeDays, Action, RemoveRole1, RemoveRole2, RemoveRole3, RemoveRole4) VALUES (@ID, @RoleID, @TimeDays, @Action, @RemoveRole1, @RemoveRole2, @RemoveRole3, @RemoveRole4)";
+            SQLiteCommand cmd = new SQLiteCommand(query, db.MyConnection);
+            cmd.Parameters.AddWithValue("@ID", activity.ID);
+            cmd.Parameters.AddWithValue("@RoleID", activity.RoleID);
+            cmd.Parameters.AddWithValue("@TimeDays", activity.TimeDays);
+            cmd.Parameters.AddWithValue("@Action", activity.Action);
+            cmd.Parameters.AddWithValue("@RemoveRole1", activity.RemoveRole1);
+            cmd.Parameters.AddWithValue("@RemoveRole2", activity.RemoveRole2);
+            cmd.Parameters.AddWithValue("@RemoveRole3", activity.RemoveRole3);
+            cmd.Parameters.AddWithValue("@RemoveRole4", activity.RemoveRole4);
+            cmd.Prepare();
+            db.OpenConnection();
+            cmd.ExecuteNonQuery();
+            db.CloseConnection();
+            await cmd.DisposeAsync();
+        }
+
+        public async Task UpdateActivity(ActivityData activity)
+        {
+            string query = $"UPDATE activitychecker SET ID = {activity.ID}, RoleID = {activity.RoleID}, TimeDays = {activity.TimeDays}, Action = {activity.Action}, RemoveRole1 = {activity.RemoveRole1}, RemoveRole2 = {activity.RemoveRole2}, RemoveRole3 = {activity.RemoveRole3}, RemoveRole4 = {activity.RemoveRole4} WHERE ID = {activity.ID} AND RoleID = {activity.RoleID}";
+            SQLiteCommand cmd = new SQLiteCommand(query, db.MyConnection);
+            cmd.Prepare();
+            db.OpenConnection();
+            cmd.ExecuteNonQuery();
+            db.CloseConnection();
+            await cmd.DisposeAsync();
+        }
+
+        public async Task<ActivityData> GetActivity(ulong id, ulong roleID)
+        {
+            string query = $"SELECT * FROM activitychecker WHERE ID = {id} AND RoleID = {roleID}";
+            SQLiteCommand cmd = new SQLiteCommand(query, db.MyConnection);
+            cmd.Prepare();
+            db.OpenConnection();
+            SQLiteDataReader result = cmd.ExecuteReader();
+            ActivityData activity = new ActivityData();
+            if (result.HasRows) while (result.Read())
+                {
+                    activity.ID = id;
+                    activity.RoleID = roleID;
+                    activity.TimeDays = Convert.ToInt16(result["TimeDays"]);
+                    activity.Action = Convert.ToInt16(result["TimeDays"]);
+                    activity.RemoveRole1 = (ulong)Convert.ToInt64(result["RemoveRole1"]);
+                    activity.RemoveRole2 = (ulong)Convert.ToInt64(result["RemoveRole2"]);
+                    activity.RemoveRole3 = (ulong)Convert.ToInt64(result["RemoveRole3"]);
+                    activity.RemoveRole4 = (ulong)Convert.ToInt64(result["RemoveRole4"]);
+                }
+            db.CloseConnection();
+            await cmd.DisposeAsync();
+            await result.DisposeAsync();
+            return activity;
         }
     }
 }
