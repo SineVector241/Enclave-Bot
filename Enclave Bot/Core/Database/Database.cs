@@ -271,5 +271,20 @@ namespace Enclave_Bot.Core.Database
             await result.DisposeAsync();
             return activity;
         }
+
+        public async Task<bool> HasActivity(ulong id, ulong RoleID)
+        {
+            string query = $"SELECT * FROM activitychecker WHERE ID = {id} AND RoleID = {RoleID}";
+            SQLiteCommand cmd = new SQLiteCommand(query, db.MyConnection);
+            cmd.Prepare();
+            db.OpenConnection();
+            SQLiteDataReader result = cmd.ExecuteReader();
+            bool hasActivity = false;
+            if (result.HasRows) hasActivity = true;
+            db.CloseConnection();
+            await cmd.DisposeAsync();
+            await result.DisposeAsync();
+            return hasActivity;
+        }
     }
 }

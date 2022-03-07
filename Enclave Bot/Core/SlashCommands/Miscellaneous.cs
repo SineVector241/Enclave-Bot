@@ -106,5 +106,22 @@ namespace Enclave_Bot.Core.SlashCommands
                 Console.WriteLine(ex.ToString());
             }
         }
+
+        [SlashCommand("poll","Create a poll. Use | to separate answers")]
+        public async Task Poll(string question, string options)
+        {
+            await DeferAsync();
+            string[] regs = { "🇦", "🇧", "🇨", "🇩", "🇪", "🇫" };
+            string[] listOptions = options.Split("|");
+            var embed = new EmbedBuilder()
+                .WithColor(utils.randomColor())
+                .WithTitle(question);
+            string content = "";
+            for(int i = 0; i < listOptions.Length; i++)
+            {
+                content += $"{regs[i]}: {listOptions[i]}";
+            }
+            await FollowupAsync(embed: embed.Build());
+        }
     }
 }
