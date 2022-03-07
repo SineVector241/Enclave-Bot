@@ -107,21 +107,38 @@ namespace Enclave_Bot.Core.SlashCommands
             }
         }
 
-        [SlashCommand("poll","Create a poll. Use | to separate answers")]
+        [SlashCommand("poll", "Create a poll. Use | to separate answers")]
         public async Task Poll(string question, string options)
         {
-            await DeferAsync();
-            string[] regs = { "🇦", "🇧", "🇨", "🇩", "🇪", "🇫" };
-            string[] listOptions = options.Split("|");
-            var embed = new EmbedBuilder()
-                .WithColor(utils.randomColor())
-                .WithTitle(question);
-            string content = "";
-            for(int i = 0; i < listOptions.Length; i++)
+            try
             {
-                content += $"{regs[i]}: {listOptions[i]}";
+                await DeferAsync();
+                string[] regs = { "🇦", "🇧", "🇨", "🇩", "🇪", "🇫" };
+                string[] listOptions = options.Split("|");
+                var embed = new EmbedBuilder()
+                    .WithColor(utils.randomColor())
+                    .WithTitle(question);
+                string content = "";
+                for (int i = 0; i < listOptions.Length; i++)
+                {
+                    content += $"{regs[i]}**: {listOptions[i]}**\n";
+                }
+                embed.WithDescription(content);
+                var msg = await FollowupAsync(embed: embed.Build());
+                for (int i = 0; i < listOptions.Length; i++)
+                {
+                    await msg.AddReactionAsync(new Emoji(regs[i]));
+                }
             }
-            await FollowupAsync(embed: embed.Build());
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await FollowupAsync(embed: embed.Build());
+            }
         }
     }
 }
