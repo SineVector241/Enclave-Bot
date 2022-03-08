@@ -275,5 +275,109 @@ namespace Enclave_Bot.Core.SlashCommands
                 await RespondAsync(embed: embed.Build());
             }
         }
+
+        [SlashCommand("activechecker", "Create, Modify, Check or Delete activity checkers")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task ActivityChecker([Choice("Add", "Add"), Choice("Edit", "Edit"), Choice("View", "View"), Choice("Delete", "Delete")] string Option, SocketRole role, int Days = 1, [Choice("Notify Only", 0), Choice("Remove Roles", 1), Choice("Kick User", 2)] int Action = 0, SocketRole RemoveRole1 = null, SocketRole RemoveRole2 = null, SocketRole RemoveRole3 = null, SocketRole RemoveRole4 = null)
+        {
+            try
+            {
+                var activity = await db.HasActivity(Context.Guild.Id, role.Id);
+                string action = "";
+                if(Action == 0)
+                    action = "Notify Only";
+                if (Action == 1)
+                    action = "Remove Roles";
+                if (Action == 2)
+                    action = "Kick User";
+                switch(Option)
+                {
+                    case "Add":
+                        if(activity)
+                        {
+                            await RespondAsync("This role has already been assigned to an activity");
+                            return;
+                        }
+                        if(Action == 1 && (RemoveRole1 == null || RemoveRole2 == null || RemoveRole3 == null || RemoveRole4 == null))
+                        {
+                            await RespondAsync("You must fill in a RemoveRole parameter if you want to remove a role.");
+                            return;
+                        }
+                        await db.CreateActivity(new Database.ActivityData() { ID = Context.Guild.Id, RoleID = role.Id, Action = Action, TimeDays = Days, RemoveRole1 = RemoveRole1 == null? 0 : RemoveRole1.Id, RemoveRole2 = RemoveRole2 == null ? 0 : RemoveRole2.Id, RemoveRole3 = RemoveRole3 == null ? 0 : RemoveRole3.Id, RemoveRole4 = RemoveRole4 == null ? 0 : RemoveRole4.Id });
+                        var embed = new EmbedBuilder()
+                            .WithTitle("Successfully created activity checker")
+                            .AddField("Role", role.Mention)
+                            .AddField("Days", Days)
+                            .AddField("Action", action)
+                            .WithColor(utils.randomColor());
+                        await RespondAsync(embed: embed.Build());
+                        break;
+                    case "Delete":
+                        if(!activity)
+                        {
+                            await RespondAsync("This role does not have an activity checker set on it");
+                            return;
+                        }
+                        await db.RemoveActivity(Context.Guild.Id, role.Id);
+                        await RespondAsync("Successfully removed action");
+                        break;
+                    case "Edit":
+                        if (!activity)
+                        {
+                            await RespondAsync("This role does not have an activity");
+                            return;
+                        }
+                        if (Action == 1 && (RemoveRole1 == null || RemoveRole2 == null || RemoveRole3 == null || RemoveRole4 == null))
+                        {
+                            await RespondAsync("You must fill in a RemoveRole parameter if you want to remove a role.");
+                            return;
+                        }
+                        await db.UpdateActivity(new Database.ActivityData() { ID = Context.Guild.Id, RoleID = role.Id, Action = Action, TimeDays = Days, RemoveRole1 = RemoveRole1 == null ? 0 : RemoveRole1.Id, RemoveRole2 = RemoveRole2 == null ? 0 : RemoveRole2.Id, RemoveRole3 = RemoveRole3 == null ? 0 : RemoveRole3.Id, RemoveRole4 = RemoveRole4 == null ? 0 : RemoveRole4.Id });
+                        var Embedded = new EmbedBuilder()
+                            .WithTitle("Successfully updated activity checker")
+                            .AddField("Role", role.Mention)
+                            .AddField("Days", Days)
+                            .AddField("Action", action)
+                            .WithColor(utils.randomColor());
+                        await RespondAsync(embed: Embedded.Build());
+                        break;
+                    case "View":
+                        if (!activity)
+                        {
+                            await RespondAsync("This role does not have an activity");
+                            return;
+                        }
+                        var data = await db.GetActivity(Context.Guild.Id, role.Id);
+                        string actiondefine = "";
+                        if (data.Action == 0)
+                            actiondefine = "Notify Only";
+                        if (data.Action == 1)
+                            actiondefine = "Remove Roles";
+                        if (data.Action == 2)
+                            actiondefine = "Kick User";
+                        var embed2 = new EmbedBuilder()
+                            .WithTitle("Viewing Activity")
+                            .AddField("Role", data.RoleID)
+                            .AddField("Days", data.TimeDays.ToString())
+                            .AddField("Action", actiondefine)
+                            .AddField("RemoveRole1", data.RemoveRole1)
+                            .AddField("RemoveRole2", data.RemoveRole2)
+                            .AddField("RemoveRole3", data.RemoveRole3)
+                            .AddField("RemoveRole4", data.RemoveRole4)
+                            .WithColor(utils.randomColor());
+                        await RespondAsync(embed: embed2.Build());
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await RespondAsync(embed: embed.Build());
+            }
+        }
     }
 }
