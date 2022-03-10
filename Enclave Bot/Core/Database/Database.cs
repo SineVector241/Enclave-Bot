@@ -263,7 +263,7 @@ namespace Enclave_Bot.Core.Database
                     activity.ID = id;
                     activity.RoleID = roleID;
                     activity.TimeDays = Convert.ToInt16(result["TimeDays"]);
-                    activity.Action = Convert.ToInt16(result["TimeDays"]);
+                    activity.Action = Convert.ToInt16(result["Action"]);
                     activity.RemoveRole1 = (ulong)Convert.ToInt64(result["RemoveRole1"]);
                     activity.RemoveRole2 = (ulong)Convert.ToInt64(result["RemoveRole2"]);
                     activity.RemoveRole3 = (ulong)Convert.ToInt64(result["RemoveRole3"]);
@@ -288,6 +288,17 @@ namespace Enclave_Bot.Core.Database
             await cmd.DisposeAsync();
             await result.DisposeAsync();
             return hasActivity;
+        }
+
+        public async Task RemoveActivity(ulong id, ulong roleID)
+        {
+            string query = $"DELETE FROM activitychecker WHERE ID = {id} AND RoleID = {roleID}";
+            SQLiteCommand cmd = new SQLiteCommand(query, db.MyConnection);
+            cmd.Prepare();
+            db.OpenConnection();
+            cmd.ExecuteNonQuery();
+            db.CloseConnection();
+            await cmd.DisposeAsync();
         }
     }
 }
