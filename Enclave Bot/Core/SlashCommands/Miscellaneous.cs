@@ -87,6 +87,7 @@ namespace Enclave_Bot.Core.SlashCommands
                 int jobhire = utils.CheckCooldown(Context.User, "QuitJob").Seconds;
                 int mine = utils.CheckCooldown(Context.User, "Mine").Seconds;
                 int XP = utils.CheckCooldown(Context.User, "XP").Seconds;
+                int Suggestion = utils.CheckCooldown(Context.User, "Suggestion").Seconds;
                 var embed = new EmbedBuilder()
                     .WithTitle($"{Context.User.Username}'s cooldowns")
                     .AddField("Beg", $"{ (beg <= 0 ? "Ready" : beg + " Seconds")}")
@@ -98,6 +99,7 @@ namespace Enclave_Bot.Core.SlashCommands
                     .AddField("JobHire", $"{(jobhire <= 0 ? "Ready" : jobhire + " Seconds")}")
                     .AddField("Mine", $"{(mine <= 0 ? "Ready" : mine + " Seconds")}")
                     .AddField("XPCooldown", $"{(XP <= 0 ? "Ready" : XP + " Seconds")}")
+                    .AddField("Suggestion", $"{(Suggestion <= 0 ? "Ready" : Suggestion + " Seconds")}")
                     .WithColor(utils.randomColor());
                 await RespondAsync(embed: embed.Build());
             }
@@ -140,5 +142,41 @@ namespace Enclave_Bot.Core.SlashCommands
                 await FollowupAsync(embed: embed.Build());
             }
         }
-    }
+
+        [SlashCommand("suggest", "Make a suggestion")]
+        public async Task Suggest(string suggestion)
+        {
+            try
+            {
+                await DeferAsync();
+                var cooldown = utils.Cooldown(Context.User, "Suggestion", 60);
+                if(!cooldown.CooledDown)
+                {
+                    await RespondAsync($"You are on cooldown for this command. Try again in {cooldown.Seconds}");
+                    return;
+                }
+                var guildsettings = await db.GetGuildSettingsById(Context.Guild.Id);
+                var channel = Context.Guild.GetTextChannel(guildsettings.SuggestionsChannel);
+                var embed = new EmbedBuilder()
+                    .WithTitle($"New suggestion from {Context.User.Username}")
+                    .WithDescription(suggestion)
+                    .WithColor(utils.randomColor())
+                    .WithThumbnailUrl(Context.User.GetAvatarUrl())
+                    .WithTimestamp(DateTime.Now);
+                var msg = await channel.SendMessageAsync(embed: embed.Build());
+                await msg.AddReactionAsync(new Emoji("✅"));
+                await msg.AddReactionAsync(new Emoji("❌"));
+                await FollowupAsync("Successfully sent suggestion", ephemeral: true);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                var embed = new EmbedBuilder()
+                    .WithTitle("An error has occured")
+                    .WithDescription($"Error Message: {ex.Message}")
+                    .WithColor(Color.DarkRed);
+                await FollowupAsync(embed: embed.Build());
+            }
+        }
+        }
 }

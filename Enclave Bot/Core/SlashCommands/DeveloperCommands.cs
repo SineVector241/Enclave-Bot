@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Enclave_Bot.Core.SlashCommands
 {
@@ -21,7 +22,7 @@ namespace Enclave_Bot.Core.SlashCommands
                 var embed = new EmbedBuilder();
                 embed.WithTitle($"Checking Cooldown: {type}");
                 embed.WithColor(utils.randomColor());
-                foreach(var cooldown in list)
+                foreach (var cooldown in list)
                 {
                     embed.AddField($"ID: {cooldown.UserID}", $"DateTime: {cooldown.DateTime}\nSeconds: {cooldown.CooldownSeconds}");
                 }

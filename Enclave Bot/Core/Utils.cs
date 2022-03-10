@@ -29,6 +29,7 @@ namespace Enclave_Bot.Core
         private static List<UserCooldown> JobHire = new List<UserCooldown>();
         private static List<UserCooldown> Mine = new List<UserCooldown>();
         private static List<UserCooldown> XPCooldown = new List<UserCooldown>();
+        private static List<UserCooldown> Suggestion = new List<UserCooldown>();
         public string GetRequest(string url)
         {
             WebRequest request = WebRequest.Create(url);
@@ -63,6 +64,8 @@ namespace Enclave_Bot.Core
                 case "Mine": list = Mine;
                     break;
                 case "XP": list = XPCooldown;
+                    break;
+                case "Suggestion": list = Suggestion;
                     break;
             }
             UserCooldown tempUser = list.FirstOrDefault(x => x.UserID == user.Id);
@@ -115,6 +118,8 @@ namespace Enclave_Bot.Core
                     break;
                 case "XP": list = XPCooldown;
                     break;
+                case "Suggestion": list = Suggestion;
+                    break;
             }
             var tempUser = list.FirstOrDefault(x => x.UserID == user.Id);
             if (tempUser.UserID != 0)
@@ -155,6 +160,9 @@ namespace Enclave_Bot.Core
                     break;
                 case "XP":
                     list = XPCooldown;
+                    break;
+                case "Suggestion":
+                    list = Suggestion;
                     break;
             }
             return list;

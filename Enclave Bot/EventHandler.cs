@@ -14,6 +14,7 @@ namespace Enclave_Bot
         private readonly IServiceProvider ServiceProvider;
         private Database db = new Database();
         private Utils utils = new Utils();
+        private Timer _timer = null;
 
         public EventHandler(IServiceProvider Services)
         {
@@ -220,6 +221,7 @@ namespace Enclave_Bot
                                 ParchmentCategory = 0,
                                 StaffApplicationChannel = 0,
                                 BountyChannel = 0,
+                                SuggestionsChannel = 0,
                                 UnverifiedRole = 0,
                                 VerifiedRole = 0,
                                 WelcomeMessage = "Welcome to [guild] **[user]**",
@@ -253,6 +255,7 @@ namespace Enclave_Bot
                 await Client.SetGameAsync("/help");
                 await Client.SetStatusAsync(UserStatus.Online);
                 await Interactions.RegisterCommandsToGuildAsync(749358542145716275);
+                _timer = new Timer(CheckUserActivity, null, 0, 1000 * 60 * 60 * 24);
             }
             catch (Exception ex)
             {
@@ -286,6 +289,17 @@ namespace Enclave_Bot
                     }
                 }
             }
+        }
+
+        public void CheckUserActivity(object state)
+        {
+            var userActivities = new Config().GetUserActivities();
+            foreach (var guild in Client.Guilds)
+            {
+                Console.WriteLine(guild.Name);
+            }
+            userActivities["UserID2"] = "Test2";
+            new Config().WriteToActivities(userActivities);
         }
     }
 }

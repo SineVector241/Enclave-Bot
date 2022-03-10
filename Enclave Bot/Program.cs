@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Enclave_Bot
+﻿namespace Enclave_Bot
 {
     class Program
     {
