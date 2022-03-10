@@ -41,6 +41,18 @@ namespace Enclave_Bot.Core.Database
         public ulong RemoveRole4 { get; set; }
     }
 
+    public struct MultipleActivityData
+    {
+        public ulong ID { get; set; }
+        public ulong RoleID { get; set; }
+        public int TimeDays { get; set; }
+        public int Action { get; set; }
+        public ulong RemoveRole1 { get; set; }
+        public ulong RemoveRole2 { get; set; }
+        public ulong RemoveRole3 { get; set; }
+        public ulong RemoveRole4 { get; set; }
+    }
+
     public class Database
     {
         SQLiteDBContext db = new SQLiteDBContext();
@@ -273,6 +285,33 @@ namespace Enclave_Bot.Core.Database
             await cmd.DisposeAsync();
             await result.DisposeAsync();
             return activity;
+        }
+
+        public async Task<List<MultipleActivityData>> GetMultipleActivityData(ulong id)
+        {
+            string query = $"SELECT * FROM activitychecker WHERE ID = {id}";
+            SQLiteCommand cmd = new SQLiteCommand(query, db.MyConnection);
+            cmd.Prepare();
+            db.OpenConnection();
+            SQLiteDataReader result = cmd.ExecuteReader();
+            MultipleActivityData activity = new MultipleActivityData();
+            List<MultipleActivityData> multipleactivity = new List<MultipleActivityData>();
+            if (result.HasRows) while (result.Read())
+                {
+                    activity.ID = id;
+                    activity.RoleID = (ulong)Convert.ToInt64(result["RoleID"]);
+                    activity.TimeDays = Convert.ToInt16(result["TimeDays"]);
+                    activity.Action = Convert.ToInt16(result["Action"]);
+                    activity.RemoveRole1 = (ulong)Convert.ToInt64(result["RemoveRole1"]);
+                    activity.RemoveRole2 = (ulong)Convert.ToInt64(result["RemoveRole2"]);
+                    activity.RemoveRole3 = (ulong)Convert.ToInt64(result["RemoveRole3"]);
+                    activity.RemoveRole4 = (ulong)Convert.ToInt64(result["RemoveRole4"]);
+                    multipleactivity.Add(activity);
+                }
+            db.CloseConnection();
+            await cmd.DisposeAsync();
+            await result.DisposeAsync();
+            return multipleactivity;
         }
 
         public async Task<bool> HasActivity(ulong id, ulong RoleID)

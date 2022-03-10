@@ -412,7 +412,7 @@ namespace Enclave_Bot.Core.SlashCommands
                 }
 
                 bool success = false;
-                switch (new Random().Next(1, 1))
+                switch (new Random().Next(1, 2))
                 {
                     case 1:
                         string[] emotes = { "unamused", "joy", "smile", "smirk", "rofl", "scream", "rage", "sunglasses", "innocent", "grimacing" };
@@ -438,6 +438,24 @@ namespace Enclave_Bot.Core.SlashCommands
                         else
                         {
                             await message.ModifyAsync(x => { x.Components = new ComponentBuilder().Build(); x.Content = $"Terrible work! You got payed nothing!"; });
+                            success = false;
+                        }
+                        break;
+                    case 2:
+                        string[] words = { "fishing", "deposited", "walking", "lights", "computer", "education", "garbage", "windows", "universal", "virtual", "curtains", "heartbeat", "fencing", "minecraft", "furnace", "orange", "animal", "planet", "economy", "profile", "telephone", "bucket", "blanket", "fighting", "graphics", "leather", "string", "station", "diamond", "turning" };
+                        string randomword = words[new Random().Next(words.Length)];
+                        var message2 = await FollowupAsync($"**Look at the word in the button closely**", components: new ComponentBuilder().WithButton(randomword, "RandomWord").Build());
+                        await Task.Delay(5000);
+                        await message2.ModifyAsync(x => { x.Components = new ComponentBuilder().Build(); x.Content = "**Now retype the word that was in the button**"; });
+                        var choice2 = await Interactive.NextMessageAsync(x => x.Channel.Id == Context.Channel.Id && x.Author.Id == Context.User.Id, timeout: TimeSpan.FromSeconds(10));
+                        if (choice2.IsSuccess && choice2.Value.Content.ToLower() == randomword)
+                        {
+                            await message2.ModifyAsync(x => { x.Components = new ComponentBuilder().Build(); x.Content = $"Good work! you got payed ${payamount}"; });
+                            success = true;
+                        }
+                        else
+                        {
+                            await message2.ModifyAsync(x => { x.Components = new ComponentBuilder().Build(); x.Content = $"Terrible work! You got payed nothing!"; });
                             success = false;
                         }
                         break;

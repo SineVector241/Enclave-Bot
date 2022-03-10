@@ -199,7 +199,6 @@ namespace Enclave_Bot
             return Task.CompletedTask;
         }
 
-
         //Important for the bots framework
         private async Task InteractionCreated(SocketInteraction interaction)
         {
@@ -267,6 +266,9 @@ namespace Enclave_Bot
         {
             if(arg.Author is SocketGuildUser)
             {
+                var userActivities = new Config().GetUserActivities();
+                userActivities[arg.Author.Id.ToString()] = DateTime.Now;
+                new Config().WriteToActivities(userActivities);
                 var author = (SocketGuildUser)arg.Author;
                 if(!utils.Cooldown(arg.Author, "XP", 10).CooledDown)
                 {
@@ -291,14 +293,25 @@ namespace Enclave_Bot
             }
         }
 
-        public void CheckUserActivity(object state)
+        public async void CheckUserActivity(object state)
         {
             var userActivities = new Config().GetUserActivities();
             foreach (var guild in Client.Guilds)
             {
-                Console.WriteLine(guild.Name);
+                foreach(var user in guild.Users)
+                {
+                    if(!userActivities.ContainsKey(user.Id.ToString()))
+                    {
+                        userActivities[user.Id.ToString()] = DateTime.Now;
+                        Console.WriteLine($"\u001b[97m[{DateTime.Now}]: [\u001b[93mACTIVITY\u001b[97m] => {user.Username} Added to database");
+                    }
+                }
+                var data = await db.GetMultipleActivityData(guild.Id);
+                foreach (var activity in data)
+                {
+                    Console.WriteLine(activity.RoleID);
+                }
             }
-            userActivities["UserID2"] = "Test2";
             new Config().WriteToActivities(userActivities);
         }
     }

@@ -1,13 +1,13 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Enclave_Bot.Core.SlashCommands
 {
     public class DeveloperCommands : InteractionModuleBase<SocketInteractionContext<SocketSlashCommand>>
     {
         Utils utils = new Utils();
+        Database.Database db = new Database.Database();
 
         [SlashCommand("checkcooldown", "Checks a cooldown list")]
         public async Task CheckCooldown(string type)
@@ -36,6 +36,25 @@ namespace Enclave_Bot.Core.SlashCommands
                     .WithDescription($"Error Message: {ex.Message}")
                     .WithColor(Color.DarkRed);
                 await RespondAsync(embed: embed.Build());
+            }
+        }
+
+        [SlashCommand("test", "Test Command")]
+        public async Task TestCommand()
+        {
+            try
+            {
+                await DeferAsync();
+                var data = await db.GetMultipleActivityData(Context.Guild.Id);
+                foreach(var activity in data)
+                {
+                    await Context.Channel.SendMessageAsync(activity.RoleID.ToString());
+                }
+                await FollowupAsync("Done");
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex);
             }
         }
     }
