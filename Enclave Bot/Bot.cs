@@ -19,7 +19,8 @@ namespace Enclave_Bot
                 LogLevel = LogSeverity.Debug,
                 UseInteractionSnowflakeDate = false,
                 MessageCacheSize = 100,
-                GatewayIntents = GatewayIntents.All
+                GatewayIntents = GatewayIntents.All,
+                AlwaysDownloadUsers = true
             });
 
             Interactions = new InteractionService(Client.Rest, new InteractionServiceConfig
@@ -36,10 +37,9 @@ namespace Enclave_Bot
             await new InteractionManager(ServiceProvider).Initialize();
 
             Client.Log += ClientLog;
-            System.AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             if (string.IsNullOrWhiteSpace(Config.BotConfiguration.Token))
             {
-                Console.WriteLine("\u001b[41mBOT CONFIGURATION TOKEN IS BLANK\u001b[40m");
+                Console.WriteLine($"[{DateTime.Now}]: [ERROR] => An error occured in Bot.cs \nError Info:\nBOT CONFIGURATION TOKEN IS BLANK");
                 return;
             }
 
@@ -48,14 +48,9 @@ namespace Enclave_Bot
             await Task.Delay(-1);
         }
 
-        private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            Console.WriteLine($"Error: Sender: {sender}\nUnhandled Event: e");
-        }
-
         private Task ClientLog(LogMessage msg)
         {
-            Console.WriteLine($"\u001b[97m[{DateTime.Now}]: [\u001b[93m{msg.Source}\u001b[97m] => {msg.Message}");
+            Console.WriteLine($"[{DateTime.Now}]: [{msg.Source}] => {msg.Message}");
             return Task.CompletedTask;
         }
 
