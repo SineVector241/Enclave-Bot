@@ -33,9 +33,9 @@ namespace Enclave_Bot.Core.Applications
         public async Task SendStaffApplicationQuestions()
         {
             var user = (SocketGuildUser)Context.User;
-            if (user.Roles.FirstOrDefault(x => x.Id == Database.Settings.Current.RoleSettings.VerifiedRole) == null)
+            if (user.Roles.FirstOrDefault(x => x.Id == Database.Settings.Current.RoleSettings.UnverifiedRole) != null)
             {
-                await RespondAsync("Error: You must verify first before filling out a staff application.", ephemeral: true);
+                await RespondAsync("Error: You must verify first before filling out a staff application!", ephemeral: true);
                 return;
             }
             var embed = new EmbedBuilder()

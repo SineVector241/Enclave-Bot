@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using Discord.Rest;
 using Discord.WebSocket;
 
 namespace Enclave_Bot.Core.Staff
@@ -95,6 +96,37 @@ namespace Enclave_Bot.Core.Staff
             await RespondAsync("Sent Embed", ephemeral: true);
         }
 
+        [SlashCommand("embedit", "Edits an embed")]
+        public async Task Embedit(string MsgId, SocketTextChannel? channel = null)
+        {
+            var msgId = ulong.Parse(MsgId);
+            if (channel == null)
+                channel = Context.Channel as SocketTextChannel;
+            var msg = (IMessage)channel.GetCachedMessage(msgId);
+
+            if (msg == null)
+                msg = await channel.GetMessageAsync(msgId);
+
+            if (msg == null || msg.Embeds.FirstOrDefault() == null)
+            {
+                await RespondAsync("Error. Either the message does not have an embed or does not exist.", ephemeral: true);
+                return;
+            }
+
+            if (msg.Author.Id != Context.Client.CurrentUser.Id)
+            {
+                await RespondAsync("Message does not come from the bot itself. Cannot Edit", ephemeral: true);
+                return;
+            }
+
+            var embed = msg.Embeds.FirstOrDefault();
+
+            await Context.Interaction.RespondWithModalAsync<EmbeditModal>($"SEE:{msgId},{channel.Id}", null, x => 
+                x.UpdateTextInput("title", x => x.Value = embed.Title)
+                .UpdateTextInput("desc", x => x.Value = embed.Description)
+            );
+        }
+
         [SlashCommand("user-info", "Displays information about a user")]
         public async Task UserInfo(SocketGuildUser? user = null)
         {
@@ -110,8 +142,8 @@ namespace Enclave_Bot.Core.Staff
                 .AddField("Status", user.Status)
                 .AddField("Created", user.CreatedAt)
                 .AddField("Joined", user.JoinedAt)
-                .AddField("Last Seen Active", userDb.LastActiveUnix)
-                .AddField("Set Gamertag", userDb.Gamertag)
+                .AddField("Last Seen Active", string.IsNullOrWhiteSpace(userDb.LastActiveUnix)? "`Cannot Find Data`" : userDb.LastActiveUnix)
+                .AddField("Set Gamertag", string.IsNullOrWhiteSpace(userDb.Gamertag)? "Not Set" : userDb.Gamertag)
                 .WithColor(Utils.RandomColor())
                 .Build();
 
@@ -141,5 +173,55 @@ namespace Enclave_Bot.Core.Staff
                 await msg.AddReactionAsync(new Emoji(regs[i]));
             }
         }
+    }
+
+    public class ModalApplications : InteractionModuleBase<SocketInteractionContext<SocketInteraction>>
+    {
+        [ModalInteraction("SEE:*,*")]
+        public async Task SubmitEmbedEdit(string MsgId, string channelId, EmbeditModal modal)
+        {
+            var msgId = ulong.Parse(MsgId);
+            var chanId = ulong.Parse(channelId);
+
+            var channel = Context.Guild.GetTextChannel(chanId);
+            var msg = (IMessage)channel.GetCachedMessage(msgId);
+
+            if (channel == null)
+            {
+                await RespondAsync("Error. Cannot find the channel that the message was in.");
+                return;
+            }
+
+            if (msg == null)
+                msg = await channel.GetMessageAsync(msgId);
+
+            if (msg == null || msg.Embeds.FirstOrDefault() == null)
+            {
+                await RespondAsync("Error. Either the message does not have an embed or does not exist.", ephemeral: true);
+                return;
+            }
+
+            await DeferAsync();
+            var userMsg = (RestUserMessage)msg;
+            await userMsg.ModifyAsync(x => x.Embed = EmbedBuilderExtensions.ToEmbedBuilder(msg.Embeds.FirstOrDefault())
+            .WithTitle(modal.EmbedTitle)
+            .WithDescription(modal.EmbedDescription).Build());
+            await FollowupAsync("Successfully edited embed", ephemeral: true);
+        }
+    }
+
+    public class EmbeditModal : IModal
+    {
+        public string Title => "Edit Embed";
+
+        [InputLabel("Title")]
+        [ModalTextInput("title", TextInputStyle.Short, "Title", maxLength: 200)]
+        public string? EmbedTitle { get; set; }
+
+        [RequiredInput(false)]
+        [InputLabel("Description")]
+        [ModalTextInput("desc", TextInputStyle.Paragraph, "Description")]
+        public string? EmbedDescription { get; set; }
+
     }
 }

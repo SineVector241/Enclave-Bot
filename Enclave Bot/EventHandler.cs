@@ -631,6 +631,11 @@ namespace Enclave_Bot
                     var ctx = new SocketInteractionContext<SocketMessageComponent>(Client, (SocketMessageComponent)interaction);
                     var result = await Interactions.ExecuteCommandAsync(ctx, ServiceProvider);
                 }
+                else
+                {
+                    var ctx = new SocketInteractionContext<SocketInteraction>(Client, interaction);
+                    await Interactions.ExecuteCommandAsync(ctx, ServiceProvider);
+                }
 
                 var user = Users.GetUserById(interaction.User.Id);
                 user.LastActiveUnix = $"<t:{Utils.ToUnixTimestamp(DateTime.UtcNow)}:R>";

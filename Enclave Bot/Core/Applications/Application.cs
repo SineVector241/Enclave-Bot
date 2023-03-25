@@ -33,8 +33,15 @@ namespace Enclave_Bot.Core.Applications
         [ComponentInteraction("SAQ")]
         public async Task SendApplicationQuestions()
         {
+            var guildUser = (SocketGuildUser)Context.User;
+            if (guildUser.Roles.FirstOrDefault(x => x.Id == Database.Settings.Current.RoleSettings.UnverifiedRole) == null)
+            {
+                await RespondAsync($"Error: You must have the <@&{Database.Settings.Current.RoleSettings.UnverifiedRole}> to receive the application!", ephemeral: true);
+                return;
+            }
+
             var user = Database.Users.GetUserById(Context.User.Id);
-            if(string.IsNullOrWhiteSpace(user.Gamertag))
+            if (string.IsNullOrWhiteSpace(user.Gamertag))
             {
                 await RespondAsync("Please set your gamertag first by running the `/setgamertag` command!!", ephemeral: true);
                 return;
