@@ -2,6 +2,7 @@
 using Discord.Interactions;
 using Discord.Rest;
 using Discord.WebSocket;
+using Enclave_Bot.Core.Database;
 
 namespace Enclave_Bot.Core.Staff
 {
@@ -202,10 +203,25 @@ namespace Enclave_Bot.Core.Staff
             }
 
             await DeferAsync();
-            var userMsg = (RestUserMessage)msg;
-            await userMsg.ModifyAsync(x => x.Embed = EmbedBuilderExtensions.ToEmbedBuilder(msg.Embeds.FirstOrDefault())
-            .WithTitle(modal.EmbedTitle)
-            .WithDescription(modal.EmbedDescription).Build());
+            if(msg is SocketUserMessage)
+            {
+                var userMsg = (SocketUserMessage)msg;
+                await userMsg.ModifyAsync(x => x.Embed = EmbedBuilderExtensions.ToEmbedBuilder(msg.Embeds.FirstOrDefault())
+                .WithTitle(modal.EmbedTitle)
+                .WithDescription(modal.EmbedDescription).Build());
+            }
+            else if(msg is RestUserMessage)
+            {
+                var userMsg = (RestUserMessage)msg;
+                await userMsg.ModifyAsync(x => x.Embed = EmbedBuilderExtensions.ToEmbedBuilder(msg.Embeds.FirstOrDefault())
+                .WithTitle(modal.EmbedTitle)
+                .WithDescription(modal.EmbedDescription).Build());
+            }
+            else
+            {
+                await FollowupAsync("Could not edit message", ephemeral: true);
+                return;
+            }
             await FollowupAsync("Successfully edited embed", ephemeral: true);
         }
     }
