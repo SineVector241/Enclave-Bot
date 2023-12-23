@@ -1,6 +1,4 @@
 ﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Reflection;
 
 namespace Enclave_Bot
 {
@@ -39,5 +37,6 @@ namespace Enclave_Bot
     public struct BotConfig
     {
         public string Token { get; set; }
+        public ushort HttpServerPort { get; set; }
     }
 }

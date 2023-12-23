@@ -11,6 +11,7 @@ namespace Enclave_Bot
         private DiscordSocketClient Client;
         private IServiceProvider ServiceProvider;
         private InteractionService Interactions;
+        private HttpServer Server;
 
         public Bot()
         {
@@ -29,6 +30,8 @@ namespace Enclave_Bot
             });
 
             ServiceProvider = BuildServiceProvider();
+
+            Server = new HttpServer();
         }
 
         public async Task MainAsync()
@@ -45,6 +48,7 @@ namespace Enclave_Bot
 
             await Client.LoginAsync(TokenType.Bot, Config.BotConfiguration.Token);
             await Client.StartAsync();
+            Server.Start(Config.BotConfiguration.HttpServerPort);
             await Task.Delay(-1);
         }
 
