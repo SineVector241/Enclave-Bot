@@ -34,7 +34,7 @@ namespace Enclave_Bot.Core.Database
             }
         }
 
-        public static User GetUserById(ulong id)
+        public static User? GetUserById(ulong id)
         {
             CreateUserIfNotExists(id);
             var user = Current.Users.FirstOrDefault(x => x.Id == id);
@@ -56,16 +56,14 @@ namespace Enclave_Bot.Core.Database
             }
         }
 
-        public static User? CreateUserIfNotExists(ulong id)
+        public static void CreateUserIfNotExists(ulong id)
         {
             var user = new User { Id = id };
             if (!Current.Users.Exists(x => x.Id == id))
             {
                 Current.Users.Add(user);
                 UpdateUsers();
-                return user;
             }
-            return null;
         }
 
         public static void ReloadUsers()

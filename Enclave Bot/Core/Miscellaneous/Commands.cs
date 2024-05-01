@@ -40,6 +40,18 @@ namespace Enclave_Bot.Core.Miscellaneous
             await RespondAsync(embed: embed, ephemeral: false);
         }
 
+        [SlashCommand("setgamertag", "Sets your gamertag.")]
+        public async Task SetGamertag(string gamertag)
+        {
+            var user = Database.Users.GetUserById(Context.User.Id);
+            if (user != null)
+            {
+                user.Gamertag = gamertag;
+                Database.Users.UpdateUser(user);
+            }
+            await Context.Interaction.RespondAsync($"Successfully set your gamertag to `{gamertag}`", ephemeral: true);
+        }
+
         [SlashCommand("suggest", "Sends a suggestion")]
         public async Task Suggest(string suggestion)
         {
