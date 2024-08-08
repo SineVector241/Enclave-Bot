@@ -37,6 +37,6 @@ namespace Enclave_Bot
     public struct BotConfig
     {
         public string Token { get; set; }
-        public ushort HttpServerPort { get; set; }
+        public string SqlConnection { get; set; }
     }
 }

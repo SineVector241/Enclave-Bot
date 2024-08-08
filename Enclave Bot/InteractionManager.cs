@@ -24,26 +24,22 @@ namespace Enclave_Bot
             try
             {
                 await Interactions.AddModulesAsync(Assembly.GetEntryAssembly(), ServiceProvider);
+                Interactions.Log += InteractionServiceLog;
 
                 foreach (ModuleInfo module in Interactions.Modules)
                 {
-                    Console.WriteLine($"[{DateTime.Now}]: [MODULES] => {module.Name} Initialized");
-                    Interactions.Log += InteractionServiceLog;
-                }
-                foreach (SlashCommandInfo cmd in Interactions.SlashCommands)
-                {
-                    Console.WriteLine($"[{DateTime.Now}]: [SLASHCOMMAND] => {cmd.Name} Loaded");
+                    Console.WriteLine($"[{DateTime.Now}]: [Modules] => {module.Name} Initialized");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[{DateTime.Now}]: [ERROR] => An error occured in InteractioneManager.cs \nError Info:\n{ex}");
+                Console.WriteLine($"[{DateTime.Now}]: [Error] => An error occured in InteractioneManager.cs \nError Info:\n{ex}");
             }
         }
 
         private Task InteractionServiceLog(LogMessage msg)
         {
-            Console.WriteLine(msg.Message);
+            Console.WriteLine($"[{DateTime.Now}]: [Interaction] => {msg.Message}");
             return Task.CompletedTask;
         }
     }

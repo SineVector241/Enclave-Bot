@@ -3,18 +3,30 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Fergun.Interactive;
 using Discord.Interactions;
+using Enclave_Bot.Database;
 
 namespace Enclave_Bot
 {
     public class Bot
     {
-        private DiscordSocketClient Client;
-        private IServiceProvider ServiceProvider;
-        private InteractionService Interactions;
-        private HttpServer Server;
+        //Display/Message Limits!
+        public const int ListLimit = 25;
+        public const int QuestionsLimit = 25;
+        public const int BehaviorsLimit = 25;
+        public const int BehaviorConditionsLimit = 25;
+        public const int StringLengthLimit = 100;
+        public const int NameLengthLimit = 30;
+        public const int TitleLengthLimit = 45;
+        public static readonly Color PrimaryColor = Color.DarkOrange;
+        public static readonly Color SecondaryColor = Color.LightOrange;
+
+        private readonly DiscordSocketClient Client;
+        private readonly IServiceProvider ServiceProvider;
+        private readonly InteractionService Interactions;
 
         public Bot()
         {
+            Console.WriteLine($"[{DateTime.Now}]: [Bot] => Starting Bot...");
             Client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Debug,
@@ -30,13 +42,11 @@ namespace Enclave_Bot
             });
 
             ServiceProvider = BuildServiceProvider();
-
-            Server = new HttpServer();
         }
 
         public async Task MainAsync()
         {
-            await new EventHandler(ServiceProvider).Initialize();
+            new EventHandler(ServiceProvider);
             await new InteractionManager(ServiceProvider).Initialize();
 
             Client.Log += ClientLog;
@@ -48,7 +58,6 @@ namespace Enclave_Bot
 
             await Client.LoginAsync(TokenType.Bot, Config.BotConfiguration.Token);
             await Client.StartAsync();
-            Server.Start(Config.BotConfiguration.HttpServerPort);
             await Task.Delay(-1);
         }
 
@@ -64,6 +73,7 @@ namespace Enclave_Bot
                 .AddSingleton(Client)
                 .AddSingleton<InteractiveService>()
                 .AddSingleton(Interactions)
+                .AddNpgsql<DatabaseContext>(Config.BotConfiguration.SqlConnection)
                 .BuildServiceProvider();
         }
     }
