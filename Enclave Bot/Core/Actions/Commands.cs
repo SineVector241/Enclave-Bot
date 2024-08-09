@@ -6,6 +6,7 @@ using Enclave_Bot.Extensions;
 namespace Enclave_Bot.Core.Actions
 {
     [Group("actions", "Manages actions for the bot.")]
+    [RequireContext(ContextType.Guild)]
     public class Commands(DatabaseContext database) : InteractionModuleBase<SocketInteractionContext<SocketSlashCommand>>
     {
         private readonly DatabaseContext Database = database;
@@ -20,13 +21,12 @@ namespace Enclave_Bot.Core.Actions
             }
 
             var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction, true);
-            var actions = Database.ServerActions.Where(x => x.ServerId == server.Id);
 
             var action = new ServerAction() { Name = name, ServerId = server.Id, Server = server };
             Database.ServerActions.Add(action);
             await Context.Interaction.DeferSafelyAsync(ephemeral: true);
             await Database.SaveChangesAsync();
-            await Context.Interaction.RespondOrFollowupAsync($"Successfully created the action `{action.Name}` with the id {action.Id}.", ephemeral: true);
+            await Context.Interaction.RespondOrFollowupAsync($"Successfully created the action `{action.Name}` with the id `{action.Id}`.", ephemeral: true);
         }
 
         [SlashCommand("list", "lists all actions.")]
@@ -40,9 +40,9 @@ namespace Enclave_Bot.Core.Actions
         }
 
         [SlashCommand("edit", "Shows the editor for an action.")]
-        public async Task EditApplication(string id)
+        public async Task Edit(string id)
         {
-            _ = Guid.TryParse(id, out Guid uuid);
+            _ = Guid.TryParse(id, out var uuid);
             var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction, true);
             var action = Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefault(x => x.Id == uuid);
 
@@ -52,8 +52,8 @@ namespace Enclave_Bot.Core.Actions
                 return;
             }
 
-            var embed = Utils.CreateServerBehaviorsEditorEmbed(action, Context.User);
-            var components = Utils.CreateServerBehaviorsEditorComponents(action, Context.User);
+            var embed = Utils.CreateServerActionBehaviorsEditorEmbed(action, Context.User);
+            var components = Utils.CreateServerActionBehaviorsEditorComponents(action, Context.User);
             await Context.Interaction.RespondOrFollowupAsync(embed: embed.Build(), components: components.Build());
         }
     }

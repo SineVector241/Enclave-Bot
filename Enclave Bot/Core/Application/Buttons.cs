@@ -61,7 +61,7 @@ namespace Enclave_Bot.Core.Application
                 .WithMinValues(1)
                 .WithMaxValues(application.Questions.Count);
 
-            for (int i = 0; i < application.Questions.Count; i++)
+            for (var i = 0; i < application.Questions.Count; i++)
             {
                 questionsSelectMenu.AddOption(i.ToString(), i.ToString(), application.Questions[i]);
             }
@@ -95,7 +95,7 @@ namespace Enclave_Bot.Core.Application
             var questionsSelectMenu = new SelectMenuBuilder()
                 .WithCustomId($"ESAQ:{application.Id},{Context.Interaction.Message.Id}");
 
-            for (int i = 0; i < application.Questions.Count; i++)
+            for (var i = 0; i < application.Questions.Count; i++)
             {
                 questionsSelectMenu.AddOption(i.ToString(), i.ToString(), application.Questions[i]);
             }

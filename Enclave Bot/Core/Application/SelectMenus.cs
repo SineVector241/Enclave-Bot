@@ -26,7 +26,7 @@ namespace Enclave_Bot.Core.Application
                 return;
             }
 
-            for (int i = application.Questions.Count - 1; i >= 0; i--)
+            for (var i = application.Questions.Count - 1; i >= 0; i--)
             {
                 if (sltdQs.Contains(i))
                 {

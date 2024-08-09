@@ -40,9 +40,9 @@ namespace Enclave_Bot.Core.Application
         }
 
         [SlashCommand("edit", "Shows the editor for an application.")]
-        public async Task EditApplication(string id)
+        public async Task Edit(string id)
         {
-            Guid.TryParse(id, out var uuid);
+            _ = Guid.TryParse(id, out var uuid);
             var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction, true);
             var application = Database.ServerApplications.Where(x => x.ServerId == server.Id).FirstOrDefault(x => x.Id == uuid);
 
@@ -60,7 +60,7 @@ namespace Enclave_Bot.Core.Application
         [SlashCommand("delete", "Deletes an application.")]
         public async Task DeleteApplication(string id)
         {
-            Guid.TryParse(id, out var uuid);
+            _ = Guid.TryParse(id, out var uuid);
             var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction, true);
             var application = Database.ServerApplications.Where(x => x.ServerId == server.Id).FirstOrDefault(x => x.Id == uuid);
 

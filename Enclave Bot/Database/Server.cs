@@ -46,7 +46,7 @@ namespace Enclave_Bot.Database
         public required Guid ServerActionsId { get; set; }
         public required ServerAction ServerActions { get; set; }
 
-        public BehaviorType Type { get; set; }
+        public ServerActionBehaviorType Type { get; set; }
         public string? Data { get; set; }
     }
 
@@ -57,18 +57,18 @@ namespace Enclave_Bot.Database
         public required Guid ServerActionsId { get; set; }
         public required ServerAction ServerActions { get; set; }
 
-        public BehaviorConditionType Type { get; set; }
+        public ServerActionConditionType Type { get; set; }
         public string? Data { get; set; }
     }
 
-    public enum BehaviorType
+    public enum ServerActionBehaviorType
     {
         AddRole,
         RemoveRole,
         SendApplication
     }
 
-    public enum BehaviorConditionType
+    public enum ServerActionConditionType
     {
         HasRole,
         HasNoRole

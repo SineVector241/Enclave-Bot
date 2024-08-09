@@ -5,7 +5,7 @@ using Enclave_Bot.Extensions;
 
 namespace Enclave_Bot.Core
 {
-    public class Utils
+    public static class Utils
     {
         public static Embed CreateErrorEmbed(string errorDescription, IUser author)
         {
@@ -34,7 +34,7 @@ namespace Enclave_Bot.Core
                             .WithTitle(title.Truncate(Bot.TitleLengthLimit))
                             .WithColor(Bot.PrimaryColor);
             //25 for list limit!
-            for(int i = page * Bot.ListLimit; i < applications.Length; i++)
+            for(var i = page * Bot.ListLimit; i < applications.Length; i++)
             {
                 embed.AddField(applications[i].Name, $"`{applications[i].Id}`");
             }
@@ -59,13 +59,24 @@ namespace Enclave_Bot.Core
         }
 
         //Actions Stuff
-        public static ComponentBuilder CreateServerBehaviorsEditorComponents(ServerAction action, SocketUser user)
+        public static ComponentBuilder CreateServerActionBehaviorsEditorComponents(ServerAction action, SocketUser user)
         {
             var components = new ComponentBuilder()
-                .WithButton("Add Action", $"ASAB:{action.Id},{user.Id}", ButtonStyle.Success, new Emoji("➕"))
-                .WithButton("Remove Action", $"RSAB:{action.Id},{user.Id}", ButtonStyle.Danger, new Emoji("➖"))
-                .WithButton("Edit Action", $"ESAB:{action.Id},{user.Id}", ButtonStyle.Primary, new Emoji("✏️"))
-                .WithButton("Switch To Conditions", $"SSAC:{action.Id},{user.Id}", ButtonStyle.Primary, new Emoji("🔄️"));
+                .WithButton("Add Behavior", $"ASAB:{action.Id},{user.Id}", ButtonStyle.Success, new Emoji("➕"))
+                .WithButton("Remove Behavior", $"RSAB:{action.Id},{user.Id}", ButtonStyle.Danger, new Emoji("➖"))
+                .WithButton("Edit Behavior", $"ESAB:{action.Id},{user.Id}", ButtonStyle.Primary, new Emoji("✏️"))
+                .WithButton("Switch To Conditions", $"SSAC:{action.Id},{user.Id}", ButtonStyle.Primary, new Emoji("\ud83d\udd04"));
+
+            return components;
+        }
+        
+        public static ComponentBuilder CreateServerActionConditionsEditorComponents(ServerAction action, SocketUser user)
+        {
+            var components = new ComponentBuilder()
+                .WithButton("Add Condition", $"ASAC:{action.Id},{user.Id}", ButtonStyle.Success, new Emoji("➕"))
+                .WithButton("Remove Condition", $"RSAC:{action.Id},{user.Id}", ButtonStyle.Danger, new Emoji("➖"))
+                .WithButton("Edit Condition", $"ESAC:{action.Id},{user.Id}", ButtonStyle.Primary, new Emoji("✏️"))
+                .WithButton("Switch To Actions", $"SSAB:{action.Id},{user.Id}", ButtonStyle.Primary, new Emoji("\ud83d\udd04"));
 
             return components;
         }
@@ -77,7 +88,7 @@ namespace Enclave_Bot.Core
                 .WithTitle(title.Truncate(Bot.TitleLengthLimit))
                 .WithColor(Bot.PrimaryColor);
             //25 for list limit!
-            for (int i = page * Bot.ListLimit; i < actions.Length; i++)
+            for (var i = page * Bot.ListLimit; i < actions.Length; i++)
             {
                 embed.AddField(actions[i].Name, $"`{actions[i].Id}`");
             }
@@ -85,16 +96,33 @@ namespace Enclave_Bot.Core
             return embed;
         }
 
-        public static EmbedBuilder CreateServerBehaviorsEditorEmbed(ServerAction action, SocketUser user)
+        public static EmbedBuilder CreateServerActionBehaviorsEditorEmbed(ServerAction action, SocketUser user)
         {
-            var title = $"Editing Action {action.Name}";
+            var title = $"Editing Action Behaviors {action.Name}";
             var embed = new EmbedBuilder()
                 .WithTitle(title.Truncate(Bot.TitleLengthLimit))
                 .WithColor(Bot.PrimaryColor)
                 .WithAuthor(user);
 
             //25 for list limit!
-            for (int i = 0; i < action.Behaviors.Count && i < Bot.BehaviorsLimit; i++)
+            for (var i = 0; i < action.Behaviors.Count && i < Bot.BehaviorsLimit; i++)
+            {
+                embed.AddField(action.Behaviors.ElementAt(i).Type.ToString(), i);
+            }
+
+            return embed;
+        }
+        
+        public static EmbedBuilder CreateServerActionConditionsEditorEmbed(ServerAction action, SocketUser user)
+        {
+            var title = $"Editing Action Conditions {action.Name}";
+            var embed = new EmbedBuilder()
+                .WithTitle(title.Truncate(Bot.TitleLengthLimit))
+                .WithColor(Bot.PrimaryColor)
+                .WithAuthor(user);
+
+            //25 for list limit!
+            for (var i = 0; i < action.Behaviors.Count && i < Bot.BehaviorsLimit; i++)
             {
                 embed.AddField(action.Behaviors.ElementAt(i).Type.ToString(), i);
             }

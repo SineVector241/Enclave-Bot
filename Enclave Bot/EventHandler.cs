@@ -14,12 +14,12 @@ namespace Enclave_Bot
         private readonly IServiceProvider ServiceProvider;
         private readonly DatabaseContext Database;
 
-        public EventHandler(IServiceProvider Services)
+        public EventHandler(IServiceProvider services)
         {
-            ServiceProvider = Services;
-            Client = Services.GetRequiredService<DiscordSocketClient>();
-            Interactions = Services.GetRequiredService<InteractionService>();
-            Database = Services.GetRequiredService<DatabaseContext>();
+            ServiceProvider = services;
+            Client = services.GetRequiredService<DiscordSocketClient>();
+            Interactions = services.GetRequiredService<InteractionService>();
+            Database = services.GetRequiredService<DatabaseContext>();
 
             Client.Ready += ClientReady;
             Client.InteractionCreated += InteractionCreated;
@@ -100,7 +100,7 @@ namespace Enclave_Bot
             await Interactions.ExecuteCommandAsync(ctx, ServiceProvider);
         }
 
-        public async Task ClientReady()
+        private async Task ClientReady()
         {
             Console.WriteLine($"[{DateTime.Now}]: [READY] => {Client.CurrentUser.Username} is ready!");
             await Client.SetGameAsync("/help");
