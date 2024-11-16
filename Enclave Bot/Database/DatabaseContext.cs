@@ -11,12 +11,17 @@ namespace Enclave_Bot.Database
     {
         public DbSet<User> Users { get; set; }
         public DbSet<Server> Servers { get; set; }
+
         public DbSet<ServerAction> ServerActions { get; set; }
-        public DbSet<LogSetting> ServerLogSettings { get; set; }
-        public DbSet<Application> ServerApplications { get; set; }
-        public DbSet<ApplicationQuestion> ServerApplicationQuestions { get; set; }
         public DbSet<ActionBehavior> ServerActionBehaviors { get; set; }
         public DbSet<ActionCondition> ServerActionBehaviorConditions { get; set; }
+
+        public DbSet<LogSettings> ServerLogSettings { get; set; }
+        public DbSet<LogSetting> ServerLogsSettings { get; set; }
+
+        public DbSet<ApplicationSettings> ServerApplicationSettings { get; set; }
+        public DbSet<Application> ServerApplications { get; set; }
+        public DbSet<ApplicationQuestion> ServerApplicationQuestions { get; set; }
 
         public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
         {
@@ -51,8 +56,8 @@ namespace Enclave_Bot.Database
             if (server != null) return server;
 
             server = new Server() { Id = id };
-            server.ApplicationSettings = new ApplicationSettings() { Id = server.Id };
-            server.LogSettings = new LogSettings() { Id = server.Id, Settings = new List<LogSetting>() };
+            server.ApplicationSettings = new ApplicationSettings() { ServerId = server.Id };
+            server.LogSettings = new LogSettings() { ServerId = server.Id, Settings = new List<LogSetting>() };
             Servers.Add(server);
             if (context != null)
                 await context.DeferSafelyAsync(ephemeral, options);

@@ -19,18 +19,19 @@ namespace Enclave_Bot.Database
 
         public Server()
         {
-            LogSettings = new LogSettings() { Id = Id };
-            ApplicationSettings = new ApplicationSettings() { Id = Id };
+            LogSettings = new LogSettings() { ServerId = Id };
+            ApplicationSettings = new ApplicationSettings() { ServerId = Id };
             ServerActions = new List<ServerAction>();
         }
     }
 
     #region Log Settings
-    [PrimaryKey(nameof(Id))]
     public class LogSettings
     {
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public Guid Id { get; set; }
         [Required]
-        public required ulong Id { get; set; }
+        public required ulong ServerId { get; set; }
 
         public ulong? DefaultChannel { get; set; }
         [Required]
@@ -52,11 +53,12 @@ namespace Enclave_Bot.Database
     #endregion
 
     #region Application Settings
-    [PrimaryKey(nameof(Id))]
     public class ApplicationSettings
     {
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public Guid Id { get; set; }
         [Required]
-        public required ulong Id { get; set; }
+        public required ulong ServerId { get; set; }
 
         [Required]
         public ICollection<Application> Applications { get; set; }
@@ -72,7 +74,7 @@ namespace Enclave_Bot.Database
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Id { get; set; }
         [Required]
-        public required ulong ApplicationSettingsId { get; set; }
+        public required Guid ApplicationSettingsId { get; set; }
 
         [Required]
         public string Name { get; set; }

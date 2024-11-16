@@ -11,12 +11,6 @@ namespace Enclave_Bot
     public class Bot
     {
         //Display/Message Limits!
-        public const int ListLimit = 25;
-        public const int QuestionsLimit = 25;
-        public const int BehaviorsLimit = 25;
-        public const int BehaviorConditionsLimit = 25;
-        public const int StringLengthLimit = 100;
-        public const int NameLengthLimit = 30;
         public const int TitleLengthLimit = 45;
         public static readonly Color PrimaryColor = Color.DarkOrange;
         public static readonly Color SecondaryColor = Color.LightOrange;

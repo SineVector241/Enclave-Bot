@@ -16,9 +16,9 @@ namespace Enclave_Bot.Core.Actions
         [SlashCommand("create", "Creates a new action.")]
         public async Task Create(string name)
         {
-            if(name.Length > Bot.NameLengthLimit)
+            if(name.Length > Bot.TitleLengthLimit)
             {
-                await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"Name cannot be longer than {Bot.NameLengthLimit} characters!", Context.User));
+                await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"Name cannot be longer than {Bot.TitleLengthLimit} characters!", Context.User));
                 return;
             }
 
