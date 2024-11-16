@@ -20,12 +20,22 @@ namespace Enclave_Bot.Core
         }
 
         //Application Stuff
-        public ComponentBuilder CreateApplicationEditorComponents(Application application, SocketUser author)
+        public ComponentBuilder CreateApplicationEditorComponents(Application application, SocketUser author, int page = 0)
         {
+            var appQuestions = Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).Count();
+
             var components = new ComponentBuilder()
                 .WithButton("Add Question", $"AAQ:{application.Id},{author.Id}", ButtonStyle.Success, new Emoji("➕"))
                 .WithButton("Remove Question", $"RAQ:{application.Id},{author.Id}", ButtonStyle.Danger, new Emoji("➖"))
-                .WithButton("Edit Question", $"EAQ:{application.Id},{author.Id}", ButtonStyle.Primary, new Emoji("✏️"));
+                .WithButton("Edit Question", $"EAQ:{application.Id},{author.Id}", ButtonStyle.Primary, new Emoji("✏️"))
+                .WithButton("OnSubmit Action", $"OSA:{application.Id},{author.Id}", ButtonStyle.Primary, new Emoji("🔧"), row: 1)
+                .WithButton("OnAccept Action", $"OAA:{application.Id},{author.Id}", ButtonStyle.Primary, new Emoji("🔧"), row: 1)
+                .WithButton("OnDeny Action", $"ODA:{application.Id},{author.Id}", ButtonStyle.Primary, new Emoji("🔧"), row: 1);
+
+            if (appQuestions > (page + 1) * 25)
+                components.WithButton("Next Page", $"GNP:{application.Id},{author.Id},{page + 1}", ButtonStyle.Primary, new Emoji("▶️"), row: 1);
+            if (page > 0)
+                components.WithButton("Previous Page", $"GPP:{application.Id},{author.Id},{page - 1}", ButtonStyle.Primary, new Emoji("◀️"), row: 1);
 
             return components;
         }
@@ -68,19 +78,18 @@ namespace Enclave_Bot.Core
             var components = new ComponentBuilder()
                 .WithButton("Add Behavior", $"ASAB:{action.Id},{author.Id}", ButtonStyle.Success, new Emoji("➕"))
                 .WithButton("Remove Behavior", $"RSAB:{action.Id},{author.Id}", ButtonStyle.Danger, new Emoji("➖"))
-                .WithButton("Edit Behavior", $"ESAB:{action.Id},{author.Id}", ButtonStyle.Primary, new Emoji("✏️"))
-                .WithButton("Switch To Conditions", $"SSAC:{action.Id},{author.Id}", ButtonStyle.Primary, new Emoji("\ud83d\udd04")); //FIX!
+                .WithButton("Edit Behavior", $"ESAB:{action.Id},{author.Id}", ButtonStyle.Primary, new Emoji("✏️"));
 
             return components;
         }
         
-        public ComponentBuilder CreateServerActionConditionsEditorComponents(ServerAction action, SocketUser author)
+        public ComponentBuilder CreateServerActionBehaviorEditorComponents(ServerAction action, ActionBehavior behavior, SocketUser author)
         {
             var components = new ComponentBuilder()
-                .WithButton("Add Condition", $"ASAC:{action.Id},{author.Id}", ButtonStyle.Success, new Emoji("➕"))
-                .WithButton("Remove Condition", $"RSAC:{action.Id},{author.Id}", ButtonStyle.Danger, new Emoji("➖"))
-                .WithButton("Edit Condition", $"ESAC:{action.Id},{author.Id}", ButtonStyle.Primary, new Emoji("✏️"))
-                .WithButton("Switch To Actions", $"SSAB:{action.Id},{author.Id}", ButtonStyle.Primary, new Emoji("\ud83d\udd04"));
+                .WithButton("Set Type", $"SSABT:{action.Id},{author.Id},{behavior.Id}", ButtonStyle.Primary, new Emoji("✏️"))
+                .WithButton("Add Condition", $"ASABC:{action.Id},{author.Id},{behavior.Id}", ButtonStyle.Success, new Emoji("➕"))
+                .WithButton("Remove Condition", $"RSABC:{action.Id},{author.Id},{behavior.Id}", ButtonStyle.Danger, new Emoji("➖"))
+                .WithButton("Edit Condition", $"ESABC:{action.Id},{author.Id},{behavior.Id}", ButtonStyle.Primary, new Emoji("✏️"));
 
             return components;
         }
@@ -103,23 +112,6 @@ namespace Enclave_Bot.Core
         public EmbedBuilder CreateServerActionBehaviorsEditorEmbed(ServerAction action, SocketUser author, int page = 0)
         {
             var title = $"Editing Action Behaviors {action.Name}";
-            var embed = new EmbedBuilder()
-                .WithTitle(title.Truncate(Bot.TitleLengthLimit))
-                .WithColor(Bot.PrimaryColor)
-                .WithAuthor(author);
-
-            //25 for list limit!
-            for (var i = page * ListLimit; i < action.Behaviors.Count && i < (page * ListLimit + ListLimit); i++)
-            {
-                embed.AddField(action.Behaviors.ElementAt(i).Type.ToString(), i);
-            }
-
-            return embed;
-        }
-        
-        public EmbedBuilder CreateServerActionConditionsEditorEmbed(ServerAction action, SocketUser author, int page = 0)
-        {
-            var title = $"Editing Action Conditions {action.Name}";
             var embed = new EmbedBuilder()
                 .WithTitle(title.Truncate(Bot.TitleLengthLimit))
                 .WithColor(Bot.PrimaryColor)

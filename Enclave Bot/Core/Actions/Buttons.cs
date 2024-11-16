@@ -79,13 +79,14 @@ public class Buttons(DatabaseContext database, Utils utils) : InteractionModuleB
 
         await Context.Interaction.RespondOrFollowupAsync("STUFF TO DO HERE!");
     }
-    
-    [ComponentInteraction("SSAC:*,*")]
-    public async Task SwitchToConditions(string actionId, string userId)
+
+    [ComponentInteraction("SSAB:*,*,*")]
+    public async Task SelectBehavior(string actionId, string userId, string behaviorId)
     {
         var actId = Guid.Parse(actionId);
         var ownerId = ulong.Parse(userId);
-        
+        var bevId = Guid.Parse(behaviorId);
+
         var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
         var action = await Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefaultAsync(x => x.Id == actId);
 
@@ -100,107 +101,15 @@ public class Buttons(DatabaseContext database, Utils utils) : InteractionModuleB
             return;
         }
 
-        var embed = Utils.CreateServerActionConditionsEditorEmbed(action, Context.User);
-        var components = Utils.CreateServerActionConditionsEditorComponents(action, Context.User);
-        await Context.Interaction.DeferSafelyAsync();
-        await ModifyOriginalResponseAsync(x =>
+        var behavior = await Database.ServerActionBehaviors.Where(x => x.ServerActionId == action.Id).FirstOrDefaultAsync(x => x.Id == bevId);
+        if (behavior == null)
         {
-            x.Embed = embed.Build();
-            x.Components = components.Build();
-        });
-    }
-    
-    [ComponentInteraction("ASAC:*,*")]
-    public async Task AddCondition(string actionId, string userId)
-    {
-        var actId = Guid.Parse(actionId);
-        var ownerId = ulong.Parse(userId);
-        
-        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
-        var action = await Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefaultAsync(x => x.Id == actId);
-
-        if (ownerId != Context.User.Id)
-        {
-            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed("You are not the owner of this action editor!", Context.User), ephemeral: true);
-            return;
-        }
-        if (action == null)
-        {
-            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actId}` no longer exists!", Context.User), ephemeral: true);
-            return;
-        }
-
-        await Context.Interaction.RespondOrFollowupAsync("STUFF TO DO HERE!");
-    }
-    
-    [ComponentInteraction("RSAC:*,*")]
-    public async Task RemoveCondition(string actionId, string userId)
-    {
-        var actId = Guid.Parse(actionId);
-        var ownerId = ulong.Parse(userId);
-        
-        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
-        var action = await Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefaultAsync(x => x.Id == actId);
-
-        if (ownerId != Context.User.Id)
-        {
-            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed("You are not the owner of this action editor!", Context.User), ephemeral: true);
-            return;
-        }
-        if (action == null)
-        {
-            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actId}` no longer exists!", Context.User), ephemeral: true);
-            return;
-        }
-
-        await Context.Interaction.RespondOrFollowupAsync("STUFF TO DO HERE!");
-    }
-    
-    [ComponentInteraction("ESAC:*,*")]
-    public async Task EditCondition(string actionId, string userId)
-    {
-        var actId = Guid.Parse(actionId);
-        var ownerId = ulong.Parse(userId);
-        
-        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
-        var action = await Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefaultAsync(x => x.Id == actId);
-
-        if (ownerId != Context.User.Id)
-        {
-            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed("You are not the owner of this action editor!", Context.User), ephemeral: true);
-            return;
-        }
-        if (action == null)
-        {
-            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actId}` no longer exists!", Context.User), ephemeral: true);
-            return;
-        }
-
-        await Context.Interaction.RespondOrFollowupAsync("STUFF TO DO HERE!");
-    }
-    
-    [ComponentInteraction("SSAB:*,*")]
-    public async Task SwitchToBehaviors(string actionId, string userId)
-    {
-        var actId = Guid.Parse(actionId);
-        var ownerId = ulong.Parse(userId);
-        
-        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
-        var action = await Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefaultAsync(x => x.Id == actId);
-
-        if (ownerId != Context.User.Id)
-        {
-            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed("You are not the owner of this action editor!", Context.User), ephemeral: true);
-            return;
-        }
-        if (action == null)
-        {
-            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actId}` no longer exists!", Context.User), ephemeral: true);
+            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The behavior `{bevId}` on action `{actId}` no longer exists!", Context.User), ephemeral: true);
             return;
         }
 
         var embed = Utils.CreateServerActionBehaviorsEditorEmbed(action, Context.User);
-        var components = Utils.CreateServerActionBehaviorsEditorComponents(action, Context.User);
+        var components = Utils.CreateServerActionBehaviorEditorComponents(action, behavior, Context.User);
         await Context.Interaction.DeferSafelyAsync();
         await ModifyOriginalResponseAsync(x =>
         {
