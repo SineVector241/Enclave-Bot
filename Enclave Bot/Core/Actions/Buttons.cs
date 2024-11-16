@@ -2,12 +2,14 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Enclave_Bot.Database;
 using Enclave_Bot.Extensions;
+using Microsoft.EntityFrameworkCore;
 
 namespace Enclave_Bot.Core.Actions;
 
-public class Buttons(DatabaseContext database) : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
+public class Buttons(DatabaseContext database, Utils utils) : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
 {
     private readonly DatabaseContext Database = database;
+    private readonly Utils Utils = utils;
 
     [ComponentInteraction("ASAB:*,*")]
     public async Task AddBehavior(string actionId, string userId)
@@ -15,8 +17,8 @@ public class Buttons(DatabaseContext database) : InteractionModuleBase<SocketInt
         var actId = Guid.Parse(actionId);
         var ownerId = ulong.Parse(userId);
         
-        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction, true);
-        var action = Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefault(x => x.Id == actId);
+        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
+        var action = await Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefaultAsync(x => x.Id == actId);
 
         if (ownerId != Context.User.Id)
         {
@@ -25,7 +27,7 @@ public class Buttons(DatabaseContext database) : InteractionModuleBase<SocketInt
         }
         if (action == null)
         {
-            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actionId}` no longer exists!", Context.User), ephemeral: true);
+            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actId}` no longer exists!", Context.User), ephemeral: true);
             return;
         }
 
@@ -38,8 +40,8 @@ public class Buttons(DatabaseContext database) : InteractionModuleBase<SocketInt
         var actId = Guid.Parse(actionId);
         var ownerId = ulong.Parse(userId);
         
-        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction, true);
-        var action = Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefault(x => x.Id == actId);
+        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
+        var action = await Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefaultAsync(x => x.Id == actId);
 
         if (ownerId != Context.User.Id)
         {
@@ -48,7 +50,7 @@ public class Buttons(DatabaseContext database) : InteractionModuleBase<SocketInt
         }
         if (action == null)
         {
-            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actionId}` no longer exists!", Context.User), ephemeral: true);
+            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actId}` no longer exists!", Context.User), ephemeral: true);
             return;
         }
 
@@ -61,8 +63,8 @@ public class Buttons(DatabaseContext database) : InteractionModuleBase<SocketInt
         var actId = Guid.Parse(actionId);
         var ownerId = ulong.Parse(userId);
         
-        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction, true);
-        var action = Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefault(x => x.Id == actId);
+        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
+        var action = await Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefaultAsync(x => x.Id == actId);
 
         if (ownerId != Context.User.Id)
         {
@@ -71,7 +73,7 @@ public class Buttons(DatabaseContext database) : InteractionModuleBase<SocketInt
         }
         if (action == null)
         {
-            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actionId}` no longer exists!", Context.User), ephemeral: true);
+            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actId}` no longer exists!", Context.User), ephemeral: true);
             return;
         }
 
@@ -84,8 +86,8 @@ public class Buttons(DatabaseContext database) : InteractionModuleBase<SocketInt
         var actId = Guid.Parse(actionId);
         var ownerId = ulong.Parse(userId);
         
-        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction, true);
-        var action = Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefault(x => x.Id == actId);
+        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
+        var action = await Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefaultAsync(x => x.Id == actId);
 
         if (ownerId != Context.User.Id)
         {
@@ -94,7 +96,7 @@ public class Buttons(DatabaseContext database) : InteractionModuleBase<SocketInt
         }
         if (action == null)
         {
-            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actionId}` no longer exists!", Context.User), ephemeral: true);
+            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actId}` no longer exists!", Context.User), ephemeral: true);
             return;
         }
 
@@ -114,8 +116,8 @@ public class Buttons(DatabaseContext database) : InteractionModuleBase<SocketInt
         var actId = Guid.Parse(actionId);
         var ownerId = ulong.Parse(userId);
         
-        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction, true);
-        var action = Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefault(x => x.Id == actId);
+        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
+        var action = await Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefaultAsync(x => x.Id == actId);
 
         if (ownerId != Context.User.Id)
         {
@@ -124,7 +126,7 @@ public class Buttons(DatabaseContext database) : InteractionModuleBase<SocketInt
         }
         if (action == null)
         {
-            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actionId}` no longer exists!", Context.User), ephemeral: true);
+            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actId}` no longer exists!", Context.User), ephemeral: true);
             return;
         }
 
@@ -137,8 +139,8 @@ public class Buttons(DatabaseContext database) : InteractionModuleBase<SocketInt
         var actId = Guid.Parse(actionId);
         var ownerId = ulong.Parse(userId);
         
-        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction, true);
-        var action = Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefault(x => x.Id == actId);
+        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
+        var action = await Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefaultAsync(x => x.Id == actId);
 
         if (ownerId != Context.User.Id)
         {
@@ -147,7 +149,7 @@ public class Buttons(DatabaseContext database) : InteractionModuleBase<SocketInt
         }
         if (action == null)
         {
-            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actionId}` no longer exists!", Context.User), ephemeral: true);
+            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actId}` no longer exists!", Context.User), ephemeral: true);
             return;
         }
 
@@ -160,8 +162,8 @@ public class Buttons(DatabaseContext database) : InteractionModuleBase<SocketInt
         var actId = Guid.Parse(actionId);
         var ownerId = ulong.Parse(userId);
         
-        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction, true);
-        var action = Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefault(x => x.Id == actId);
+        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
+        var action = await Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefaultAsync(x => x.Id == actId);
 
         if (ownerId != Context.User.Id)
         {
@@ -170,7 +172,7 @@ public class Buttons(DatabaseContext database) : InteractionModuleBase<SocketInt
         }
         if (action == null)
         {
-            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actionId}` no longer exists!", Context.User), ephemeral: true);
+            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actId}` no longer exists!", Context.User), ephemeral: true);
             return;
         }
 
@@ -183,8 +185,8 @@ public class Buttons(DatabaseContext database) : InteractionModuleBase<SocketInt
         var actId = Guid.Parse(actionId);
         var ownerId = ulong.Parse(userId);
         
-        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction, true);
-        var action = Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefault(x => x.Id == actId);
+        var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
+        var action = await Database.ServerActions.Where(x => x.ServerId == server.Id).FirstOrDefaultAsync(x => x.Id == actId);
 
         if (ownerId != Context.User.Id)
         {
@@ -193,7 +195,7 @@ public class Buttons(DatabaseContext database) : InteractionModuleBase<SocketInt
         }
         if (action == null)
         {
-            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actionId}` no longer exists!", Context.User), ephemeral: true);
+            await Context.Interaction.RespondOrFollowupAsync(embed: Utils.CreateErrorEmbed($"The action `{actId}` no longer exists!", Context.User), ephemeral: true);
             return;
         }
 

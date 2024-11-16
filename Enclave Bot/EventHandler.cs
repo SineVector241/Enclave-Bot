@@ -37,7 +37,8 @@ namespace Enclave_Bot
         {
             if (!result.IsSuccess && result.Error != InteractionCommandError.UnknownCommand)
             {
-                var errorEmbed = Utils.CreateErrorEmbed(result.ErrorReason, ctx.User);
+                var utils = ServiceProvider.GetRequiredService<Utils>();
+                var errorEmbed = utils.CreateErrorEmbed(result.ErrorReason, ctx.User);
 
                 if (ctx.Interaction.HasResponded)
                     await ctx.Interaction.FollowupAsync(embed: errorEmbed);
@@ -47,15 +48,12 @@ namespace Enclave_Bot
         }
 
         //Important for the bots framework
-        private Task InteractionCreated(SocketInteraction interaction)
+        private async Task InteractionCreated(SocketInteraction interaction)
         {
-            _ = Task.Run(async () =>
-            {
-                var user = await Database.GetOrCreateUserById(interaction.User.Id, interaction);
-                user.LastActiveDC = DateTime.UtcNow;
-                await Database.SaveChangesAsync();
-            });
-            return Task.CompletedTask;
+            var user = await Database.GetOrCreateUserById(interaction.User.Id, interaction);
+            user.LastActive = DateTime.UtcNow;
+            user.Username = interaction.User.Username;
+            await Database.SaveChangesAsync();
         }
 
         private async Task ButtonExecuted(SocketMessageComponent interaction)

@@ -5,9 +5,11 @@ using Enclave_Bot.Extensions;
 
 namespace Enclave_Bot.Core
 {
-    public static class Utils
+    public class Utils(DatabaseContext database)
     {
-        public static Embed CreateErrorEmbed(string errorDescription, IUser author)
+        private readonly DatabaseContext Database = database;
+
+        public Embed CreateErrorEmbed(string errorDescription, IUser author)
         {
             return new EmbedBuilder()
                     .WithTitle("Error!")
@@ -17,17 +19,17 @@ namespace Enclave_Bot.Core
         }
 
         //Application Stuff
-        public static ComponentBuilder CreateApplicationEditorComponents(ServerApplication application, SocketUser user)
+        public ComponentBuilder CreateApplicationEditorComponents(Application application, SocketUser author)
         {
             var components = new ComponentBuilder()
-                .WithButton("Add Question", $"AAQ:{application.Id},{user.Id}", ButtonStyle.Success, new Emoji("➕"))
-                .WithButton("Remove Question", $"RAQ:{application.Id},{user.Id}", ButtonStyle.Danger, new Emoji("➖"))
-                .WithButton("Edit Question", $"EAQ:{application.Id},{user.Id}", ButtonStyle.Primary, new Emoji("✏️"));
+                .WithButton("Add Question", $"AAQ:{application.Id},{author.Id}", ButtonStyle.Success, new Emoji("➕"))
+                .WithButton("Remove Question", $"RAQ:{application.Id},{author.Id}", ButtonStyle.Danger, new Emoji("➖"))
+                .WithButton("Edit Question", $"EAQ:{application.Id},{author.Id}", ButtonStyle.Primary, new Emoji("✏️"));
 
             return components;
         }
 
-        public static EmbedBuilder CreateApplicationListEmbed(SocketGuild guild, ServerApplication[] applications, int page = 0)
+        public EmbedBuilder CreateApplicationListEmbed(SocketGuild guild, Application[] applications, int page = 0)
         {
             var title = $"{guild.Name} Applications";
             var embed = new EmbedBuilder()
@@ -42,46 +44,46 @@ namespace Enclave_Bot.Core
             return embed;
         }
 
-        public static EmbedBuilder CreateApplicationEditorEmbed(ServerApplication application, SocketUser user)
+        public EmbedBuilder CreateApplicationEditorEmbed(Application application, SocketUser author)
         {
             var title = $"Editing Application {application.Name}";
             var embed = new EmbedBuilder()
                 .WithTitle(title.Truncate(Bot.TitleLengthLimit))
                 .WithColor(Bot.PrimaryColor)
-            .WithAuthor(user);
+            .WithAuthor(author);
 
             for (int i = 0; i < application.Questions.Count && i < Bot.QuestionsLimit; i++)
             {
-                embed.AddField(application.Questions[i], i);
+                //embed.AddField([i], i);
             }
 
             return embed;
         }
 
         //Actions Stuff
-        public static ComponentBuilder CreateServerActionBehaviorsEditorComponents(ServerAction action, SocketUser user)
+        public ComponentBuilder CreateServerActionBehaviorsEditorComponents(ServerAction action, SocketUser author)
         {
             var components = new ComponentBuilder()
-                .WithButton("Add Behavior", $"ASAB:{action.Id},{user.Id}", ButtonStyle.Success, new Emoji("➕"))
-                .WithButton("Remove Behavior", $"RSAB:{action.Id},{user.Id}", ButtonStyle.Danger, new Emoji("➖"))
-                .WithButton("Edit Behavior", $"ESAB:{action.Id},{user.Id}", ButtonStyle.Primary, new Emoji("✏️"))
-                .WithButton("Switch To Conditions", $"SSAC:{action.Id},{user.Id}", ButtonStyle.Primary, new Emoji("\ud83d\udd04"));
+                .WithButton("Add Behavior", $"ASAB:{action.Id},{author.Id}", ButtonStyle.Success, new Emoji("➕"))
+                .WithButton("Remove Behavior", $"RSAB:{action.Id},{author.Id}", ButtonStyle.Danger, new Emoji("➖"))
+                .WithButton("Edit Behavior", $"ESAB:{action.Id},{author.Id}", ButtonStyle.Primary, new Emoji("✏️"))
+                .WithButton("Switch To Conditions", $"SSAC:{action.Id},{author.Id}", ButtonStyle.Primary, new Emoji("\ud83d\udd04"));
 
             return components;
         }
         
-        public static ComponentBuilder CreateServerActionConditionsEditorComponents(ServerAction action, SocketUser user)
+        public ComponentBuilder CreateServerActionConditionsEditorComponents(ServerAction action, SocketUser author)
         {
             var components = new ComponentBuilder()
-                .WithButton("Add Condition", $"ASAC:{action.Id},{user.Id}", ButtonStyle.Success, new Emoji("➕"))
-                .WithButton("Remove Condition", $"RSAC:{action.Id},{user.Id}", ButtonStyle.Danger, new Emoji("➖"))
-                .WithButton("Edit Condition", $"ESAC:{action.Id},{user.Id}", ButtonStyle.Primary, new Emoji("✏️"))
-                .WithButton("Switch To Actions", $"SSAB:{action.Id},{user.Id}", ButtonStyle.Primary, new Emoji("\ud83d\udd04"));
+                .WithButton("Add Condition", $"ASAC:{action.Id},{author.Id}", ButtonStyle.Success, new Emoji("➕"))
+                .WithButton("Remove Condition", $"RSAC:{action.Id},{author.Id}", ButtonStyle.Danger, new Emoji("➖"))
+                .WithButton("Edit Condition", $"ESAC:{action.Id},{author.Id}", ButtonStyle.Primary, new Emoji("✏️"))
+                .WithButton("Switch To Actions", $"SSAB:{action.Id},{author.Id}", ButtonStyle.Primary, new Emoji("\ud83d\udd04"));
 
             return components;
         }
 
-        public static EmbedBuilder CreateServerActionsListEmbed(SocketGuild guild, ServerAction[] actions, int page = 0)
+        public EmbedBuilder CreateServerActionsListEmbed(SocketGuild guild, ServerAction[] actions, int page = 0)
         {
             var title = $"{guild.Name} Actions";
             var embed = new EmbedBuilder()
@@ -96,13 +98,13 @@ namespace Enclave_Bot.Core
             return embed;
         }
 
-        public static EmbedBuilder CreateServerActionBehaviorsEditorEmbed(ServerAction action, SocketUser user)
+        public EmbedBuilder CreateServerActionBehaviorsEditorEmbed(ServerAction action, SocketUser author)
         {
             var title = $"Editing Action Behaviors {action.Name}";
             var embed = new EmbedBuilder()
                 .WithTitle(title.Truncate(Bot.TitleLengthLimit))
                 .WithColor(Bot.PrimaryColor)
-                .WithAuthor(user);
+                .WithAuthor(author);
 
             //25 for list limit!
             for (var i = 0; i < action.Behaviors.Count && i < Bot.BehaviorsLimit; i++)
@@ -113,19 +115,33 @@ namespace Enclave_Bot.Core
             return embed;
         }
         
-        public static EmbedBuilder CreateServerActionConditionsEditorEmbed(ServerAction action, SocketUser user)
+        public EmbedBuilder CreateServerActionConditionsEditorEmbed(ServerAction action, SocketUser author)
         {
             var title = $"Editing Action Conditions {action.Name}";
             var embed = new EmbedBuilder()
                 .WithTitle(title.Truncate(Bot.TitleLengthLimit))
                 .WithColor(Bot.PrimaryColor)
-                .WithAuthor(user);
+                .WithAuthor(author);
 
             //25 for list limit!
             for (var i = 0; i < action.Behaviors.Count && i < Bot.BehaviorsLimit; i++)
             {
                 embed.AddField(action.Behaviors.ElementAt(i).Type.ToString(), i);
             }
+
+            return embed;
+        }
+
+        //Staff Stuff
+        public async Task<EmbedBuilder> CreateUserInfoEmbed(SocketUser user, SocketUser author)
+        {
+            var dbUser = await Database.GetOrCreateUserById(user.Id);
+            var embed = new EmbedBuilder()
+                .WithTitle(user.GlobalName.Truncate(Bot.TitleLengthLimit))
+                .WithColor(Bot.PrimaryColor)
+                .WithThumbnailUrl(user.GetDisplayAvatarUrl())
+                .AddField("Last Active", dbUser.LastActive.ToDiscordUnixTimestampFormat())
+                .WithAuthor(author);
 
             return embed;
         }

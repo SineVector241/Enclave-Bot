@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Fergun.Interactive;
 using Discord.Interactions;
 using Enclave_Bot.Database;
+using Enclave_Bot.Core;
 
 namespace Enclave_Bot
 {
@@ -71,6 +72,7 @@ namespace Enclave_Bot
         {
             return new ServiceCollection()
                 .AddSingleton(Client)
+                .AddSingleton<Utils>()
                 .AddSingleton<InteractiveService>()
                 .AddSingleton(Interactions)
                 .AddNpgsql<DatabaseContext>(Config.BotConfiguration.SqlConnection)

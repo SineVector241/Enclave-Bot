@@ -33,7 +33,7 @@ namespace Enclave_Bot
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[{DateTime.Now}]: [Error] => An error occured in InteractioneManager.cs \nError Info:\n{ex}");
+                Console.WriteLine($"[{DateTime.Now}]: [Error] => An error occured in InteractionManager.cs \nError Info:\n{ex}");
             }
         }
 

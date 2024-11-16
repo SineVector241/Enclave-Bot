@@ -11,16 +11,18 @@ namespace Enclave_Bot.Database
     {
         public DbSet<User> Users { get; set; }
         public DbSet<Server> Servers { get; set; }
-        public DbSet<ServerApplication> ServerApplications { get; set; }
         public DbSet<ServerAction> ServerActions { get; set; }
-        public DbSet<ServerBehaviorCondition> ServerActionConditions { get; set; }
-        public DbSet<ServerBehavior> ServerActionBehaviors { get; set; }
+        public DbSet<LogSetting> ServerLogSettings { get; set; }
+        public DbSet<Application> ServerApplications { get; set; }
+        public DbSet<ApplicationQuestion> ServerApplicationQuestions { get; set; }
+        public DbSet<ActionBehavior> ServerActionBehaviors { get; set; }
+        public DbSet<ActionCondition> ServerActionBehaviorConditions { get; set; }
 
         public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
         {
             try
             {
-                var databaseCreator = (Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator);
+                var databaseCreator = Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator;
                 databaseCreator?.CreateTables();
             }
             catch (Exception ex)
@@ -31,10 +33,10 @@ namespace Enclave_Bot.Database
 
         public async Task<User> GetOrCreateUserById(ulong id, SocketInteraction? context = null, bool ephemeral = false, RequestOptions? options = null)
         {
-            var user = Users.FirstOrDefault(x => x.Id == id);
+            var user = await Users.FirstOrDefaultAsync(x => x.Id == id);
             if (user != null) return user;
             
-            user = new User() { Id = id, ApplicationDenials = 0, LastActiveDC = DateTime.UtcNow, LastActiveMC = DateTime.MinValue };
+            user = new User() { Id = id, Username = context?.User.Username ?? string.Empty, LastActive = DateTime.UtcNow };
             Users.Add(user);
             if (context != null)
                 await context.DeferSafelyAsync(ephemeral, options);
@@ -45,10 +47,12 @@ namespace Enclave_Bot.Database
 
         public async Task<Server> GetOrCreateServerById(ulong id, SocketInteraction? context = null, bool ephemeral = false, RequestOptions? options = null)
         {
-            var server = Servers.FirstOrDefault(x => x.Id == id);
+            var server = await Servers.FirstOrDefaultAsync(x => x.Id == id);
             if (server != null) return server;
-            
-            server = new Server() { Id = id, LogSettings = new ServerLogSettings() { Id = id } };
+
+            server = new Server() { Id = id };
+            server.ApplicationSettings = new ApplicationSettings() { Id = server.Id };
+            server.LogSettings = new LogSettings() { Id = server.Id, Settings = new List<LogSetting>() };
             Servers.Add(server);
             if (context != null)
                 await context.DeferSafelyAsync(ephemeral, options);
