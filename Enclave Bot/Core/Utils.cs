@@ -7,7 +7,7 @@ namespace Enclave_Bot.Core
 {
     public class Utils(DatabaseContext database)
     {
-        private const int ListLimit = 25;
+        public const int ListLimit = 25;
         private readonly DatabaseContext Database = database;
 
         public Embed CreateErrorEmbed(string errorDescription, IUser author)
@@ -55,7 +55,7 @@ namespace Enclave_Bot.Core
             var appQuestions = Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).Count();
 
             var components = new ComponentBuilder()
-                .WithButton("Add Question", $"{Constants.ADD_APP_QUESTION}:{author.Id},{application.Id}", ButtonStyle.Success, new Emoji("➕"))
+                .WithButton("Add Question", $"{Constants.ADD_APP_QUESTION}:{author.Id},{application.Id},{page}", ButtonStyle.Success, new Emoji("➕"))
                 .WithButton("Remove Question", $"{Constants.REMOVE_APP_QUESTION}:{author.Id},{application.Id},{page}", ButtonStyle.Danger, new Emoji("➖"))
                 .WithButton("Edit Question", $"{Constants.EDIT_APP_QUESTION}:{author.Id},{application.Id},{page}", ButtonStyle.Primary, new Emoji("✏️"))
                 .WithButton("Edit Actions", $"{Constants.SWITCH_TO_APP_ACTIONS}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("\ud83d\udd04"));
@@ -75,11 +75,11 @@ namespace Enclave_Bot.Core
             var embed = new EmbedBuilder()
                 .WithTitle(title.Truncate(Bot.TitleLengthLimit))
                 .WithColor(Bot.PrimaryColor)
-            .WithAuthor(author);
+                .WithAuthor(author);
 
-            for (int i = page * ListLimit; i < application.Questions.Count && i < (page * ListLimit + ListLimit); i++)
+            for (int i = page * ListLimit; i < applicationQuestions.Length && i < (page * ListLimit + ListLimit); i++)
             {
-                embed.AddField(applicationQuestions[i].Index.ToString(), applicationQuestions[i].Question);
+                embed.AddField($"{applicationQuestions[i].Index}{(applicationQuestions[i].Required ? "*" : string.Empty)}", applicationQuestions[i].Question);
             }
 
             return embed;

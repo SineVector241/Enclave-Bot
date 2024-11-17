@@ -47,7 +47,6 @@ namespace Enclave_Bot.Core.Applications
         [SlashCommand("edit", "Shows the editor for an application.")]
         public async Task Edit(string id)
         {
-            await Context.Interaction.DeferSafelyAsync();
             _ = Guid.TryParse(id, out var uuid);
             await Context.Interaction.DeferSafelyAsync();
             var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);

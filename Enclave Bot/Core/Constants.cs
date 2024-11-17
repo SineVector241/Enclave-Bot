@@ -6,6 +6,7 @@
         public const string ADD_APP_QUESTION = "AAQ";
         public const string ADD_APP_QUESTION_MODAL = "AAQM";
         public const string REMOVE_APP_QUESTION = "RAQ";
+        public const string REMOVE_APP_QUESTION_SELECTION = "RAQS";
 
         public const string EDIT_APP_QUESTION = "EAQ";
         public const string APP_QUESTIONS_NEXT_PAGE = "AQNP";

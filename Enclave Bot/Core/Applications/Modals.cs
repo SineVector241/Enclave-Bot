@@ -11,11 +11,12 @@ namespace Enclave_Bot.Core.Applications
         private readonly DatabaseContext Database = database;
         private readonly Utils Utils = utils;
 
-        [ModalInteraction($"{Constants.ADD_APP_QUESTION_MODAL}:*,*")]
-        public async Task AddQuestion(string author, string applicationId, AddApplicationQuestionModal modal)
+        [ModalInteraction($"{Constants.ADD_APP_QUESTION_MODAL}:*,*,*")]
+        public async Task AddQuestion(string author, string applicationId, string page, AddApplicationQuestionModal modal)
         {
             var owner = ulong.Parse(author);
             var appId = Guid.Parse(applicationId);
+            var pageN = int.Parse(page);
 
             if (Context.User.Id != owner)
             {
@@ -46,12 +47,12 @@ namespace Enclave_Bot.Core.Applications
                 {
                     await Database.ServerApplicationQuestions.AddAsync(new ApplicationQuestion() { ApplicationId = application.Id, Question = modal.Question, Required = required, Index = i });
                     await Database.SaveChangesAsync();
-                    await Context.Interaction.RespondOrFollowupAsync("Successfully added question!", ephemeral: true);
+                    await Context.Interaction.RespondOrFollowupAsync("Successfully added question.", ephemeral: true);
                     break;
                 }
             }
 
-            _ = ModifyOriginalResponseAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User).Build(); }); //We don't care if it fails.
+            _ = ModifyOriginalResponseAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User, pageN).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User, pageN).Build(); }); //We don't care if it fails.
         }
     }
 
