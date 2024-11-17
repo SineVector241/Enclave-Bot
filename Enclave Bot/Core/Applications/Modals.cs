@@ -17,7 +17,6 @@ namespace Enclave_Bot.Core.Applications
             var owner = ulong.Parse(author);
             var appId = Guid.Parse(applicationId);
 
-            await Context.Interaction.DeferSafelyAsync();
             if (Context.User.Id != owner)
             {
                 await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!", ephemeral: true);
@@ -51,6 +50,8 @@ namespace Enclave_Bot.Core.Applications
                     break;
                 }
             }
+
+            _ = ModifyOriginalResponseAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User).Build(); }); //We don't care if it fails.
         }
     }
 
