@@ -4,7 +4,7 @@ using Enclave_Bot.Database;
 
 namespace Enclave_Bot.Core.Settings
 {
-    [Group("settings", "setting commands.")]
+    [Group("settings", "Setting commands.")]
     [RequireContext(ContextType.Guild)]
     public class Commands(DatabaseContext database) : InteractionModuleBase<SocketInteractionContext<SocketSlashCommand>>
     {

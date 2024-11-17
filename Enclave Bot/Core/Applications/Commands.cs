@@ -39,7 +39,8 @@ namespace Enclave_Bot.Core.Applications
             var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
             var applications = Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).ToArray();
 
-            var embed = Utils.CreateApplicationListEmbed(Context.Guild, applications);
+            var embed = Utils.CreateApplicationListEmbed(Context.Guild, applications, Context.User);
+            var components = Utils.CreateApplicationListComponents(applications, Context.User);
             await Context.Interaction.RespondOrFollowupAsync(embed: embed.Build());
         }
 
@@ -47,6 +48,7 @@ namespace Enclave_Bot.Core.Applications
         public async Task Edit(string id)
         {
             _ = Guid.TryParse(id, out var uuid);
+            await Context.Interaction.DeferSafelyAsync();
             var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
             var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
             var application = await Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).FirstOrDefaultAsync(x => x.Id == uuid);

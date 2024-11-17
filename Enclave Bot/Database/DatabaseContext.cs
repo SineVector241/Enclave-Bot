@@ -12,10 +12,6 @@ namespace Enclave_Bot.Database
         public DbSet<User> Users { get; set; }
         public DbSet<Server> Servers { get; set; }
 
-        public DbSet<ServerAction> ServerActions { get; set; }
-        public DbSet<ActionBehavior> ServerActionBehaviors { get; set; }
-        public DbSet<ActionCondition> ServerActionBehaviorConditions { get; set; }
-
         public DbSet<LogSettings> ServerLogSettings { get; set; }
         public DbSet<LogSetting> ServerLogsSettings { get; set; }
 
