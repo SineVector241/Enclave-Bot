@@ -54,6 +54,35 @@ namespace Enclave_Bot.Core.Applications
 
             _ = ModifyOriginalResponseAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User, pageN).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User, pageN).Build(); }); //We don't care if it fails.
         }
+
+        [ModalInteraction($"{Constants.EDIT_APP_QUESTION_MODAL}:*,*,*")]
+        public async Task EditQuestion(string author, string applicationId, string selectedQuestion, EditApplicationQuestionModal modal)
+        {
+            var owner = ulong.Parse(author);
+            var appId = Guid.Parse(applicationId);
+            var selectedQ = Guid.Parse(selectedQuestion);
+
+            if (Context.User.Id != owner)
+            {
+                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!", ephemeral: true);
+                return;
+            }
+
+            var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
+            var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
+            var application = await Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).FirstOrDefaultAsync(x => x.Id == appId);
+
+            if (application == null)
+            {
+                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
+                return;
+            }
+            if (!bool.TryParse(modal.Required, out var required))
+            {
+                await Context.Interaction.RespondOrFollowupAsync($"Invalid required value! Required value must be either True or False!", ephemeral: true);
+                return;
+            }
+        }
     }
 
     public class AddApplicationQuestionModal : IModal
