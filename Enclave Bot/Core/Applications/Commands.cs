@@ -48,7 +48,6 @@ namespace Enclave_Bot.Core.Applications
         public async Task Edit(string id)
         {
             _ = Guid.TryParse(id, out var uuid);
-            await Context.Interaction.DeferSafelyAsync();
             var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
             var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
             var application = await Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).FirstOrDefaultAsync(x => x.Id == uuid);

@@ -36,18 +36,13 @@ namespace Enclave_Bot.Core.Applications
                 return;
             }
 
-            var question = await Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).FirstOrDefaultAsync(x => x.Id == selectedQuestion);
-
-            if(question == null)
+            if (await Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id && x.Id == selectedQuestion).ExecuteDeleteAsync() <= 0)
             {
                 await Context.Interaction.RespondOrFollowupAsync($"The question with the id {selectedQuestion} does not exist!", ephemeral: true);
                 return;
             }
 
-            Database.ServerApplicationQuestions.Remove(question);
-            await Database.SaveChangesAsync();
-
-            _ = ModifyOriginalResponseAsync(x => { x.Content = $"Successfully removed question {question.Index} with id {question.Id}."; x.Components = null; });
+            _ = ModifyOriginalResponseAsync(x => { x.Content = $"Successfully removed question with id {selectedQuestion}."; x.Components = null; });
             _ = editor.ModifyAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User).Build(); }); //We don't care if it fails.
         }
 
@@ -58,6 +53,7 @@ namespace Enclave_Bot.Core.Applications
             var owner = ulong.Parse(author);
             var appId = Guid.Parse(applicationId);
             var selectedQuestion = Guid.Parse(value[0]);
+            await Context.Interaction.DeferSafelyAsync();
 
             if (Context.User.Id != owner)
             {

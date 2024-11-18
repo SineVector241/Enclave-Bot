@@ -58,6 +58,8 @@ namespace Enclave_Bot.Core.Applications
             var selectedQ = Guid.Parse(selectedQuestion);
             var editor = (SocketUserMessage)(Context.Channel.GetCachedMessage(editorId) ?? await Context.Channel.GetMessageAsync(editorId));
 
+            await Context.Interaction.DeferSafelyAsync();
+
             var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
             var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
             var application = await Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).FirstOrDefaultAsync(x => x.Id == appId);
@@ -73,19 +75,17 @@ namespace Enclave_Bot.Core.Applications
                 return;
             }
 
-            var question = await Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).FirstOrDefaultAsync(x => x.Id == selectedQ);
+            var affected = await Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id && x.Id == selectedQ).ExecuteUpdateAsync(x => x
+                .SetProperty(y => y.Question, modal.Question)
+                .SetProperty(y => y.Required, required)
+            );
 
-            if (question == null)
+            if (affected <= 0)
             {
                 await Context.Interaction.RespondOrFollowupAsync($"The question with the id {selectedQ} does not exist!", ephemeral: true);
                 return;
             }
 
-            question.Question = modal.Question;
-            question.Required = required;
-
-            Database.ServerApplicationQuestions.Update(question);
-            await Database.SaveChangesAsync();
             await Context.Interaction.DeferSafelyAsync();
             _ = ModifyOriginalResponseAsync(x => { x.Content = $"Question with id {selectedQ} was successfully edited!"; x.Components = null; });
             _ = editor.ModifyAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User).Build(); }); //We don't care if it fails.
