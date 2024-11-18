@@ -31,46 +31,39 @@ namespace Enclave_Bot.Core.Applications
         [ComponentInteraction($"{Constants.REMOVE_APP_QUESTION}:*,*,*")]
         public async Task RemoveQuestion(string author, string applicationId, string page)
         {
-            try
+            var owner = ulong.Parse(author);
+            var appId = Guid.Parse(applicationId);
+            var pageN = int.Parse(page);
+
+            await Context.Interaction.DeferSafelyAsync();
+            if (Context.User.Id != owner)
             {
-                var owner = ulong.Parse(author);
-                var appId = Guid.Parse(applicationId);
-                var pageN = int.Parse(page);
-
-                await Context.Interaction.DeferSafelyAsync();
-                if (Context.User.Id != owner)
-                {
-                    await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!");
-                    return;
-                }
-
-                var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
-                var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
-                var application = await Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).FirstOrDefaultAsync(x => x.Id == appId);
-
-                if (application == null)
-                {
-                    await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
-                    return;
-                }
-
-                var applicationQuestions = Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).ToArray();
-                var selectionMenu = new SelectMenuBuilder()
-                    .WithCustomId($"{Constants.REMOVE_APP_QUESTION_SELECTION}:{owner},{appId},{pageN}");
-
-                for (int i = pageN * Constants.ListLimit; i < applicationQuestions.Length && i < (pageN * Constants.ListLimit + Constants.ListLimit); i++)
-                {
-                    selectionMenu.AddOption(i.ToString(), applicationQuestions[i].Id.ToString(), applicationQuestions[i].Question.Truncate(100));
-                }
-
-                var components = new ComponentBuilder()
-                    .WithSelectMenu(selectionMenu);
-                await Context.Interaction.RespondOrFollowupAsync(components: components.Build(), ephemeral: true);
+                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!");
+                return;
             }
-            catch(Exception ex)
+
+            var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
+            var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
+            var application = await Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).FirstOrDefaultAsync(x => x.Id == appId);
+
+            if (application == null)
             {
-                Console.WriteLine(ex);
+                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
+                return;
             }
+
+            var applicationQuestions = Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).ToArray();
+            var selectionMenu = new SelectMenuBuilder()
+                .WithCustomId($"{Constants.REMOVE_APP_QUESTION_SELECTION}:{owner},{Context.Interaction.Message.Id},{appId}");
+
+            for (int i = pageN * Constants.ListLimit; i < applicationQuestions.Length && i < (pageN * Constants.ListLimit + Constants.ListLimit); i++)
+            {
+                selectionMenu.AddOption(i.ToString(), applicationQuestions[i].Id.ToString(), applicationQuestions[i].Question.Truncate(100));
+            }
+
+            var components = new ComponentBuilder()
+                .WithSelectMenu(selectionMenu);
+            await Context.Interaction.RespondOrFollowupAsync(components: components.Build(), ephemeral: true);
         }
 
         [ComponentInteraction($"{Constants.APP_QUESTIONS_NEXT_PAGE}:*,*,*")]

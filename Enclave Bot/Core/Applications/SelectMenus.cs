@@ -12,12 +12,13 @@ namespace Enclave_Bot.Core.Applications
         private readonly Utils Utils = utils;
 
         [ComponentInteraction($"{Constants.REMOVE_APP_QUESTION_SELECTION}:*,*,*")]
-        public async Task RemoveQuestion(string author, string applicationId, string page, string[] value)
+        public async Task RemoveQuestion(string author, string originalMessage, string applicationId, string[] value)
         {
+            var editorId = ulong.Parse(originalMessage);
             var owner = ulong.Parse(author);
             var appId = Guid.Parse(applicationId);
-            var pageN = int.Parse(page);
             var selectedQuestion = Guid.Parse(value[0]);
+            var editor = (SocketUserMessage)(Context.Channel.GetCachedMessage(editorId) ?? await Context.Channel.GetMessageAsync(editorId));
 
             if (Context.User.Id != owner)
             {
@@ -47,7 +48,7 @@ namespace Enclave_Bot.Core.Applications
             await Database.SaveChangesAsync();
             await Context.Interaction.RespondOrFollowupAsync($"Successfully removed question {question.Index} with id {question.Id}.");
 
-            _ = ModifyOriginalResponseAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User, pageN).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User, pageN).Build(); }); //We don't care if it fails.
+            _ = editor.ModifyAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User).Build(); }); //We don't care if it fails.
         }
 
         [ComponentInteraction($"{Constants.EDIT_APP_QUESTION_SELECTION}:*,*")]
