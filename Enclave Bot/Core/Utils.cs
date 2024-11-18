@@ -25,7 +25,7 @@ namespace Enclave_Bot.Core
 
             var components = new ComponentBuilder();
 
-            if (apps > (page + 1) * 25)
+            if (apps > (page + 1) * Constants.ListLimit)
                 components.WithButton("Next Page", $"{Constants.APP_LIST_NEXT_PAGE}:{author.Id},{page}", ButtonStyle.Primary, new Emoji("▶️"), row: 1);
             if (page > 0)
                 components.WithButton("Previous Page", $"{Constants.APP_LIST_PREVIOUS_PAGE}:{author.Id},{page}", ButtonStyle.Primary, new Emoji("◀️"), row: 1);
@@ -40,7 +40,7 @@ namespace Enclave_Bot.Core
                 .WithAuthor(author)
                 .WithTitle(title.Truncate(Constants.TitleLimit))
                 .WithColor(Constants.PrimaryColor);
-            //25 for list limit!
+
             for (var i = page * Constants.ListLimit; i < applications.Length && i < (page * Constants.ListLimit + Constants.ListLimit); i++)
             {
                 embed.AddField(applications[i].Name, $"`{applications[i].Id}`");
@@ -59,7 +59,7 @@ namespace Enclave_Bot.Core
                 .WithButton("Edit Question", $"{Constants.EDIT_APP_QUESTION}:{author.Id},{application.Id},{page}", ButtonStyle.Primary, new Emoji("✏️"))
                 .WithButton("Edit Actions", $"{Constants.SWITCH_TO_APP_ACTIONS}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("\ud83d\udd04"));
 
-            if (appQuestions > (page + 1) * 25)
+            if (appQuestions > (page + 1) * Constants.ListLimit)
                 components.WithButton("Next Page", $"{Constants.APP_QUESTIONS_NEXT_PAGE}:{author.Id},{application.Id},{page}", ButtonStyle.Primary, new Emoji("▶️"), row: 1);
             if (page > 0)
                 components.WithButton("Previous Page", $"{Constants.APP_QUESTIONS_PREVIOUS_PAGE}:{author.Id},{application.Id},{page}", ButtonStyle.Primary, new Emoji("◀️"), row: 1);
