@@ -10,11 +10,6 @@ namespace Enclave_Bot
 {
     public class Bot
     {
-        //Display/Message Limits!
-        public const int TitleLengthLimit = 45;
-        public static readonly Color PrimaryColor = Color.DarkOrange;
-        public static readonly Color SecondaryColor = Color.LightOrange;
-
         private readonly DiscordSocketClient Client;
         private readonly IServiceProvider ServiceProvider;
         private readonly InteractionService Interactions;

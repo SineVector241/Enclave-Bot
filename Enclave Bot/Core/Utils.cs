@@ -7,7 +7,6 @@ namespace Enclave_Bot.Core
 {
     public class Utils(DatabaseContext database)
     {
-        public const int ListLimit = 25;
         private readonly DatabaseContext Database = database;
 
         public Embed CreateErrorEmbed(string errorDescription, IUser author)
@@ -16,7 +15,7 @@ namespace Enclave_Bot.Core
                     .WithTitle("Error!")
                     .WithDescription($"**Error Message:** {errorDescription}")
                     .WithAuthor(author)
-                    .WithColor(Color.Red).Build();
+                    .WithColor(Constants.ErrorColor).Build();
         }
 
         //Application Stuff
@@ -39,10 +38,10 @@ namespace Enclave_Bot.Core
             var title = $"{guild.Name} Applications";
             var embed = new EmbedBuilder()
                 .WithAuthor(author)
-                .WithTitle(title.Truncate(Bot.TitleLengthLimit))
-                .WithColor(Bot.PrimaryColor);
+                .WithTitle(title.Truncate(Constants.TitleLimit))
+                .WithColor(Constants.PrimaryColor);
             //25 for list limit!
-            for (var i = page * ListLimit; i < applications.Length && i < (page * ListLimit + ListLimit); i++)
+            for (var i = page * Constants.ListLimit; i < applications.Length && i < (page * Constants.ListLimit + Constants.ListLimit); i++)
             {
                 embed.AddField(applications[i].Name, $"`{applications[i].Id}`");
             }
@@ -73,11 +72,11 @@ namespace Enclave_Bot.Core
             var applicationQuestions = Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).ToArray();
             var title = $"Editing Application {application.Name}";
             var embed = new EmbedBuilder()
-                .WithTitle(title.Truncate(Bot.TitleLengthLimit))
-                .WithColor(Bot.PrimaryColor)
+                .WithTitle(title.Truncate(Constants.TitleLimit))
+                .WithColor(Constants.PrimaryColor)
                 .WithAuthor(author);
 
-            for (int i = page * ListLimit; i < applicationQuestions.Length && i < (page * ListLimit + ListLimit); i++)
+            for (int i = page * Constants.ListLimit; i < applicationQuestions.Length && i < (page * Constants.ListLimit + Constants.ListLimit); i++)
             {
                 embed.AddField($"{applicationQuestions[i].Index}{(applicationQuestions[i].Required ? "*" : string.Empty)}", applicationQuestions[i].Question);
             }
@@ -103,8 +102,8 @@ namespace Enclave_Bot.Core
             var applicationQuestions = Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).ToArray();
             var title = $"Editing Application {application.Name}";
             var embed = new EmbedBuilder()
-                .WithTitle(title.Truncate(Bot.TitleLengthLimit))
-                .WithColor(Bot.PrimaryColor)
+                .WithTitle(title.Truncate(Constants.TitleLimit))
+                .WithColor(Constants.PrimaryColor)
             .WithAuthor(author);
 
             return embed;
@@ -115,8 +114,8 @@ namespace Enclave_Bot.Core
         {
             var dbUser = await Database.GetOrCreateUserById(user.Id);
             var embed = new EmbedBuilder()
-                .WithTitle(user.GlobalName.Truncate(Bot.TitleLengthLimit))
-                .WithColor(Bot.PrimaryColor)
+                .WithTitle(user.GlobalName.Truncate(Constants.TitleLimit))
+                .WithColor(Constants.PrimaryColor)
                 .WithThumbnailUrl(user.GetDisplayAvatarUrl())
                 .AddField("Last Active", dbUser.LastActive.ToDiscordUnixTimestampFormat())
                 .WithAuthor(author);

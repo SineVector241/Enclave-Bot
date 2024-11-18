@@ -58,7 +58,7 @@ namespace Enclave_Bot.Core.Applications
                 var selectionMenu = new SelectMenuBuilder()
                     .WithCustomId($"{Constants.REMOVE_APP_QUESTION_SELECTION}:{owner},{appId},{pageN}");
 
-                for (int i = pageN * Utils.ListLimit; i < applicationQuestions.Length && i < (pageN * Utils.ListLimit + Utils.ListLimit); i++)
+                for (int i = pageN * Constants.ListLimit; i < applicationQuestions.Length && i < (pageN * Constants.ListLimit + Constants.ListLimit); i++)
                 {
                     selectionMenu.AddOption(i.ToString(), applicationQuestions[i].Id.ToString(), applicationQuestions[i].Question.Truncate(100));
                 }
@@ -125,6 +125,43 @@ namespace Enclave_Bot.Core.Applications
 
             await Context.Interaction.DeferSafelyAsync();
             _ = ModifyOriginalResponseAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User, pageN - 1).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User, pageN - 1).Build(); }); //We don't care if it fails.
+        }
+
+        [ComponentInteraction($"{Constants.EDIT_APP_QUESTION}:*,*,*")]
+        public async Task EditQuestion(string author, string applicationId, string page)
+        {
+            var owner = ulong.Parse(author);
+            var appId = Guid.Parse(applicationId);
+            var pageN = int.Parse(page);
+
+            if (Context.User.Id != owner)
+            {
+                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!");
+                return;
+            }
+
+            var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
+            var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
+            var application = await Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).FirstOrDefaultAsync(x => x.Id == appId);
+
+            if (application == null)
+            {
+                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
+                return;
+            }
+
+            var applicationQuestions = Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).ToArray();
+            var selectionMenu = new SelectMenuBuilder()
+                                .WithCustomId($"{Constants.EDIT_APP_QUESTION_SELECTION}:{owner},{appId}");
+
+            for (int i = pageN * Constants.ListLimit; i < applicationQuestions.Length && i < (pageN * Constants.ListLimit + Constants.ListLimit); i++)
+            {
+                selectionMenu.AddOption(i.ToString(), applicationQuestions[i].Id.ToString(), applicationQuestions[i].Question.Truncate(Constants.ValueLimit));
+            }
+
+            var components = new ComponentBuilder()
+                .WithSelectMenu(selectionMenu);
+            await Context.Interaction.RespondOrFollowupAsync(components: components.Build(), ephemeral: true);
         }
     }
 }

@@ -68,4 +68,21 @@ namespace Enclave_Bot.Core.Applications
         [ModalTextInput("required", Discord.TextInputStyle.Short, "true", maxLength: 5, initValue: "True")]
         public string Required { get; set; } = true.ToString();
     }
+
+    public class EditApplicationQuestionModal : IModal
+    {
+        public string Title => "Edit Question";
+
+        [InputLabel("Question")]
+        [ModalTextInput("question", Discord.TextInputStyle.Paragraph, "Question...", maxLength: Constants.TitleLimit)]
+        public string Question { get; set; } = string.Empty;
+
+        [InputLabel("Required?")]
+        [ModalTextInput("required", Discord.TextInputStyle.Short, "true", maxLength: 5, initValue: "True")]
+        public string Required { get; set; } = true.ToString();
+
+        [InputLabel("Move")]
+        [ModalTextInput("move", Discord.TextInputStyle.Short, "0", maxLength: 2, initValue: "0")]
+        public string Move { get; set; } = "0";
+    }
 }
