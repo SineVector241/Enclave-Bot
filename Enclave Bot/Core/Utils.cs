@@ -43,7 +43,7 @@ namespace Enclave_Bot.Core
 
             for (var i = page * Constants.ListLimit; i < applications.Length && i < (page * Constants.ListLimit + Constants.ListLimit); i++)
             {
-                embed.AddField(applications[i].Name, $"`{applications[i].Id}`");
+                embed.AddField(applications[i].Name.Truncate(Constants.TitleLimit), $"`{applications[i].Id}`".Truncate(Constants.ValueLimit));
             }
 
             return embed;
@@ -78,7 +78,7 @@ namespace Enclave_Bot.Core
 
             for (int i = page * Constants.ListLimit; i < applicationQuestions.Length && i < (page * Constants.ListLimit + Constants.ListLimit); i++)
             {
-                embed.AddField($"{applicationQuestions[i].Index}{(applicationQuestions[i].Required ? "*" : string.Empty)}", applicationQuestions[i].Question);
+                embed.AddField($"{i} - Index: {applicationQuestions[i].Index}, Required: {(applicationQuestions[i].Required ? "Yes" : "No")}".Truncate(Constants.TitleLimit), applicationQuestions[i].Question.Truncate(Constants.ValueLimit));
             }
 
             return embed;

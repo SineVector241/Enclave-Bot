@@ -73,17 +73,18 @@ namespace Enclave_Bot.Core.Applications
                 return;
             }
 
-            var affected = await Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id && x.Id == selectedQ).ExecuteUpdateAsync(x => x
-                .SetProperty(y => y.Question, modal.Question)
-                .SetProperty(y => y.Required, required)
-            );
+            var question = await Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).FirstOrDefaultAsync(x => x.Id == selectedQ);
 
-            if (affected <= 0)
+            if (question == null)
             {
                 await Context.Interaction.RespondOrFollowupAsync($"The question with the id {selectedQ} does not exist!", ephemeral: true);
                 return;
             }
 
+            question.Question = modal.Question;
+            question.Required = required;
+
+            await Database.SaveChangesAsync();
             await Context.Interaction.DeferSafelyAsync();
             _ = ModifyOriginalResponseAsync(x => { x.Content = $"Question with id {selectedQ} was successfully edited!"; x.Components = null; });
             _ = editor.ModifyAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User).Build(); }); //We don't care if it fails.
