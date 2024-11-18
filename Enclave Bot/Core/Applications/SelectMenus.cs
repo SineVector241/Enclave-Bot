@@ -51,7 +51,7 @@ namespace Enclave_Bot.Core.Applications
             _ = editor.ModifyAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User).Build(); }); //We don't care if it fails.
         }
 
-        [ComponentInteraction($"{Constants.EDIT_APP_QUESTION_SELECTION}:*,*")]
+        [ComponentInteraction($"{Constants.EDIT_APP_QUESTION_SELECTION}:*,*,*")]
         public async Task EditQuestion(string author, string originalMessage, string applicationId, string[] value)
         {
             var editorId = ulong.Parse(originalMessage);
