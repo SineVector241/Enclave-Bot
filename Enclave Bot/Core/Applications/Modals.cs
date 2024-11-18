@@ -41,6 +41,7 @@ namespace Enclave_Bot.Core.Applications
                 {
                     await Database.ServerApplicationQuestions.AddAsync(new ApplicationQuestion() { ApplicationId = application.Id, Question = modal.Question, Required = required, Index = i });
                     await Database.SaveChangesAsync();
+                    await Context.Interaction.DeferSafelyAsync();
                     _ = ModifyOriginalResponseAsync(x => { x.Content = "Sucessfully added question."; x.Components = null; });
                     break;
                 }
@@ -83,8 +84,9 @@ namespace Enclave_Bot.Core.Applications
             question.Question = modal.Question;
             question.Required = required;
 
+            Database.ServerApplicationQuestions.Update(question);
             await Database.SaveChangesAsync();
-            await DeferAsync();
+            await Context.Interaction.DeferSafelyAsync();
             _ = ModifyOriginalResponseAsync(x => { x.Content = $"Question with id {selectedQ} was successfully edited!"; x.Components = null; });
             _ = editor.ModifyAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User).Build(); }); //We don't care if it fails.
         }

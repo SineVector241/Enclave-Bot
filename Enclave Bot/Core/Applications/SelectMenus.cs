@@ -46,8 +46,8 @@ namespace Enclave_Bot.Core.Applications
 
             Database.ServerApplicationQuestions.Remove(question);
             await Database.SaveChangesAsync();
-            await Context.Interaction.RespondOrFollowupAsync($"Successfully removed question {question.Index} with id {question.Id}.", ephemeral: true);
 
+            _ = ModifyOriginalResponseAsync(x => { x.Content = $"Successfully removed question {question.Index} with id {question.Id}."; x.Components = null; });
             _ = editor.ModifyAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User).Build(); }); //We don't care if it fails.
         }
 
