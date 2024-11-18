@@ -51,8 +51,9 @@ namespace Enclave_Bot.Core.Applications
         }
 
         [ComponentInteraction($"{Constants.EDIT_APP_QUESTION_SELECTION}:*,*")]
-        public async Task EditQuestion(string author, string applicationId, string[] value)
+        public async Task EditQuestion(string author, string originalMessage, string applicationId, string[] value)
         {
+            var editorId = ulong.Parse(originalMessage);
             var owner = ulong.Parse(author);
             var appId = Guid.Parse(applicationId);
             var selectedQuestion = Guid.Parse(value[0]);
@@ -81,7 +82,7 @@ namespace Enclave_Bot.Core.Applications
                 return;
             }
 
-            await RespondWithModalAsync<EditApplicationQuestionModal>($"{Constants.EDIT_APP_QUESTION_MODAL}:{owner},{appId},{selectedQuestion}", modifyModal: (modal) =>
+            await RespondWithModalAsync<EditApplicationQuestionModal>($"{Constants.EDIT_APP_QUESTION_MODAL}:{editorId},{appId},{selectedQuestion}", modifyModal: (modal) =>
             {
                 modal.UpdateTextInput("question", question.Question);
                 modal.UpdateTextInput("required", question.Required);

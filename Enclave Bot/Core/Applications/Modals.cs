@@ -12,17 +12,12 @@ namespace Enclave_Bot.Core.Applications
         private readonly Utils Utils = utils;
 
         [ModalInteraction($"{Constants.ADD_APP_QUESTION_MODAL}:*,*,*")]
-        public async Task AddQuestion(string author, string applicationId, string page, AddApplicationQuestionModal modal)
+        public async Task AddQuestion(string originalMessage, string applicationId, string page, AddApplicationQuestionModal modal)
         {
-            var owner = ulong.Parse(author);
+            var editorId = ulong.Parse(originalMessage);
             var appId = Guid.Parse(applicationId);
             var pageN = int.Parse(page);
-
-            if (Context.User.Id != owner)
-            {
-                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!", ephemeral: true);
-                return;
-            }
+            var editor = (SocketUserMessage)(Context.Channel.GetCachedMessage(editorId) ?? await Context.Channel.GetMessageAsync(editorId));
 
             var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
             var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
@@ -52,21 +47,16 @@ namespace Enclave_Bot.Core.Applications
                 }
             }
 
-            _ = ModifyOriginalResponseAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User, pageN).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User, pageN).Build(); }); //We don't care if it fails.
+            _ = editor.ModifyAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User, pageN).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User, pageN).Build(); }); //We don't care if it fails.
         }
 
         [ModalInteraction($"{Constants.EDIT_APP_QUESTION_MODAL}:*,*,*")]
-        public async Task EditQuestion(string author, string applicationId, string selectedQuestion, EditApplicationQuestionModal modal)
+        public async Task EditQuestion(string originalMessage, string applicationId, string selectedQuestion, EditApplicationQuestionModal modal)
         {
-            var owner = ulong.Parse(author);
+            var editorId = ulong.Parse(originalMessage);
             var appId = Guid.Parse(applicationId);
             var selectedQ = Guid.Parse(selectedQuestion);
-
-            if (Context.User.Id != owner)
-            {
-                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!", ephemeral: true);
-                return;
-            }
+            var editor = (SocketUserMessage)(Context.Channel.GetCachedMessage(editorId) ?? await Context.Channel.GetMessageAsync(editorId));
 
             var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
             var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
@@ -82,6 +72,21 @@ namespace Enclave_Bot.Core.Applications
                 await Context.Interaction.RespondOrFollowupAsync($"Invalid required value! Required value must be either True or False!", ephemeral: true);
                 return;
             }
+
+            var question = await Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).FirstOrDefaultAsync(x => x.Id == selectedQ);
+
+            if (question == null)
+            {
+                await Context.Interaction.RespondOrFollowupAsync($"The question with the id {selectedQ} does not exist!", ephemeral: true);
+                return;
+            }
+
+            question.Question = modal.Question;
+            question.Required = required;
+
+            await Database.SaveChangesAsync();
+            await Context.Interaction.RespondOrFollowupAsync($"Question with id {selectedQ} was successfully edited!");
+            _ = editor.ModifyAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User).Build(); }); //We don't care if it fails.
         }
     }
 

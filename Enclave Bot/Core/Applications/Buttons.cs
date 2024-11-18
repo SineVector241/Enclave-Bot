@@ -21,11 +21,11 @@ namespace Enclave_Bot.Core.Applications
 
             if (Context.User.Id != owner)
             {
-                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!");
+                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!", ephemeral: true);
                 return;
             }
 
-            await RespondWithModalAsync<AddApplicationQuestionModal>($"{Constants.ADD_APP_QUESTION_MODAL}:{owner},{appId},{pageN}");
+            await RespondWithModalAsync<AddApplicationQuestionModal>($"{Constants.ADD_APP_QUESTION_MODAL}:{Context.Interaction.Message.Id},{appId},{pageN}");
         }
 
         [ComponentInteraction($"{Constants.REMOVE_APP_QUESTION}:*,*,*")]
@@ -109,7 +109,7 @@ namespace Enclave_Bot.Core.Applications
 
             if (Context.User.Id != owner)
             {
-                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!");
+                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!", ephemeral: true);
                 return;
             }
 
@@ -136,7 +136,7 @@ namespace Enclave_Bot.Core.Applications
 
             if (Context.User.Id != owner)
             {
-                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!");
+                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!", ephemeral: true);
                 return;
             }
 
@@ -152,7 +152,7 @@ namespace Enclave_Bot.Core.Applications
 
             var applicationQuestions = Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).ToArray();
             var selectionMenu = new SelectMenuBuilder()
-                                .WithCustomId($"{Constants.EDIT_APP_QUESTION_SELECTION}:{owner},{appId}");
+                                .WithCustomId($"{Constants.EDIT_APP_QUESTION_SELECTION}:{owner},{Context.Interaction.Message.Id},{appId}");
 
             for (int i = pageN * Constants.ListLimit; i < applicationQuestions.Length && i < (pageN * Constants.ListLimit + Constants.ListLimit); i++)
             {
