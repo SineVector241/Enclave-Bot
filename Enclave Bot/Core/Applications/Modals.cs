@@ -1,4 +1,5 @@
-﻿using Discord.Interactions;
+﻿using Discord;
+using Discord.Interactions;
 using Discord.WebSocket;
 using Enclave_Bot.Database;
 using Enclave_Bot.Extensions;
@@ -16,7 +17,7 @@ namespace Enclave_Bot.Core.Applications
         {
             var editorId = ulong.Parse(originalMessage);
             var appId = Guid.Parse(applicationId);
-            var editor = (SocketUserMessage)(Context.Channel.GetCachedMessage(editorId) ?? await Context.Channel.GetMessageAsync(editorId));
+            var editor = (IUserMessage)(Context.Channel.GetCachedMessage(editorId) ?? await Context.Channel.GetMessageAsync(editorId));
 
             var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
             var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
@@ -41,8 +42,7 @@ namespace Enclave_Bot.Core.Applications
                 {
                     await Database.ServerApplicationQuestions.AddAsync(new ApplicationQuestion() { ApplicationId = application.Id, Question = modal.Question, Required = required, Index = i });
                     await Database.SaveChangesAsync();
-                    await Context.Interaction.DeferSafelyAsync();
-                    _ = ModifyOriginalResponseAsync(x => { x.Content = "Sucessfully added question."; x.Components = null; });
+                    await Context.Interaction.RespondOrFollowupAsync("Sucessfully added question.", ephemeral: true);
                     break;
                 }
             }
@@ -56,9 +56,7 @@ namespace Enclave_Bot.Core.Applications
             var editorId = ulong.Parse(originalMessage);
             var appId = Guid.Parse(applicationId);
             var selectedQ = Guid.Parse(selectedQuestion);
-            var editor = (SocketUserMessage)(Context.Channel.GetCachedMessage(editorId) ?? await Context.Channel.GetMessageAsync(editorId));
-
-            await Context.Interaction.DeferSafelyAsync();
+            var editor = (IUserMessage)(Context.Channel.GetCachedMessage(editorId) ?? await Context.Channel.GetMessageAsync(editorId));
 
             var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
             var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);

@@ -1,4 +1,5 @@
-﻿using Discord.Interactions;
+﻿using Discord;
+using Discord.Interactions;
 using Discord.WebSocket;
 using Enclave_Bot.Database;
 using Enclave_Bot.Extensions;
@@ -18,7 +19,7 @@ namespace Enclave_Bot.Core.Applications
             var owner = ulong.Parse(author);
             var appId = Guid.Parse(applicationId);
             var selectedQuestion = Guid.Parse(value[0]);
-            var editor = (SocketUserMessage)(Context.Channel.GetCachedMessage(editorId) ?? await Context.Channel.GetMessageAsync(editorId));
+            var editor = (IUserMessage)(Context.Channel.GetCachedMessage(editorId) ?? await Context.Channel.GetMessageAsync(editorId));
 
             if (Context.User.Id != owner)
             {
@@ -42,6 +43,7 @@ namespace Enclave_Bot.Core.Applications
                 return;
             }
 
+            await Context.Interaction.DeferSafelyAsync();
             _ = ModifyOriginalResponseAsync(x => { x.Content = $"Successfully removed question with id {selectedQuestion}."; x.Components = null; });
             _ = editor.ModifyAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User).Build(); }); //We don't care if it fails.
         }
@@ -53,7 +55,6 @@ namespace Enclave_Bot.Core.Applications
             var owner = ulong.Parse(author);
             var appId = Guid.Parse(applicationId);
             var selectedQuestion = Guid.Parse(value[0]);
-            await Context.Interaction.DeferSafelyAsync();
 
             if (Context.User.Id != owner)
             {

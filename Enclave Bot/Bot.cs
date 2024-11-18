@@ -20,7 +20,7 @@ namespace Enclave_Bot
             Client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Debug,
-                UseInteractionSnowflakeDate = false,
+                UseInteractionSnowflakeDate = true,
                 MessageCacheSize = 100,
                 GatewayIntents = GatewayIntents.All,
                 AlwaysDownloadUsers = true
@@ -61,10 +61,10 @@ namespace Enclave_Bot
         {
             return new ServiceCollection()
                 .AddSingleton(Client)
+                .AddSingleton<DatabaseContext>()
                 .AddSingleton<Utils>()
                 .AddSingleton<InteractiveService>()
                 .AddSingleton(Interactions)
-                .AddNpgsql<DatabaseContext>(Config.BotConfiguration.SqlConnection)
                 .BuildServiceProvider();
         }
     }

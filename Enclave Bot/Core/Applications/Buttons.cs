@@ -34,7 +34,6 @@ namespace Enclave_Bot.Core.Applications
             var appId = Guid.Parse(applicationId);
             var pageN = int.Parse(page);
 
-            await Context.Interaction.DeferSafelyAsync();
             if (Context.User.Id != owner)
             {
                 await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!");
@@ -125,7 +124,6 @@ namespace Enclave_Bot.Core.Applications
             var owner = ulong.Parse(author);
             var appId = Guid.Parse(applicationId);
             var pageN = int.Parse(page);
-            await Context.Interaction.DeferSafelyAsync();
 
             if (Context.User.Id != owner)
             {

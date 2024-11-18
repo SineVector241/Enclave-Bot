@@ -19,7 +19,7 @@ namespace Enclave_Bot.Database
         public DbSet<Application> ServerApplications { get; set; }
         public DbSet<ApplicationQuestion> ServerApplicationQuestions { get; set; }
 
-        public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
+        public DatabaseContext()
         {
             try
             {
@@ -31,6 +31,8 @@ namespace Enclave_Bot.Database
                 Console.WriteLine($"[{DateTime.Now}]: [Database] => {ex.Message}");
             }
         }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder.UseNpgsql(Config.BotConfiguration.SqlConnection);
 
         public async Task<User> GetOrCreateUserById(ulong id, SocketInteraction? context = null, bool ephemeral = false, RequestOptions? options = null)
         {
