@@ -12,12 +12,11 @@ namespace Enclave_Bot.Core.Applications
         private readonly DatabaseContext Database = database;
         private readonly Utils Utils = utils;
 
-        [ComponentInteraction($"{Constants.ADD_APP_QUESTION}:*,*,*")]
-        public async Task AddQuestion(string author, string applicationId, string page)
+        [ComponentInteraction($"{Constants.ADD_APP_QUESTION}:*,*")]
+        public async Task AddQuestion(string author, string applicationId)
         {
             var owner = ulong.Parse(author);
             var appId = Guid.Parse(applicationId);
-            var pageN = int.Parse(page);
 
             if (Context.User.Id != owner)
             {
@@ -25,7 +24,7 @@ namespace Enclave_Bot.Core.Applications
                 return;
             }
 
-            await RespondWithModalAsync<AddApplicationQuestionModal>($"{Constants.ADD_APP_QUESTION_MODAL}:{Context.Interaction.Message.Id},{appId},{pageN}");
+            await RespondWithModalAsync<AddApplicationQuestionModal>($"{Constants.ADD_APP_QUESTION_MODAL}:{Context.Interaction.Message.Id},{appId}");
         }
 
         [ComponentInteraction($"{Constants.REMOVE_APP_QUESTION}:*,*,*")]

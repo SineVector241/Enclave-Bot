@@ -54,7 +54,7 @@ namespace Enclave_Bot.Core
             var appQuestions = Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).Count();
 
             var components = new ComponentBuilder()
-                .WithButton("Add Question", $"{Constants.ADD_APP_QUESTION}:{author.Id},{application.Id},{page}", ButtonStyle.Success, new Emoji("➕"))
+                .WithButton("Add Question", $"{Constants.ADD_APP_QUESTION}:{author.Id},{application.Id}", ButtonStyle.Success, new Emoji("➕"))
                 .WithButton("Remove Question", $"{Constants.REMOVE_APP_QUESTION}:{author.Id},{application.Id},{page}", ButtonStyle.Danger, new Emoji("➖"))
                 .WithButton("Edit Question", $"{Constants.EDIT_APP_QUESTION}:{author.Id},{application.Id},{page}", ButtonStyle.Primary, new Emoji("✏️"))
                 .WithButton("Edit Actions", $"{Constants.SWITCH_TO_APP_ACTIONS}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("\ud83d\udd04"));

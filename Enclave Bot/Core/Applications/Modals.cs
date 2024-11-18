@@ -11,12 +11,11 @@ namespace Enclave_Bot.Core.Applications
         private readonly DatabaseContext Database = database;
         private readonly Utils Utils = utils;
 
-        [ModalInteraction($"{Constants.ADD_APP_QUESTION_MODAL}:*,*,*")]
-        public async Task AddQuestion(string originalMessage, string applicationId, string page, AddApplicationQuestionModal modal)
+        [ModalInteraction($"{Constants.ADD_APP_QUESTION_MODAL}:*,*")]
+        public async Task AddQuestion(string originalMessage, string applicationId, AddApplicationQuestionModal modal)
         {
             var editorId = ulong.Parse(originalMessage);
             var appId = Guid.Parse(applicationId);
-            var pageN = int.Parse(page);
             var editor = (SocketUserMessage)(Context.Channel.GetCachedMessage(editorId) ?? await Context.Channel.GetMessageAsync(editorId));
 
             var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
@@ -42,12 +41,12 @@ namespace Enclave_Bot.Core.Applications
                 {
                     await Database.ServerApplicationQuestions.AddAsync(new ApplicationQuestion() { ApplicationId = application.Id, Question = modal.Question, Required = required, Index = i });
                     await Database.SaveChangesAsync();
-                    await Context.Interaction.RespondOrFollowupAsync("Successfully added question.", ephemeral: true);
+                    _ = ModifyOriginalResponseAsync(x => { x.Content = "Sucessfully added question."; x.Components = null; });
                     break;
                 }
             }
 
-            _ = editor.ModifyAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User, pageN).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User, pageN).Build(); }); //We don't care if it fails.
+            _ = editor.ModifyAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User).Build(); }); //We don't care if it fails.
         }
 
         [ModalInteraction($"{Constants.EDIT_APP_QUESTION_MODAL}:*,*,*")]
@@ -85,7 +84,8 @@ namespace Enclave_Bot.Core.Applications
             question.Required = required;
 
             await Database.SaveChangesAsync();
-            await Context.Interaction.RespondOrFollowupAsync($"Question with id {selectedQ} was successfully edited!");
+            await DeferAsync();
+            _ = ModifyOriginalResponseAsync(x => { x.Content = $"Question with id {selectedQ} was successfully edited!"; x.Components = null; });
             _ = editor.ModifyAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User).Build(); }); //We don't care if it fails.
         }
     }
