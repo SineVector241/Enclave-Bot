@@ -13,7 +13,7 @@ namespace Enclave_Bot.Core.Applications
         private readonly Utils Utils = utils;
 
         [ModalInteraction($"{Constants.ADD_APP_QUESTION_MODAL}:*,*")]
-        public async Task AddQuestion(string originalMessage, string applicationId, AddApplicationQuestionModal modal)
+        public async Task AddQuestion(string originalMessage, string applicationId, ApplicationQuestionModal modal)
         {
             var editorId = ulong.Parse(originalMessage);
             var appId = Guid.Parse(applicationId);
@@ -36,14 +36,36 @@ namespace Enclave_Bot.Core.Applications
 
             var questions = Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).ToList();
 
-            for (int i = 0; i < int.MaxValue; i++)
+            if (questions.Count > Constants.ApplicationQuestionsLimit)
             {
-                if (!questions.Exists(x => x.Index == i))
+                await Context.Interaction.RespondOrFollowupAsync($"You have reached the application question limit of {Constants.ApplicationQuestionsLimit}.", ephemeral: true);
+                return;
+            }
+
+            if (int.TryParse(modal.Index, out var index))
+            {
+                var question = new ApplicationQuestion() { ApplicationId = application.Id, Question = modal.Question, Required = required, Index = index };
+                await Database.ServerApplicationQuestions.AddAsync(question);
+                while (questions.Exists(x => x.Index == index && x != question))
                 {
-                    await Database.ServerApplicationQuestions.AddAsync(new ApplicationQuestion() { ApplicationId = application.Id, Question = modal.Question, Required = required, Index = i });
-                    await Database.SaveChangesAsync();
-                    await Context.Interaction.RespondOrFollowupAsync("Sucessfully added question.", ephemeral: true);
-                    break;
+                    question = questions.First(x => x.Index == index && x != question);
+                    question.Index = index + 1;
+                    index++;
+                }
+                await Database.SaveChangesAsync();
+                await Context.Interaction.RespondOrFollowupAsync($"Sucessfully added question to index {index}.", ephemeral: true);
+            }
+            else
+            {
+                for (int i = 0; i < int.MaxValue; i++)
+                {
+                    if (!questions.Exists(x => x.Index == i))
+                    {
+                        await Database.ServerApplicationQuestions.AddAsync(new ApplicationQuestion() { ApplicationId = application.Id, Question = modal.Question, Required = required, Index = i });
+                        await Database.SaveChangesAsync();
+                        await Context.Interaction.RespondOrFollowupAsync($"Sucessfully added question to index {i}.", ephemeral: true);
+                        break;
+                    }
                 }
             }
 
@@ -51,7 +73,7 @@ namespace Enclave_Bot.Core.Applications
         }
 
         [ModalInteraction($"{Constants.EDIT_APP_QUESTION_MODAL}:*,*,*")]
-        public async Task EditQuestion(string originalMessage, string applicationId, string selectedQuestion, EditApplicationQuestionModal modal)
+        public async Task EditQuestion(string originalMessage, string applicationId, string selectedQuestion, ApplicationQuestionModal modal)
         {
             var editorId = ulong.Parse(originalMessage);
             var appId = Guid.Parse(applicationId);
@@ -73,7 +95,8 @@ namespace Enclave_Bot.Core.Applications
                 return;
             }
 
-            var question = await Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).FirstOrDefaultAsync(x => x.Id == selectedQ);
+            var questions = Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).ToList();
+            var question = questions.FirstOrDefault(x => x.Id == selectedQ);
 
             if (question == null)
             {
@@ -84,6 +107,17 @@ namespace Enclave_Bot.Core.Applications
             question.Question = modal.Question;
             question.Required = required;
 
+            if (int.TryParse(modal.Index, out var index))
+            {
+                question.Index = index;
+                while (questions.Exists(x => x.Index == index && x != question))
+                {
+                    question = questions.First(x => x.Index == index && x != question);
+                    question.Index = index + 1;
+                    index++;
+                }
+            }
+
             await Database.SaveChangesAsync();
             await Context.Interaction.DeferSafelyAsync();
             _ = ModifyOriginalResponseAsync(x => { x.Content = $"Question with id {selectedQ} was successfully edited!"; x.Components = null; });
@@ -91,33 +125,20 @@ namespace Enclave_Bot.Core.Applications
         }
     }
 
-    public class AddApplicationQuestionModal : IModal
+    public class ApplicationQuestionModal : IModal
     {
         public string Title => "Add Question";
 
         [InputLabel("Question")]
-        [ModalTextInput("question", Discord.TextInputStyle.Paragraph, "Question...", maxLength: 100)]
+        [ModalTextInput("question", TextInputStyle.Paragraph, "Question...", maxLength: 100)]
         public string Question { get; set; } = string.Empty;
 
         [InputLabel("Required?")]
-        [ModalTextInput("required", Discord.TextInputStyle.Short, "true", maxLength: 5, initValue: "True")]
-        public string Required { get; set; } = true.ToString();
-    }
-
-    public class EditApplicationQuestionModal : IModal
-    {
-        public string Title => "Edit Question";
-
-        [InputLabel("Question")]
-        [ModalTextInput("question", Discord.TextInputStyle.Paragraph, "Question...", maxLength: Constants.TitleLimit)]
-        public string Question { get; set; } = string.Empty;
-
-        [InputLabel("Required?")]
-        [ModalTextInput("required", Discord.TextInputStyle.Short, "true", maxLength: 5, initValue: "True")]
+        [ModalTextInput("required", TextInputStyle.Short, "true", maxLength: 5, initValue: "True")]
         public string Required { get; set; } = true.ToString();
 
-        [InputLabel("Move")]
-        [ModalTextInput("move", Discord.TextInputStyle.Short, "0", maxLength: 2, initValue: "0")]
-        public string Move { get; set; } = "0";
+        [InputLabel("Index")]
+        [ModalTextInput("index", TextInputStyle.Short, "0", maxLength: 2, initValue: "0")]
+        public string Index { get; set; } = string.Empty;
     }
 }

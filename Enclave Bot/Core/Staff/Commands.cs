@@ -12,10 +12,10 @@ namespace Enclave_Bot.Core.Staff
         private readonly Utils Utils = utils;
 
         [SlashCommand("userinfo", "Get's a users info.")]
-        public async Task UserInfo(SocketUser? user = null)
+        public async Task UserInfo(SocketGuildUser? user = null)
         {
             if (user == null)
-                user = Context.User;
+                user = Context.Guild.GetUser(Context.User.Id);
             var embed = await Utils.CreateUserInfoEmbed(user, Context.User);
             await RespondAsync(embed: embed.Build());
         }

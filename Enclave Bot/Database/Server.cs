@@ -76,16 +76,30 @@ namespace Enclave_Bot.Database
         [Required]
         public string Name { get; set; }
         [Required]
+        public ulong SubmissionChannel { get; set; }
+        [Required]
         public ICollection<ApplicationQuestion> Questions { get; set; }
+        [Required]
+        public List<ulong> AddRoles { get; set; }
+        [Required]
+        public List<ulong> RemoveRoles { get; set; }
+        [Required]
+        public byte Retries { get; set; }
+        [Required]
+        public ApplicationFailAction FailAction { get; set; }
 
         public Application()
         {
             Name = string.Empty;
             Questions = new List<ApplicationQuestion>();
+            AddRoles = new List<ulong>();
+            RemoveRoles = new List<ulong>();
+            Retries = 0;
+            FailAction = ApplicationFailAction.None;
         }
     }
 
-    [Index(nameof(Index), IsUnique = true)]
+    [Index(nameof(Index), nameof(ApplicationId), IsUnique = true)]
     public class ApplicationQuestion
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -112,5 +126,12 @@ namespace Enclave_Bot.Database
     public enum ServerLogType
     {
 
+    }
+
+    public enum ApplicationFailAction
+    {
+        None,
+        Kick,
+        Ban
     }
 }

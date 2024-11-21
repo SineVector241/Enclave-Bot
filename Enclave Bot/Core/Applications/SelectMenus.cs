@@ -18,7 +18,7 @@ namespace Enclave_Bot.Core.Applications
             var editorId = ulong.Parse(originalMessage);
             var owner = ulong.Parse(author);
             var appId = Guid.Parse(applicationId);
-            var selectedQuestion = Guid.Parse(value[0]);
+            var selectedQuestions = value.Select(Guid.Parse);
             var editor = (IUserMessage)(Context.Channel.GetCachedMessage(editorId) ?? await Context.Channel.GetMessageAsync(editorId));
 
             if (Context.User.Id != owner)
@@ -37,14 +37,15 @@ namespace Enclave_Bot.Core.Applications
                 return;
             }
 
-            if (await Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id && x.Id == selectedQuestion).ExecuteDeleteAsync() <= 0)
+            var removed = await Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id && selectedQuestions.Contains(x.Id)).ExecuteDeleteAsync();
+            if (removed <= 0)
             {
-                await Context.Interaction.RespondOrFollowupAsync($"The question with the id {selectedQuestion} does not exist!", ephemeral: true);
+                await Context.Interaction.RespondOrFollowupAsync("No questions were removed!", ephemeral: true);
                 return;
             }
 
             await Context.Interaction.DeferSafelyAsync();
-            _ = ModifyOriginalResponseAsync(x => { x.Content = $"Successfully removed question with id {selectedQuestion}."; x.Components = null; });
+            _ = ModifyOriginalResponseAsync(x => { x.Content = $"Successfully removed {removed} question(s)."; x.Components = null; });
             _ = editor.ModifyAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User).Build(); }); //We don't care if it fails.
         }
 
@@ -80,10 +81,12 @@ namespace Enclave_Bot.Core.Applications
                 return;
             }
 
-            await RespondWithModalAsync<EditApplicationQuestionModal>($"{Constants.EDIT_APP_QUESTION_MODAL}:{editorId},{appId},{selectedQuestion}", modifyModal: (modal) =>
+            await RespondWithModalAsync<ApplicationQuestionModal>($"{Constants.EDIT_APP_QUESTION_MODAL}:{editorId},{appId},{selectedQuestion}", modifyModal: (modal) =>
             {
+                modal.WithTitle("Edit Question".Truncate(Constants.TitleLimit));
                 modal.UpdateTextInput("question", question.Question);
                 modal.UpdateTextInput("required", question.Required);
+                modal.UpdateTextInput("index", question.Index);
             });
         }
     }

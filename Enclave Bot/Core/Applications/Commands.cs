@@ -35,13 +35,20 @@ namespace Enclave_Bot.Core.Applications
         [SlashCommand("list", "Lists all applications")]
         public async Task List()
         {
-            var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
-            var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
-            var applications = Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).ToArray();
+            try
+            {
+                var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
+                var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
+                var applications = Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).ToArray();
 
-            var embed = Utils.CreateApplicationListEmbed(Context.Guild, applications, Context.User);
-            var components = Utils.CreateApplicationListComponents(applications, Context.User);
-            await Context.Interaction.RespondOrFollowupAsync(embed: embed.Build());
+                var embed = Utils.CreateApplicationListEmbed(Context.Guild, applications, Context.User);
+                var components = Utils.CreateApplicationListComponents(applications, Context.User);
+                await Context.Interaction.RespondOrFollowupAsync(embed: embed.Build());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
 
         [SlashCommand("edit", "Shows the editor for an application.")]

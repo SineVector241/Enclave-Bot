@@ -87,25 +87,40 @@ namespace Enclave_Bot.Core
         public ComponentBuilder CreateApplicationEditorActionComponents(Application application, SocketUser author)
         {
             var components = new ComponentBuilder()
-                .WithButton("Add Accept Role", $"{Constants.ADD_APP_ACCEPT_ROLE}:{author.Id}", ButtonStyle.Primary, new Emoji("➕"))
-                .WithButton("Remove Accept Role", $"{Constants.REMOVE_APP_ACCEPT_ROLE}:{author.Id}", ButtonStyle.Primary, new Emoji("➖"))
-                .WithButton("Set Accept Message", $"{Constants.SET_APP_ACCEPT_MESSAGE}:{author.Id}", ButtonStyle.Primary, new Emoji("✏️"))
-                .WithButton("Set Deny Message", $"{Constants.SET_APP_DENY_MESSAGE}:{author.Id}", ButtonStyle.Primary, new Emoji("✏️"))
-                .WithButton("Set Submission Channel", $"{Constants.SET_APP_SUBMISSION_CHANNEL}:{author.Id}", ButtonStyle.Primary, new Emoji("✏️"))
-                .WithButton("Edit Questions", $"{Constants.SWITCH_TO_APP_QUESTIONS}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("\ud83d\udd04"));
+                .WithButton("Add Addition Role", $"{Constants.ADD_APP_ADDITION_ROLE}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("➕"))
+                .WithButton("Remove Addotion Role", $"{Constants.REMOVE_APP_ADDITION_ROLE}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("➖"))
+                .WithButton("Add Removal Role", $"{Constants.ADD_APP_REMOVAL_ROLE}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("➕"))
+                .WithButton("Remove Removal Role", $"{Constants.REMOVE_APP_REMOVAL_ROLE}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("➖"))
+                .WithButton("Set Accept Message", $"{Constants.SET_APP_ACCEPT_MESSAGE}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("✏️"), row: 1)
+                .WithButton("Set Submission Channel", $"{Constants.SET_APP_SUBMISSION_CHANNEL}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("✏️"), row: 1)
+                .WithButton("Set Retries", $"{Constants.SET_APP_RETRIES}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("🧮"), row: 1)
+                .WithButton("Set Deny Action", $"{Constants.SET_APP_DENY_ACTION}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("🔨"), row: 1)
+                .WithButton("Edit Questions", $"{Constants.SWITCH_TO_APP_QUESTIONS}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("\ud83d\udd04"), row: 1);
 
             return components;
         }
 
         public EmbedBuilder CreateApplicationEditorActionEmbed(Application application, SocketUser author)
         {
-            var applicationQuestions = Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).ToArray();
             var title = $"Editing Application {application.Name}";
             var embed = new EmbedBuilder()
                 .WithTitle(title.Truncate(Constants.TitleLimit))
                 .WithColor(Constants.PrimaryColor)
-            .WithAuthor(author);
+                .WithAuthor(author);
 
+            var addRoles = string.Empty;
+            foreach(var addRole in application.AddRoles)
+            {
+                addRoles += $"<@&:{addRole}>";
+            }
+            embed.AddField("Adds Roles", string.IsNullOrWhiteSpace(addRoles) ? "None" : addRoles);
+
+            var removeRoles = string.Empty;
+            foreach (var removeRole in application.RemoveRoles)
+            {
+                removeRoles += $"<@&:{removeRole}>";
+            }
+            embed.AddField("Removes Roles", string.IsNullOrWhiteSpace(removeRoles) ? "None" : removeRoles);
             return embed;
         }
 
@@ -118,7 +133,13 @@ namespace Enclave_Bot.Core
                 .WithColor(Constants.PrimaryColor)
                 .WithThumbnailUrl(user.GetDisplayAvatarUrl())
                 .AddField("Last Active", dbUser.LastActive.ToDiscordUnixTimestampFormat())
+                .AddField("Created At", $"{user.CreatedAt} - <t:{user.CreatedAt.ToUnixTimeSeconds()}:R>")
                 .WithAuthor(author);
+
+            if(user is SocketGuildUser guildUser)
+            {
+                embed.AddField("Joined At", $"{guildUser.JoinedAt} - <t:{guildUser.JoinedAt?.ToUnixTimeSeconds()}:R>");
+            }
 
             return embed;
         }

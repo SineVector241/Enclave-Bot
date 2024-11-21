@@ -17,6 +17,8 @@ namespace Enclave_Bot.Core
 
         public const int ApplicationsLimit = 20;
         public const int ApplicationQuestionsLimit = 50;
+        public const int ApplicationAddRolesLimit = 10;
+        public const int ApplicationRemoveRolesLimit = 10;
 
         //App Component ID's
         public const string ADD_APP_QUESTION = "AAQ";
@@ -30,11 +32,20 @@ namespace Enclave_Bot.Core
         public const string APP_QUESTIONS_NEXT_PAGE = "AQNP";
         public const string APP_QUESTIONS_PREVIOUS_PAGE = "AQPP";
 
-        public const string ADD_APP_ACCEPT_ROLE = "AAAR";
-        public const string REMOVE_APP_ACCEPT_ROLE = "RAAR";
+        public const string ADD_APP_ADDITION_ROLE = "AAAR";
+        public const string REMOVE_APP_ADDITION_ROLE = "RAAR";
+        public const string ADD_APP_REMOVAL_ROLE = "AARR";
+        public const string REMOVE_APP_REMOVAL_ROLE = "RARR";
         public const string SET_APP_ACCEPT_MESSAGE = "SAAM";
         public const string SET_APP_DENY_MESSAGE = "SADM";
         public const string SET_APP_SUBMISSION_CHANNEL = "SASC";
+        public const string SET_APP_RETRIES = "SAR";
+        public const string SET_APP_DENY_ACTION = "SADA";
+
+        public const string ADD_APP_ADDTION_ROLE_SELECTION = "AAARS";
+        public const string REMOVE_APP_ADDTION_ROLE_SELECTION = "RAARS";
+        public const string ADD_APP_REMOVAL_ROLE_SELECTION = "AARRS";
+        public const string REMOVE_APP_REMOVAL_ROLE_SELECTION = "RARRS";
 
         public const string SWITCH_TO_APP_ACTIONS = "STAA";
         public const string SWITCH_TO_APP_QUESTIONS = "STAQ";
