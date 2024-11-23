@@ -22,5 +22,13 @@ namespace Enclave_Bot.Extensions
                 return;
             await interaction.DeferAsync(ephemeral, options);
         }
+
+        public static async Task<bool> CheckAuthorAsync<TInteraction>(this TInteraction interaction, ulong author, string? text = null, Embed[]? embeds = null, bool isTTS = false, bool ephemeral = false,
+            AllowedMentions? allowedMentions = null, MessageComponent? components = null, Embed? embed = null, RequestOptions? options = null, PollProperties? poll = null) where TInteraction : SocketInteraction
+        {
+            if (interaction.User.Id == author) return true;
+            await interaction.RespondOrFollowupAsync(text, embeds, isTTS, ephemeral, allowedMentions, components, embed, options, poll);
+            return false;
+        }
     }
 }

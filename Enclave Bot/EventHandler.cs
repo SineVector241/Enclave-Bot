@@ -50,7 +50,7 @@ namespace Enclave_Bot
         //Important for the bots framework
         private async Task InteractionCreated(SocketInteraction interaction)
         {
-            var user = await Database.GetOrCreateUserById(interaction.User.Id, interaction);
+            var user = await Database.GetOrCreateUserById(interaction.User.Id);
             user.LastActive = DateTime.UtcNow;
             user.Username = interaction.User.Username;
             await Database.SaveChangesAsync();

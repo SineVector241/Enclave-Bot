@@ -24,7 +24,6 @@ namespace Enclave_Bot.Core
             var apps = application.Length;
 
             var components = new ComponentBuilder();
-
             if (apps > (page + 1) * Constants.ListLimit)
                 components.WithButton("Next Page", $"{Constants.APP_LIST_NEXT_PAGE}:{author.Id},{page}", ButtonStyle.Primary, new Emoji("▶️"), row: 1);
             if (page > 0)
@@ -51,7 +50,7 @@ namespace Enclave_Bot.Core
 
         public ComponentBuilder CreateApplicationEditorComponents(Application application, SocketUser author, int page = 0)
         {
-            var appQuestions = Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).Count();
+            var appQuestions = Database.ServerApplicationQuestions.Count(x => x.ApplicationId == application.Id);
 
             var components = new ComponentBuilder()
                 .WithButton("Add Question", $"{Constants.ADD_APP_QUESTION}:{author.Id},{application.Id}", ButtonStyle.Success, new Emoji("➕"))
@@ -88,13 +87,13 @@ namespace Enclave_Bot.Core
         {
             var components = new ComponentBuilder()
                 .WithButton("Add Addition Role", $"{Constants.ADD_APP_ADDITION_ROLE}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("➕"))
-                .WithButton("Remove Addotion Role", $"{Constants.REMOVE_APP_ADDITION_ROLE}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("➖"))
+                .WithButton("Remove Addition Role", $"{Constants.REMOVE_APP_ADDITION_ROLE}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("➖"))
                 .WithButton("Add Removal Role", $"{Constants.ADD_APP_REMOVAL_ROLE}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("➕"))
                 .WithButton("Remove Removal Role", $"{Constants.REMOVE_APP_REMOVAL_ROLE}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("➖"))
                 .WithButton("Set Accept Message", $"{Constants.SET_APP_ACCEPT_MESSAGE}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("✏️"), row: 1)
                 .WithButton("Set Submission Channel", $"{Constants.SET_APP_SUBMISSION_CHANNEL}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("✏️"), row: 1)
                 .WithButton("Set Retries", $"{Constants.SET_APP_RETRIES}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("🧮"), row: 1)
-                .WithButton("Set Deny Action", $"{Constants.SET_APP_DENY_ACTION}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("🔨"), row: 1)
+                .WithButton("Set Fail Action", $"{Constants.SET_APP_FAIL_ACTION}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("🔨"), row: 1)
                 .WithButton("Edit Questions", $"{Constants.SWITCH_TO_APP_QUESTIONS}:{author.Id},{application.Id}", ButtonStyle.Primary, new Emoji("\ud83d\udd04"), row: 1);
 
             return components;
@@ -105,21 +104,17 @@ namespace Enclave_Bot.Core
             var title = $"Editing Application {application.Name}";
             var embed = new EmbedBuilder()
                 .WithTitle(title.Truncate(Constants.TitleLimit))
+                .AddField("Accept Message", string.IsNullOrWhiteSpace(application.AcceptMessage) ? "N.A." : application.AcceptMessage.Truncate(Constants.ValueLimit))
+                .AddField("Submission Channel", application.SubmissionChannel == null? "N.A." : $"<#{application.SubmissionChannel}>")
+                .AddField("Retries", application.Retries.ToString())
+                .AddField("Fail Action", application.FailAction.ToString())
                 .WithColor(Constants.PrimaryColor)
                 .WithAuthor(author);
 
-            var addRoles = string.Empty;
-            foreach(var addRole in application.AddRoles)
-            {
-                addRoles += $"<@&:{addRole}>";
-            }
+            var addRoles = application.AddRoles.Aggregate(string.Empty, (current, addRole) => current + $"<@&{addRole}>\n");
             embed.AddField("Adds Roles", string.IsNullOrWhiteSpace(addRoles) ? "None" : addRoles);
 
-            var removeRoles = string.Empty;
-            foreach (var removeRole in application.RemoveRoles)
-            {
-                removeRoles += $"<@&:{removeRole}>";
-            }
+            var removeRoles = application.RemoveRoles.Aggregate(string.Empty, (current, removeRole) => current + $"<@&{removeRole}>\n");
             embed.AddField("Removes Roles", string.IsNullOrWhiteSpace(removeRoles) ? "None" : removeRoles);
             return embed;
         }

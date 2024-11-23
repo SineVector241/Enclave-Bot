@@ -23,7 +23,7 @@ namespace Enclave_Bot.Database
     }
 
     #region Log Settings
-    public class LogSettings
+    public class LogSettings(ICollection<LogSetting> settings)
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Id { get; set; }
@@ -32,11 +32,10 @@ namespace Enclave_Bot.Database
 
         public ulong? DefaultChannel { get; set; }
         [Required]
-        public ICollection<LogSetting> Settings { get; set; }
+        public ICollection<LogSetting> Settings { get; set; } = settings;
 
-        public LogSettings()
+        public LogSettings() : this(new List<LogSetting>())
         {
-            Settings = new List<LogSetting>();
         }
     }
 
@@ -50,7 +49,7 @@ namespace Enclave_Bot.Database
     #endregion
 
     #region Application Settings
-    public class ApplicationSettings
+    public class ApplicationSettings(ICollection<Application> applications)
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Id { get; set; }
@@ -58,49 +57,57 @@ namespace Enclave_Bot.Database
         public required ulong ServerId { get; set; }
 
         [Required]
-        public ICollection<Application> Applications { get; set; }
+        public ICollection<Application> Applications { get; set; } = applications;
 
-        public ApplicationSettings()
+        public ApplicationSettings() : this(new List<Application>())
         {
-            Applications = new List<Application>();
         }
     }
 
-    public class Application
+    public class Application(
+        string name,
+        string acceptMessage,
+        ICollection<ApplicationQuestion> questions,
+        List<ulong> addRoles,
+        List<ulong> removeRoles)
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Id { get; set; }
+        
         [Required]
         public required Guid ApplicationSettingsId { get; set; }
 
         [Required]
-        public string Name { get; set; }
+        public string Name { get; set; } = name;
+        
         [Required]
-        public ulong SubmissionChannel { get; set; }
+        public string AcceptMessage { get; set; } = acceptMessage;
+        
+        public ulong? SubmissionChannel { get; set; }
+        
         [Required]
-        public ICollection<ApplicationQuestion> Questions { get; set; }
+        public ICollection<ApplicationQuestion> Questions { get; set; } = questions;
+
         [Required]
-        public List<ulong> AddRoles { get; set; }
+        public List<ulong> AddRoles { get; set; } = addRoles;
+
         [Required]
-        public List<ulong> RemoveRoles { get; set; }
+        public List<ulong> RemoveRoles { get; set; } = removeRoles;
+
         [Required]
         public byte Retries { get; set; }
         [Required]
         public ApplicationFailAction FailAction { get; set; }
 
-        public Application()
+        public Application() : this(string.Empty, string.Empty, new List<ApplicationQuestion>(), [], [])
         {
-            Name = string.Empty;
-            Questions = new List<ApplicationQuestion>();
-            AddRoles = new List<ulong>();
-            RemoveRoles = new List<ulong>();
             Retries = 0;
             FailAction = ApplicationFailAction.None;
         }
     }
 
     [Index(nameof(Index), nameof(ApplicationId), IsUnique = true)]
-    public class ApplicationQuestion
+    public class ApplicationQuestion(string question)
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Id { get; set; }
@@ -108,15 +115,15 @@ namespace Enclave_Bot.Database
         public required Guid ApplicationId { get; set; }
 
         [Required]
-        public string Question { get; set; }
+        public string Question { get; set; } = question;
+
         [Required]
         public int Index { get; set; }
         [Required]
         public bool Required { get; set; }
 
-        public ApplicationQuestion()
+        public ApplicationQuestion() : this(string.Empty)
         {
-            Question = string.Empty;
             Index = 0;
             Required = false;
         }

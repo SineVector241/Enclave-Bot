@@ -3,7 +3,6 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Enclave_Bot.Database;
 using Enclave_Bot.Extensions;
-using Microsoft.EntityFrameworkCore;
 
 namespace Enclave_Bot.Core.Applications
 {
@@ -19,23 +18,16 @@ namespace Enclave_Bot.Core.Applications
             var owner = ulong.Parse(author);
             var appId = Guid.Parse(applicationId);
 
-            if (Context.User.Id != owner)
-            {
-                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!", ephemeral: true);
-                return;
-            }
-
-            var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
-            var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
-            var application = await Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).FirstOrDefaultAsync(x => x.Id == appId);
-
+            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
+            
+            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
             if (application == null)
             {
                 await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
                 return;
             }
 
-            var questions = Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).Count();
+            var questions = Database.ServerApplicationQuestions.Count(x => x.ApplicationId == application.Id);
             if (questions > Constants.ApplicationQuestionsLimit)
             {
                 await Context.Interaction.RespondOrFollowupAsync($"You have reached the application question limit of {Constants.ApplicationQuestionsLimit}.", ephemeral: true);
@@ -52,16 +44,9 @@ namespace Enclave_Bot.Core.Applications
             var appId = Guid.Parse(applicationId);
             var pageN = int.Parse(page);
 
-            if (Context.User.Id != owner)
-            {
-                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!");
-                return;
-            }
-
-            var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
-            var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
-            var application = await Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).FirstOrDefaultAsync(x => x.Id == appId);
-
+            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
+            
+            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
             if (application == null)
             {
                 await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
@@ -73,7 +58,7 @@ namespace Enclave_Bot.Core.Applications
                 .WithCustomId($"{Constants.REMOVE_APP_QUESTION_SELECTION}:{owner},{Context.Interaction.Message.Id},{appId}")
                 .WithMaxValues(applicationQuestions.Length);
 
-            for (int i = pageN * Constants.ListLimit; i < applicationQuestions.Length && i < (pageN * Constants.ListLimit + Constants.ListLimit); i++)
+            for (var i = pageN * Constants.ListLimit; i < applicationQuestions.Length && i < (pageN * Constants.ListLimit + Constants.ListLimit); i++)
             {
                 selectionMenu.AddOption(i.ToString(), applicationQuestions[i].Id.ToString(), applicationQuestions[i].Question.Truncate(100));
             }
@@ -96,16 +81,9 @@ namespace Enclave_Bot.Core.Applications
             var appId = Guid.Parse(applicationId);
             var pageN = int.Parse(page);
 
-            if (Context.User.Id != owner)
-            {
-                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!", ephemeral: true);
-                return;
-            }
+            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
 
-            var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
-            var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
-            var application = await Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).FirstOrDefaultAsync(x => x.Id == appId);
-
+            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
             if (application == null)
             {
                 await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
@@ -116,7 +94,7 @@ namespace Enclave_Bot.Core.Applications
             var selectionMenu = new SelectMenuBuilder()
                                 .WithCustomId($"{Constants.EDIT_APP_QUESTION_SELECTION}:{owner},{Context.Interaction.Message.Id},{appId}");
 
-            for (int i = pageN * Constants.ListLimit; i < applicationQuestions.Length && i < (pageN * Constants.ListLimit + Constants.ListLimit); i++)
+            for (var i = pageN * Constants.ListLimit; i < applicationQuestions.Length && i < (pageN * Constants.ListLimit + Constants.ListLimit); i++)
             {
                 selectionMenu.AddOption(i.ToString(), applicationQuestions[i].Id.ToString(), applicationQuestions[i].Question.Truncate(Constants.ValueLimit));
             }
@@ -129,30 +107,34 @@ namespace Enclave_Bot.Core.Applications
         [ComponentInteraction($"{Constants.SWITCH_TO_APP_ACTIONS}:*,*")]
         public async Task SwitchToActions(string author, string applicationId)
         {
-            var owner = ulong.Parse(author);
-            var appId = Guid.Parse(applicationId);
-
-            if (Context.User.Id != owner)
+            try
             {
-                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!", ephemeral: true);
-                return;
+                var owner = ulong.Parse(author);
+                var appId = Guid.Parse(applicationId);
+
+                if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
+
+                var application = await Database.GetApplicationById(Context.Guild.Id, appId);
+                if (application == null)
+                {
+                    await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
+                    return;
+                }
+
+                var embed = Utils.CreateApplicationEditorActionEmbed(application, Context.User);
+                var components = Utils.CreateApplicationEditorActionComponents(application, Context.User);
+
+                await Context.Interaction.DeferSafelyAsync();
+                await ModifyOriginalResponseAsync(x =>
+                {
+                    x.Embed = embed.Build();
+                    x.Components = components.Build();
+                });
             }
-
-            var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
-            var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
-            var application = await Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).FirstOrDefaultAsync(x => x.Id == appId);
-
-            if (application == null)
+            catch (Exception ex)
             {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
-                return;
+                Console.WriteLine(ex.Message);
             }
-
-            var embed = Utils.CreateApplicationEditorActionEmbed(application, Context.User);
-            var components = Utils.CreateApplicationEditorActionComponents(application, Context.User);
-
-            await Context.Interaction.DeferSafelyAsync();
-            await ModifyOriginalResponseAsync(x => { x.Embed = embed.Build(); x.Components = components.Build(); });
         }
 
         [ComponentInteraction($"{Constants.APP_QUESTIONS_NEXT_PAGE}:*,*,*")]
@@ -162,16 +144,9 @@ namespace Enclave_Bot.Core.Applications
             var appId = Guid.Parse(applicationId);
             var pageN = int.Parse(page);
 
-            if (Context.User.Id != owner)
-            {
-                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!");
-                return;
-            }
+            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
 
-            var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
-            var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
-            var application = await Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).FirstOrDefaultAsync(x => x.Id == appId);
-
+            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
             if (application == null)
             {
                 await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
@@ -189,16 +164,9 @@ namespace Enclave_Bot.Core.Applications
             var appId = Guid.Parse(applicationId);
             var pageN = int.Parse(page);
 
-            if (Context.User.Id != owner)
-            {
-                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!", ephemeral: true);
-                return;
-            }
+            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
 
-            var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
-            var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
-            var application = await Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).FirstOrDefaultAsync(x => x.Id == appId);
-
+            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
             if (application == null)
             {
                 await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
@@ -217,29 +185,23 @@ namespace Enclave_Bot.Core.Applications
             var owner = ulong.Parse(author);
             var appId = Guid.Parse(applicationId);
 
-            if (Context.User.Id != owner)
-            {
-                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!", ephemeral: true);
-                return;
-            }
+            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
 
-            var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
-            var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
-            var application = await Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).FirstOrDefaultAsync(x => x.Id == appId);
-
+            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
             if (application == null)
             {
                 await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
                 return;
             }
-            if (application.AddRoles.Count > Constants.ApplicationAddRolesLimit)
+            if (application.AddRoles.Count >= Constants.ApplicationAddRolesLimit)
             {
-                await Context.Interaction.RespondOrFollowupAsync($"You have reached the application add role limit of {Constants.ApplicationAddRolesLimit}.", ephemeral: true);
+                await Context.Interaction.RespondOrFollowupAsync($"You have reached the application add role limit of {Constants.ApplicationAddRolesLimit}!", ephemeral: true);
                 return;
             }
 
             var selectionMenu = new SelectMenuBuilder()
-                .WithCustomId($"{Constants.ADD_APP_ADDTION_ROLE_SELECTION}:{owner},{appId}")
+                .WithCustomId($"{Constants.ADD_APP_ADDITION_ROLE_SELECTION}:{owner},{Context.Interaction.Message.Id},{appId}")
+                .WithMaxValues(Constants.ApplicationAddRolesLimit - application.AddRoles.Count)
                 .WithType(ComponentType.RoleSelect);
             var components = new ComponentBuilder()
                 .WithSelectMenu(selectionMenu);
@@ -253,16 +215,9 @@ namespace Enclave_Bot.Core.Applications
             var owner = ulong.Parse(author);
             var appId = Guid.Parse(applicationId);
 
-            if (Context.User.Id != owner)
-            {
-                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!", ephemeral: true);
-                return;
-            }
+            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
 
-            var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
-            var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
-            var application = await Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).FirstOrDefaultAsync(x => x.Id == appId);
-
+            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
             if (application == null)
             {
                 await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
@@ -275,7 +230,8 @@ namespace Enclave_Bot.Core.Applications
             }
 
             var selectionMenu = new SelectMenuBuilder()
-                .WithCustomId($"{Constants.REMOVE_APP_ADDTION_ROLE_SELECTION}:{owner},{appId}")
+                .WithCustomId($"{Constants.REMOVE_APP_ADDITION_ROLE_SELECTION}:{owner},{Context.Interaction.Message.Id},{appId}")
+                .WithMaxValues(Constants.ApplicationAddRolesLimit)
                 .WithType(ComponentType.RoleSelect);
             var components = new ComponentBuilder()
                 .WithSelectMenu(selectionMenu);
@@ -289,29 +245,23 @@ namespace Enclave_Bot.Core.Applications
             var owner = ulong.Parse(author);
             var appId = Guid.Parse(applicationId);
 
-            if (Context.User.Id != owner)
-            {
-                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!", ephemeral: true);
-                return;
-            }
+            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
 
-            var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
-            var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
-            var application = await Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).FirstOrDefaultAsync(x => x.Id == appId);
-
+            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
             if (application == null)
             {
                 await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
                 return;
             }
-            if (application.RemoveRoles.Count > Constants.ApplicationRemoveRolesLimit)
+            if (application.RemoveRoles.Count >= Constants.ApplicationRemoveRolesLimit)
             {
-                await Context.Interaction.RespondOrFollowupAsync($"You have reached the application remove role limit of {Constants.ApplicationAddRolesLimit}.", ephemeral: true);
+                await Context.Interaction.RespondOrFollowupAsync($"You have reached the application remove role limit of {Constants.ApplicationAddRolesLimit}!", ephemeral: true);
                 return;
             }
 
             var selectionMenu = new SelectMenuBuilder()
-                .WithCustomId($"{Constants.ADD_APP_REMOVAL_ROLE_SELECTION}:{owner},{appId}")
+                .WithCustomId($"{Constants.ADD_APP_REMOVAL_ROLE_SELECTION}:{owner},{Context.Interaction.Message.Id},{appId}")
+                .WithMaxValues(Constants.ApplicationAddRolesLimit - application.RemoveRoles.Count)
                 .WithType(ComponentType.RoleSelect);
             var components = new ComponentBuilder()
                 .WithSelectMenu(selectionMenu);
@@ -325,16 +275,9 @@ namespace Enclave_Bot.Core.Applications
             var owner = ulong.Parse(author);
             var appId = Guid.Parse(applicationId);
 
-            if (Context.User.Id != owner)
-            {
-                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!", ephemeral: true);
-                return;
-            }
+            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
 
-            var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
-            var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
-            var application = await Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).FirstOrDefaultAsync(x => x.Id == appId);
-
+            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
             if (application == null)
             {
                 await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
@@ -347,7 +290,8 @@ namespace Enclave_Bot.Core.Applications
             }
 
             var selectionMenu = new SelectMenuBuilder()
-                .WithCustomId($"{Constants.REMOVE_APP_REMOVAL_ROLE_SELECTION}:{owner},{appId}")
+                .WithCustomId($"{Constants.REMOVE_APP_REMOVAL_ROLE_SELECTION}:{owner},{Context.Interaction.Message.Id},{appId}")
+                .WithMaxValues(Constants.ApplicationAddRolesLimit)
                 .WithType(ComponentType.RoleSelect);
             var components = new ComponentBuilder()
                 .WithSelectMenu(selectionMenu);
@@ -358,25 +302,98 @@ namespace Enclave_Bot.Core.Applications
         [ComponentInteraction($"{Constants.SET_APP_ACCEPT_MESSAGE}:*,*")]
         public async Task SetAcceptMessage(string author, string applicationId)
         {
-            await Context.Interaction.RespondOrFollowupAsync("TODO!");
+            var owner = ulong.Parse(author);
+            var appId = Guid.Parse(applicationId);
+
+            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
+
+            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
+            if (application == null)
+            {
+                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
+                return;
+            }
+
+            await RespondWithModalAsync<ApplicationMessageModal>($"{Constants.SET_APP_ACCEPT_MESSAGE_MODAL}:{Context.Interaction.Message.Id},{appId}", modifyModal: (modal) =>
+            {
+                modal.UpdateTextInput("message", application.AcceptMessage);
+            });
         }
 
         [ComponentInteraction($"{Constants.SET_APP_SUBMISSION_CHANNEL}:*,*")]
         public async Task SetSubmissionChannel(string author, string applicationId)
         {
-            await Context.Interaction.RespondOrFollowupAsync("TODO!");
+            var owner = ulong.Parse(author);
+            var appId = Guid.Parse(applicationId);
+
+            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
+
+            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
+            if (application == null)
+            {
+                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
+                return;
+            }
+
+            var selectionMenu = new SelectMenuBuilder()
+                .WithCustomId($"{Constants.SET_APP_SUBMISSION_CHANNEL_SELECTION}:{owner},{Context.Interaction.Message.Id},{appId}")
+                .WithType(ComponentType.ChannelSelect)
+                .WithChannelTypes(ChannelType.Text);
+            var components = new ComponentBuilder()
+                .WithSelectMenu(selectionMenu);
+
+            await Context.Interaction.RespondOrFollowupAsync(components: components.Build(), ephemeral: true);
         }
 
         [ComponentInteraction($"{Constants.SET_APP_RETRIES}:*,*")]
         public async Task SetRetries(string author, string applicationId)
         {
-            await Context.Interaction.RespondOrFollowupAsync("TODO!");
+            var owner = ulong.Parse(author);
+            var appId = Guid.Parse(applicationId);
+
+            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
+
+            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
+            if (application == null)
+            {
+                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
+                return;
+            }
+
+            await RespondWithModalAsync<ApplicationRetriesModal>($"{Constants.SET_APP_RETRIES_MODAL}:{Context.Interaction.Message.Id},{appId}", modifyModal: (modal) =>
+            {
+                modal.UpdateTextInput("retries", application.Retries.ToString());
+            });
         }
 
-        [ComponentInteraction($"{Constants.SET_APP_DENY_ACTION}:*,*")]
+        [ComponentInteraction($"{Constants.SET_APP_FAIL_ACTION}:*,*")]
         public async Task SetDenyAction(string author, string applicationId)
         {
-            await Context.Interaction.RespondOrFollowupAsync("TODO!");
+            var owner = ulong.Parse(author);
+            var appId = Guid.Parse(applicationId);
+
+            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
+
+            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
+            if (application == null)
+            {
+                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
+                return;
+            }
+
+            var selectionMenu = new SelectMenuBuilder()
+                .WithCustomId($"{Constants.SET_APP_FAIL_ACTION_SELECTION}:{owner},{Context.Interaction.Message.Id},{appId}");
+            
+
+            foreach (int i in Enum.GetValues(typeof(ApplicationFailAction)))
+            {
+                selectionMenu.AddOption(Enum.GetName(typeof(ApplicationFailAction), i), i.ToString());
+            }
+            
+            var components = new ComponentBuilder()
+                .WithSelectMenu(selectionMenu);
+            
+            await Context.Interaction.RespondOrFollowupAsync(components: components.Build(), ephemeral: true);
         }
 
         [ComponentInteraction($"{Constants.SWITCH_TO_APP_QUESTIONS}:*,*")]
@@ -385,16 +402,9 @@ namespace Enclave_Bot.Core.Applications
             var owner = ulong.Parse(author);
             var appId = Guid.Parse(applicationId);
 
-            if (Context.User.Id != owner)
-            {
-                await Context.Interaction.RespondOrFollowupAsync("You are not the owner of this editor!", ephemeral: true);
-                return;
-            }
+            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
 
-            var server = await Database.GetOrCreateServerById(Context.Guild.Id, Context.Interaction);
-            var serverApplicationSettings = await Database.ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
-            var application = await Database.ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).FirstOrDefaultAsync(x => x.Id == appId);
-
+            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
             if (application == null)
             {
                 await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);

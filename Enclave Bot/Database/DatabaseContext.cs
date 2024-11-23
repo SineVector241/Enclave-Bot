@@ -34,21 +34,19 @@ namespace Enclave_Bot.Database
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder.UseNpgsql(Config.BotConfiguration.SqlConnection);
 
-        public async Task<User> GetOrCreateUserById(ulong id, SocketInteraction? context = null, bool ephemeral = false, RequestOptions? options = null)
+        public async Task<User> GetOrCreateUserById(ulong id)
         {
             var user = await Users.FirstOrDefaultAsync(x => x.Id == id);
             if (user != null) return user;
             
-            user = new User() { Id = id, Username = context?.User.Username ?? string.Empty, LastActive = DateTime.UtcNow };
+            user = new User() { Id = id, Username = string.Empty, LastActive = DateTime.UtcNow };
             Users.Add(user);
-            if (context != null)
-                await context.DeferSafelyAsync(ephemeral, options);
 
             await SaveChangesAsync();
             return user;
         }
 
-        public async Task<Server> GetOrCreateServerById(ulong id, SocketInteraction? context = null, bool ephemeral = false, RequestOptions? options = null)
+        public async Task<Server> GetOrCreateServerById(ulong id)
         {
             var server = await Servers.FirstOrDefaultAsync(x => x.Id == id);
             if (server != null) return server;
@@ -57,11 +55,24 @@ namespace Enclave_Bot.Database
             server.ApplicationSettings = new ApplicationSettings() { ServerId = server.Id };
             server.LogSettings = new LogSettings() { ServerId = server.Id, Settings = new List<LogSetting>() };
             Servers.Add(server);
-            if (context != null)
-                await context.DeferSafelyAsync(ephemeral, options);
 
             await SaveChangesAsync();
             return server;
+        }
+
+        public async Task<Application[]> GetServerApplications(ulong serverId)
+        {
+            var server = await GetOrCreateServerById(serverId);
+            var serverApplicationSettings = await ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
+            return await ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).ToArrayAsync();
+        }
+
+        public async Task<Application?> GetApplicationById(ulong serverId, Guid applicationId)
+        {
+            var server = await GetOrCreateServerById(serverId);
+            var serverApplicationSettings = await ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
+            
+            return await ServerApplications.FirstOrDefaultAsync(x => x.ApplicationSettingsId == serverApplicationSettings.Id && x.Id == applicationId);
         }
     }
 }

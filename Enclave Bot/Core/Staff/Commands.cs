@@ -11,11 +11,10 @@ namespace Enclave_Bot.Core.Staff
         private readonly DatabaseContext Database = database;
         private readonly Utils Utils = utils;
 
-        [SlashCommand("userinfo", "Get's a users info.")]
+        [SlashCommand("userinfo", "Gets a users info.")]
         public async Task UserInfo(SocketGuildUser? user = null)
         {
-            if (user == null)
-                user = Context.Guild.GetUser(Context.User.Id);
+            user ??= Context.Guild.GetUser(Context.User.Id);
             var embed = await Utils.CreateUserInfoEmbed(user, Context.User);
             await RespondAsync(embed: embed.Build());
         }
