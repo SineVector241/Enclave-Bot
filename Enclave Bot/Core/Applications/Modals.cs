@@ -1,191 +1,227 @@
-﻿using Discord;
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Enclave_Bot.Database;
-using Enclave_Bot.Extensions;
+using Enclave_Bot.Preconditions;
+using Microsoft.EntityFrameworkCore;
 
 namespace Enclave_Bot.Core.Applications
 {
-    public class Modals(DatabaseContext database, Utils utils) : InteractionModuleBase<SocketInteractionContext<SocketModal>>
+    [IsStaff]
+    public class Modals(DatabaseContext database) : InteractionModuleBase<SocketInteractionContext<SocketModal>>
     {
-        private readonly DatabaseContext Database = database;
-        private readonly Utils Utils = utils;
-
-        [ModalInteraction($"{Constants.ADD_APP_QUESTION_MODAL}:*,*")]
-        public async Task AddQuestion(string originalMessage, string applicationId, ApplicationQuestionModal modal)
+        [ModalInteraction($"{Constants.APPLICATION_MODAL_CREATE}")]
+        public async Task CreateApplication(CreateApplicationModal modal)
         {
-            var editorId = ulong.Parse(originalMessage);
-            var appId = Guid.Parse(applicationId);
-            var editor = (IUserMessage)(Context.Channel.GetCachedMessage(editorId) ?? await Context.Channel.GetMessageAsync(editorId));
-
-            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
-            if (application == null)
+            if (modal.Name.Length > Constants.APPLICATION_TITLE_CHARACTER_LIMIT)
             {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
+                await RespondAsync($"Name can only be {Constants.APPLICATION_TITLE_CHARACTER_LIMIT} characters!", ephemeral: true);
+                return;
+            }
+
+            var applicationSettings = (await database.Servers
+                .Include(x => x.ApplicationSettings)
+                .ThenInclude(x => x.Applications)
+                .FirstAsync(x => x.Id == Context.Guild.Id)).ApplicationSettings;
+            var applications = applicationSettings.Applications;
+            
+            applications.Add(new Application { ApplicationSettings = applicationSettings, Name = modal.Name });
+            await database.SaveChangesAsync();
+            await RespondAsync($"Created application {modal.Name}.", ephemeral: true);
+            
+            //Don't really care if it fails.
+            var applicationList = Utils.CreateApplicationList(applications.ToArray(), 0, Context.User);
+            _ = Context.Interaction.Message.ModifyAsync(x =>
+            {
+                x.Embed = applicationList.Item1;
+                x.Components = applicationList.Item2;
+            });
+        }
+
+        [ModalInteraction($"{Constants.APPLICATION_MODAL_CREATE_QUESTION}:*")]
+        public async Task CreateApplicationQuestion(string sApplicationId, ApplicationQuestionModal modal)
+        {
+            var applicationId = Guid.Parse(sApplicationId);
+            
+            if (modal.Question.Length > Constants.APPLICATION_QUESTION_CHARACTER_LIMIT)
+            {
+                await RespondAsync($"Question can only be {Constants.APPLICATION_QUESTION_CHARACTER_LIMIT} characters!", ephemeral: true);
                 return;
             }
             if (!bool.TryParse(modal.Required, out var required))
             {
-                await Context.Interaction.RespondOrFollowupAsync($"Invalid required value! Required value must be either True or False!", ephemeral: true);
+                await RespondAsync($"Invalid required value! Required value must be either True or False!", ephemeral: true);
                 return;
             }
 
-            var questions = Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).ToList();
-
-            if (questions.Count > Constants.ApplicationQuestionsLimit)
+            var applications = (await database.Servers
+                .Include(x => x.ApplicationSettings)
+                .ThenInclude(x => x.Applications)
+                .ThenInclude(x => x.Questions)
+                .FirstAsync(x => x.Id == Context.Guild.Id)).ApplicationSettings.Applications;
+            var application = applications.FirstOrDefault(x => x.Id == applicationId);
+            
+            if (application == null)
             {
-                await Context.Interaction.RespondOrFollowupAsync($"You have reached the application question limit of {Constants.ApplicationQuestionsLimit}.", ephemeral: true);
+                await RespondAsync($"Application with id {applicationId} was not found!", ephemeral: true);
                 return;
             }
-
-            if (int.TryParse(modal.Index, out var index))
+            if (int.TryParse(modal.Index, out var index) && index >= 0)
             {
-                var question = new ApplicationQuestion() { ApplicationId = application.Id, Question = modal.Question.Truncate(Constants.ValueLimit) ?? string.Empty, Required = required, Index = index };
-                await Database.ServerApplicationQuestions.AddAsync(question);
-                while (questions.Exists(x => x.Index == index && x != question))
+                var question = new ApplicationQuestion { Application = application, Question = modal.Question, Required = required, Index = index };
+                application.Questions.Add(question);
+                while (application.Questions.Exists(x => x.Index == index && x != question))
                 {
-                    question = questions.First(x => x.Index == index && x != question);
+                    question = application.Questions.First(x => x.Index == index && x != question);
                     question.Index = index + 1;
                     index++;
                 }
-                await Database.SaveChangesAsync();
-                await Context.Interaction.RespondOrFollowupAsync($"Successfully added question to index {index}.", ephemeral: true);
             }
             else
             {
                 for (var i = 0; i < int.MaxValue; i++)
                 {
-                    if (questions.Exists(x => x.Index == i)) continue;
-                    await Database.ServerApplicationQuestions.AddAsync(new ApplicationQuestion() { ApplicationId = application.Id, Question = modal.Question.Truncate(Constants.ValueLimit) ?? string.Empty, Required = required, Index = i });
-                    await Database.SaveChangesAsync();
-                    await Context.Interaction.RespondOrFollowupAsync($"Successfully added question to index {i}.", ephemeral: true);
+                    if (application.Questions.Exists(x => x.Index == i)) continue;
+                    application.Questions.Add(new ApplicationQuestion { Application = application, Question = modal.Question, Required = required, Index = i });
+                    index = i;
                     break;
                 }
             }
-
-            _ = editor.ModifyAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User).Build(); }); //We don't care if it fails.
+            
+            await database.SaveChangesAsync();
+            await RespondAsync($"Successfully added question to index {index}.", ephemeral: true);
+            
+            //Don't really care if it fails.
+            var applicationEditor = Utils.CreateApplicationQuestionEditor(application, 0, Context.User);
+            _ = Context.Interaction.Message.ModifyAsync(x =>
+            {
+                x.Embed = applicationEditor.Item1;
+                x.Components = applicationEditor.Item2;
+            });
         }
 
-        [ModalInteraction($"{Constants.EDIT_APP_QUESTION_MODAL}:*,*,*")]
-        public async Task EditQuestion(string originalMessage, string applicationId, string selectedQuestion, ApplicationQuestionModal modal)
+        [ModalInteraction($"{Constants.APPLICATION_MODAL_EDIT_QUESTION}:*,*")]
+        public async Task EditApplicationQuestion(string sApplicationId, string sQuestionId, ApplicationQuestionModal modal)
         {
-            var editorId = ulong.Parse(originalMessage);
-            var appId = Guid.Parse(applicationId);
-            var selectedQ = Guid.Parse(selectedQuestion);
-            var editor = (IUserMessage)(Context.Channel.GetCachedMessage(editorId) ?? await Context.Channel.GetMessageAsync(editorId));
-            
-            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
-            if (application == null)
+            var applicationId = Guid.Parse(sApplicationId);
+            var questionId = Guid.Parse(sQuestionId);
+
+            if (modal.Question.Length > Constants.APPLICATION_QUESTION_CHARACTER_LIMIT)
             {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
+                await RespondAsync($"Question can only be {Constants.APPLICATION_QUESTION_CHARACTER_LIMIT} characters!", ephemeral: true);
                 return;
             }
             if (!bool.TryParse(modal.Required, out var required))
             {
-                await Context.Interaction.RespondOrFollowupAsync($"Invalid required value! Required value must be either True or False!", ephemeral: true);
+                await RespondAsync($"Invalid required value! Required value must be either True or False!", ephemeral: true);
                 return;
             }
 
-            var questions = Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).ToList();
-            var question = questions.FirstOrDefault(x => x.Id == selectedQ);
+            var applications = (await database.Servers
+                .Include(x => x.ApplicationSettings)
+                .ThenInclude(x => x.Applications)
+                .ThenInclude(x => x.Questions)
+                .FirstAsync(x => x.Id == Context.Guild.Id)).ApplicationSettings.Applications;
+            var application = applications.FirstOrDefault(x => x.Id == applicationId);
 
+            if (application == null)
+            {
+                await RespondAsync($"Application with id {applicationId} was not found!", ephemeral: true);
+                return;
+            }
+            
+            var question = application.Questions.FirstOrDefault(x => x.Id == questionId);
             if (question == null)
             {
-                await Context.Interaction.RespondOrFollowupAsync($"The question with the id {selectedQ} does not exist!", ephemeral: true);
+                await RespondAsync($"Question with id {questionId} was not found!", ephemeral: true);
                 return;
             }
 
-            question.Question = modal.Question.Truncate(Constants.ValueLimit) ?? string.Empty;
+            question.Question = modal.Question;
             question.Required = required;
-
-            if (int.TryParse(modal.Index, out var index))
+            if (int.TryParse(modal.Index, out var index) && index >= 0 && index != question.Index)
             {
                 question.Index = index;
-                while (questions.Exists(x => x.Index == index && x != question))
+                while (application.Questions.Exists(x => x.Index == index && x != question))
                 {
-                    question = questions.First(x => x.Index == index && x != question);
+                    question = application.Questions.First(x => x.Index == index && x != question);
                     question.Index = index + 1;
                     index++;
                 }
             }
 
-            await Database.SaveChangesAsync();
-            await Context.Interaction.DeferSafelyAsync();
-            _ = ModifyOriginalResponseAsync(x => { x.Content = $"Question with id {selectedQ} was successfully edited!"; x.Components = null; });
-            _ = editor.ModifyAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User).Build(); }); //We don't care if it fails.
+            await database.SaveChangesAsync();
+            await RespondAsync($"Successfully edited question with id {question.Id}.", ephemeral: true);
+
+            //Don't really care if it fails.
+            var applicationEditor = Utils.CreateApplicationQuestionEditor(application, 0, Context.User);
+            _ = Context.Interaction.Message.ModifyAsync(x =>
+            {
+                x.Embed = applicationEditor.Item1;
+                x.Components = applicationEditor.Item2;
+            });
         }
 
-        [ModalInteraction($"{Constants.SET_APP_ACCEPT_MESSAGE_MODAL}:*,*")]
-        public async Task SetAcceptMessage(string originalMessage, string applicationId, ApplicationMessageModal modal)
+        [ModalInteraction($"{Constants.APPLICATION_MODAL_SET_RETRIES}:*")]
+        public async Task SetFailAmount(string sApplicationId, ApplicationRetriesModal modal)
         {
-            var editorId = ulong.Parse(originalMessage);
-            var appId = Guid.Parse(applicationId);
-            var editor = (IUserMessage)(Context.Channel.GetCachedMessage(editorId) ?? await Context.Channel.GetMessageAsync(editorId));
-            
-            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
-            if (application == null)
-            {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
-                return;
-            }
-            
-            application.AcceptMessage = modal.Message.Truncate(Constants.ValueLimit) ?? string.Empty;
-            await Database.SaveChangesAsync();
-            await Context.Interaction.RespondOrFollowupAsync("Application accept message was set!", ephemeral: true);
-            _ = editor.ModifyAsync(x => { x.Embed = Utils.CreateApplicationEditorActionEmbed(application, Context.User).Build(); x.Components = Utils.CreateApplicationEditorActionComponents(application, Context.User).Build(); }); //We don't care if it fails.
-        }
-        
-        [ModalInteraction($"{Constants.SET_APP_RETRIES_MODAL}:*,*")]
-        public async Task SetAcceptMessage(string originalMessage, string applicationId, ApplicationRetriesModal modal)
-        {
-            var editorId = ulong.Parse(originalMessage);
-            var appId = Guid.Parse(applicationId);
-            var editor = (IUserMessage)(Context.Channel.GetCachedMessage(editorId) ?? await Context.Channel.GetMessageAsync(editorId));
-            
-            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
-            if (application == null)
-            {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
-                return;
-            }
-
+            var applicationId = Guid.Parse(sApplicationId);
             if (!byte.TryParse(modal.Retries, out var retries))
             {
-                await Context.Interaction.RespondOrFollowupAsync($"Invalid required value! Required value must be between {byte.MinValue} and {byte.MaxValue}!", ephemeral: true);
+                await RespondAsync($"{modal.Retries} is not a valid number. The value must be between {byte.MinValue} and {byte.MaxValue}!", ephemeral: true);
                 return;
             }
+            
+            var applications = (await database.Servers
+                .Include(x => x.ApplicationSettings)
+                .ThenInclude(x => x.Applications)
+                .FirstAsync(x => x.Id == Context.Guild.Id)).ApplicationSettings.Applications;
+            var application = applications.FirstOrDefault(x => x.Id == applicationId);
 
+            if (application == null)
+            {
+                await RespondAsync($"Application with id {applicationId} was not found!", ephemeral: true);
+                return;
+            }
+            
             application.Retries = retries;
-            await Database.SaveChangesAsync();
-            await Context.Interaction.RespondOrFollowupAsync($"Successfully set application retries to {retries}!", ephemeral: true);
-            _ = editor.ModifyAsync(x => { x.Embed = Utils.CreateApplicationEditorActionEmbed(application, Context.User).Build(); x.Components = Utils.CreateApplicationEditorActionComponents(application, Context.User).Build(); }); //We don't care if it fails.
+            await database.SaveChangesAsync();
+            await RespondAsync($"Successfully set retries to {application.Retries}.", ephemeral: true);
+
+            //Don't really care if it fails.
+            var applicationEditor = Utils.CreateApplicationActionEditor(application, Context.User, Context.Guild);
+            _ = Context.Interaction.Message.ModifyAsync(x =>
+            {
+                x.Embed = applicationEditor.Item1;
+                x.Components = applicationEditor.Item2;
+            });
         }
+    }
+    
+    public class CreateApplicationModal : IModal
+    {
+        public string Title => "Create Application";
+
+        [InputLabel("Name")]
+        [ModalTextInput("name", maxLength: Constants.APPLICATION_TITLE_CHARACTER_LIMIT)]
+        public string Name { get; set; } = string.Empty;
     }
 
     public class ApplicationQuestionModal : IModal
     {
-        public string Title => "Add Question";
-
-        [InputLabel("Question")]
-        [ModalTextInput("question", TextInputStyle.Paragraph, "Question...", maxLength: Constants.ValueLimit)]
-        public string Question { get; set; } = string.Empty;
-
-        [InputLabel("Required?")]
-        [ModalTextInput("required", TextInputStyle.Short, "true", maxLength: 5, initValue: "True")]
-        public string Required { get; set; } = true.ToString();
-
-        [InputLabel("Index")]
-        [ModalTextInput("index", TextInputStyle.Short, "0", maxLength: 2, initValue: "0")]
-        public string Index { get; set; } = string.Empty;
-    }
-
-    public class ApplicationMessageModal : IModal
-    {
-        public string Title => "Set Message";
+        public string Title => "Create Question";
         
-        [InputLabel("Message")]
-        [ModalTextInput("message", TextInputStyle.Paragraph, "Message...", maxLength: Constants.DescriptionLimit)]
-        public string Message { get; set; } = string.Empty;
+        [InputLabel("Question")]
+        [ModalTextInput("question", TextInputStyle.Paragraph, maxLength: Constants.APPLICATION_QUESTION_CHARACTER_LIMIT)]
+        public string Question { get; set; } = string.Empty;
+        
+        [InputLabel("Required")]
+        [ModalTextInput("required", initValue: "True", placeholder: "True/False")]
+        public string Required { get; set; } = string.Empty;
+        
+        [InputLabel("Index")]
+        [ModalTextInput("index", initValue: "-1")]
+        public string Index { get; set; } = string.Empty;
     }
 
     public class ApplicationRetriesModal : IModal
@@ -193,7 +229,7 @@ namespace Enclave_Bot.Core.Applications
         public string Title => "Set Retries";
         
         [InputLabel("Retries")]
-        [ModalTextInput("retries", TextInputStyle.Short, "0", maxLength: 3, initValue: "0")]
+        [ModalTextInput("retries", initValue: "-1")]
         public string Retries { get; set; } = string.Empty;
     }
 }

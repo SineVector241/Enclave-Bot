@@ -4,20 +4,19 @@ using Microsoft.Extensions.DependencyInjection;
 using Fergun.Interactive;
 using Discord.Interactions;
 using Enclave_Bot.Database;
-using Enclave_Bot.Core;
 
 namespace Enclave_Bot
 {
     public class Bot
     {
-        private readonly DiscordSocketClient Client;
-        private readonly IServiceProvider ServiceProvider;
-        private readonly InteractionService Interactions;
+        private readonly DiscordSocketClient _client;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly InteractionService _interactions;
 
         public Bot()
         {
             Console.WriteLine($"[{DateTime.Now}]: [Bot] => Starting Bot...");
-            Client = new DiscordSocketClient(new DiscordSocketConfig
+            _client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Debug,
                 UseInteractionSnowflakeDate = true,
@@ -26,32 +25,32 @@ namespace Enclave_Bot
                 AlwaysDownloadUsers = true
             });
 
-            Interactions = new InteractionService(Client.Rest, new InteractionServiceConfig
+            _interactions = new InteractionService(_client.Rest, new InteractionServiceConfig
             {
                 LogLevel = LogSeverity.Debug
             });
 
-            ServiceProvider = BuildServiceProvider();
+            _serviceProvider = BuildServiceProvider();
         }
 
         public async Task MainAsync()
         {
-            new EventHandler(ServiceProvider);
-            await new InteractionManager(ServiceProvider).Initialize();
+            _serviceProvider.GetRequiredService<EventHandler>();
+            await new InteractionManager(_serviceProvider).Initialize();
 
-            Client.Log += ClientLog;
+            _client.Log += ClientLog;
             if (string.IsNullOrWhiteSpace(Config.BotConfiguration.Token))
             {
                 Console.WriteLine($"[{DateTime.Now}]: [ERROR] => An error occured in Bot.cs \nError Info:\nBOT CONFIGURATION TOKEN IS BLANK");
                 return;
             }
 
-            await Client.LoginAsync(TokenType.Bot, Config.BotConfiguration.Token);
-            await Client.StartAsync();
+            await _client.LoginAsync(TokenType.Bot, Config.BotConfiguration.Token);
+            await _client.StartAsync();
             await Task.Delay(-1);
         }
 
-        private Task ClientLog(LogMessage msg)
+        private static Task ClientLog(LogMessage msg)
         {
             Console.WriteLine($"[{DateTime.Now}]: [{msg.Source}] => {msg.Message}");
             return Task.CompletedTask;
@@ -60,11 +59,11 @@ namespace Enclave_Bot
         private ServiceProvider BuildServiceProvider()
         {
             return new ServiceCollection()
-                .AddSingleton(Client)
+                .AddSingleton(_client)
+                .AddSingleton<EventHandler>(x => new EventHandler(x))
                 .AddSingleton<DatabaseContext>()
-                .AddSingleton<Utils>()
                 .AddSingleton<InteractiveService>()
-                .AddSingleton(Interactions)
+                .AddSingleton(_interactions)
                 .BuildServiceProvider();
         }
     }

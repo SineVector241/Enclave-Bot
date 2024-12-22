@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="72edcfb7-634b-4b94-8027-11972aaa0fa1" name="Enclave">
+        <fileTransfer rootFolder="/var/Enclave/BotTesting" accessType="SFTP" host="mason.cloudcue.net" port="22" sshConfigId="167240c2-5855-4a8d-9181-9d12dbe47823" sshConfig="root@mason.cloudcue.net:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

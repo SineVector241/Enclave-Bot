@@ -1,22 +1,23 @@
 ﻿using Discord.Interactions;
 using Discord.WebSocket;
 using Enclave_Bot.Database;
+using Enclave_Bot.Preconditions;
 
 namespace Enclave_Bot.Core.Staff
 {
     [Group("staff", "Staff commands.")]
     [RequireContext(ContextType.Guild)]
-    public class Commands(DatabaseContext database, Utils utils) : InteractionModuleBase<SocketInteractionContext<SocketSlashCommand>>
+    [IsStaff]
+    public class Commands(DatabaseContext database) : InteractionModuleBase<SocketInteractionContext<SocketSlashCommand>>
     {
-        private readonly DatabaseContext Database = database;
-        private readonly Utils Utils = utils;
-
         [SlashCommand("userinfo", "Gets a users info.")]
         public async Task UserInfo(SocketGuildUser? user = null)
         {
             user ??= Context.Guild.GetUser(Context.User.Id);
-            var embed = await Utils.CreateUserInfoEmbed(user, Context.User);
-            await RespondAsync(embed: embed.Build());
+            await database.CreateUserIfNotExistsAsync(user);
+            var botUser = database.Users.First(x => x.Id == user.Id);
+            var embed = Utils.CreateUserInfo(user, botUser, Context.User);
+            await RespondAsync(embed: embed);
         }
     }
 }

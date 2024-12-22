@@ -1,6 +1,4 @@
 ﻿using Discord;
-using Discord.WebSocket;
-using Enclave_Bot.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -12,17 +10,11 @@ namespace Enclave_Bot.Database
         public DbSet<User> Users { get; set; }
         public DbSet<Server> Servers { get; set; }
 
-        public DbSet<LogSettings> ServerLogSettings { get; set; }
-        public DbSet<LogSetting> ServerLogsSettings { get; set; }
-
-        public DbSet<ApplicationSettings> ServerApplicationSettings { get; set; }
-        public DbSet<Application> ServerApplications { get; set; }
-        public DbSet<ApplicationQuestion> ServerApplicationQuestions { get; set; }
-
         public DatabaseContext()
         {
             try
             {
+                ChangeTracker.LazyLoadingEnabled = false;
                 var databaseCreator = Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator;
                 databaseCreator?.CreateTables();
             }
@@ -32,47 +24,28 @@ namespace Enclave_Bot.Database
             }
         }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder.UseNpgsql(Config.BotConfiguration.SqlConnection);
-
-        public async Task<User> GetOrCreateUserById(ulong id)
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            var user = await Users.FirstOrDefaultAsync(x => x.Id == id);
-            if (user != null) return user;
-            
-            user = new User() { Id = id, Username = string.Empty, LastActive = DateTime.UtcNow };
-            Users.Add(user);
-
-            await SaveChangesAsync();
-            return user;
+            optionsBuilder.UseNpgsql(Config.BotConfiguration.SqlConnection);
+            base.OnConfiguring(optionsBuilder);
         }
 
-        public async Task<Server> GetOrCreateServerById(ulong id)
+        public async Task CreateServerIfNotExistsAsync(IGuild guild)
         {
-            var server = await Servers.FirstOrDefaultAsync(x => x.Id == id);
-            if (server != null) return server;
-
-            server = new Server() { Id = id };
-            server.ApplicationSettings = new ApplicationSettings() { ServerId = server.Id };
-            server.LogSettings = new LogSettings() { ServerId = server.Id, Settings = new List<LogSetting>() };
-            Servers.Add(server);
-
-            await SaveChangesAsync();
-            return server;
+            if (!await Servers.AnyAsync(x => x.Id == guild.Id))
+            {
+                await Servers.AddAsync(new Server { Id = guild.Id });
+                await SaveChangesAsync();
+            }
         }
 
-        public async Task<Application[]> GetServerApplications(ulong serverId)
+        public async Task CreateUserIfNotExistsAsync(IUser user)
         {
-            var server = await GetOrCreateServerById(serverId);
-            var serverApplicationSettings = await ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
-            return await ServerApplications.Where(x => x.ApplicationSettingsId == serverApplicationSettings.Id).ToArrayAsync();
-        }
-
-        public async Task<Application?> GetApplicationById(ulong serverId, Guid applicationId)
-        {
-            var server = await GetOrCreateServerById(serverId);
-            var serverApplicationSettings = await ServerApplicationSettings.FirstAsync(x => x.ServerId == server.Id);
-            
-            return await ServerApplications.FirstOrDefaultAsync(x => x.ApplicationSettingsId == serverApplicationSettings.Id && x.Id == applicationId);
+            if (!await Users.AnyAsync(x => x.Id == user.Id))
+            {
+                await Users.AddAsync(new User { Id = user.Id, Name = user.Username });
+                await SaveChangesAsync();
+            }
         }
     }
 }

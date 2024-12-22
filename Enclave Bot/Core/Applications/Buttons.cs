@@ -1,422 +1,209 @@
-﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Enclave_Bot.Database;
-using Enclave_Bot.Extensions;
+using Enclave_Bot.Preconditions;
+using Microsoft.EntityFrameworkCore;
 
 namespace Enclave_Bot.Core.Applications
 {
-    public class Buttons(DatabaseContext database, Utils utils) : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
+    [IsStaff]
+    public class Buttons(DatabaseContext database) : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
     {
-        private readonly DatabaseContext Database = database;
-        private readonly Utils Utils = utils;
-
-        #region App Questions
-        [ComponentInteraction($"{Constants.ADD_APP_QUESTION}:*,*")]
-        public async Task AddQuestion(string author, string applicationId)
+        [ComponentInteraction($"{Constants.APPLICATION_LIST_NAVIGATE}:*,*")]
+        public async Task ApplicationListNavigate(string sAuthorId, string sPage)
         {
-            var owner = ulong.Parse(author);
-            var appId = Guid.Parse(applicationId);
-
-            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
-            
-            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
-            if (application == null)
+            var authorId = ulong.Parse(sAuthorId);
+            var page = int.Parse(sPage);
+            if (authorId != Context.User.Id)
             {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
+                await RespondAsync("You are not the owner of this application list!", ephemeral: true);
                 return;
             }
 
-            var questions = Database.ServerApplicationQuestions.Count(x => x.ApplicationId == application.Id);
-            if (questions > Constants.ApplicationQuestionsLimit)
+            if (page < 0)
             {
-                await Context.Interaction.RespondOrFollowupAsync($"You have reached the application question limit of {Constants.ApplicationQuestionsLimit}.", ephemeral: true);
+                await RespondAsync("Page must be greater than or equal to zero", ephemeral: true);
                 return;
             }
 
-            await RespondWithModalAsync<ApplicationQuestionModal>($"{Constants.ADD_APP_QUESTION_MODAL}:{Context.Interaction.Message.Id},{appId}");
-        }
+            var applications = (await database.Servers
+                .Include(x => x.ApplicationSettings)
+                .ThenInclude(x => x.Applications)
+                .FirstAsync(x => x.Id == Context.Guild.Id)).ApplicationSettings.Applications;
+            await DeferAsync();
 
-        [ComponentInteraction($"{Constants.REMOVE_APP_QUESTION}:*,*,*")]
-        public async Task RemoveQuestion(string author, string applicationId, string page)
-        {
-            var owner = ulong.Parse(author);
-            var appId = Guid.Parse(applicationId);
-            var pageN = int.Parse(page);
-
-            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
-            
-            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
-            if (application == null)
+            //Don't really care if it fails.
+            var applicationList = Utils.CreateApplicationList(applications.ToArray(), page, Context.User);
+            _ = Context.Interaction.Message.ModifyAsync(x =>
             {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
-                return;
-            }
-
-            var applicationQuestions = Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).ToArray();
-            var selectionMenu = new SelectMenuBuilder()
-                .WithCustomId($"{Constants.REMOVE_APP_QUESTION_SELECTION}:{owner},{Context.Interaction.Message.Id},{appId}")
-                .WithMaxValues(applicationQuestions.Length);
-
-            for (var i = pageN * Constants.ListLimit; i < applicationQuestions.Length && i < (pageN * Constants.ListLimit + Constants.ListLimit); i++)
-            {
-                selectionMenu.AddOption(i.ToString(), applicationQuestions[i].Id.ToString(), applicationQuestions[i].Question.Truncate(100));
-            }
-
-            if(selectionMenu.Options.Count <= 0)
-            {
-                await Context.Interaction.RespondOrFollowupAsync($"There are no questions to remove!", ephemeral: true);
-                return;
-            }
-
-            var components = new ComponentBuilder()
-                .WithSelectMenu(selectionMenu);
-            await Context.Interaction.RespondOrFollowupAsync(components: components.Build(), ephemeral: true);
-        }
-
-        [ComponentInteraction($"{Constants.EDIT_APP_QUESTION}:*,*,*")]
-        public async Task EditQuestion(string author, string applicationId, string page)
-        {
-            var owner = ulong.Parse(author);
-            var appId = Guid.Parse(applicationId);
-            var pageN = int.Parse(page);
-
-            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
-
-            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
-            if (application == null)
-            {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
-                return;
-            }
-
-            var applicationQuestions = Database.ServerApplicationQuestions.Where(x => x.ApplicationId == application.Id).ToArray();
-            var selectionMenu = new SelectMenuBuilder()
-                                .WithCustomId($"{Constants.EDIT_APP_QUESTION_SELECTION}:{owner},{Context.Interaction.Message.Id},{appId}");
-
-            for (var i = pageN * Constants.ListLimit; i < applicationQuestions.Length && i < (pageN * Constants.ListLimit + Constants.ListLimit); i++)
-            {
-                selectionMenu.AddOption(i.ToString(), applicationQuestions[i].Id.ToString(), applicationQuestions[i].Question.Truncate(Constants.ValueLimit));
-            }
-
-            var components = new ComponentBuilder()
-                .WithSelectMenu(selectionMenu);
-            await Context.Interaction.RespondOrFollowupAsync(components: components.Build(), ephemeral: true);
-        }
-
-        [ComponentInteraction($"{Constants.SWITCH_TO_APP_ACTIONS}:*,*")]
-        public async Task SwitchToActions(string author, string applicationId)
-        {
-            try
-            {
-                var owner = ulong.Parse(author);
-                var appId = Guid.Parse(applicationId);
-
-                if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
-
-                var application = await Database.GetApplicationById(Context.Guild.Id, appId);
-                if (application == null)
-                {
-                    await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
-                    return;
-                }
-
-                var embed = Utils.CreateApplicationEditorActionEmbed(application, Context.User);
-                var components = Utils.CreateApplicationEditorActionComponents(application, Context.User);
-
-                await Context.Interaction.DeferSafelyAsync();
-                await ModifyOriginalResponseAsync(x =>
-                {
-                    x.Embed = embed.Build();
-                    x.Components = components.Build();
-                });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-        }
-
-        [ComponentInteraction($"{Constants.APP_QUESTIONS_NEXT_PAGE}:*,*,*")]
-        public async Task QuestionNextPage(string author, string applicationId, string page)
-        {
-            var owner = ulong.Parse(author);
-            var appId = Guid.Parse(applicationId);
-            var pageN = int.Parse(page);
-
-            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
-
-            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
-            if (application == null)
-            {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
-                return;
-            }
-
-            await Context.Interaction.DeferSafelyAsync();
-            await ModifyOriginalResponseAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User, pageN + 1).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User, pageN + 1).Build(); }); //We don't care if it fails.
-        }
-
-        [ComponentInteraction($"{Constants.APP_QUESTIONS_PREVIOUS_PAGE}:*,*,*")]
-        public async Task QuestionPreviousPage(string author, string applicationId, string page)
-        {
-            var owner = ulong.Parse(author);
-            var appId = Guid.Parse(applicationId);
-            var pageN = int.Parse(page);
-
-            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
-
-            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
-            if (application == null)
-            {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
-                return;
-            }
-
-            await Context.Interaction.DeferSafelyAsync();
-            await ModifyOriginalResponseAsync(x => { x.Embed = Utils.CreateApplicationEditorEmbed(application, Context.User, pageN - 1).Build(); x.Components = Utils.CreateApplicationEditorComponents(application, Context.User, pageN - 1).Build(); }); //We don't care if it fails.
-        }
-        #endregion
-
-        #region App Actions
-        [ComponentInteraction($"{Constants.ADD_APP_ADDITION_ROLE}:*,*")]
-        public async Task AddAdditionRole(string author, string applicationId)
-        {
-            var owner = ulong.Parse(author);
-            var appId = Guid.Parse(applicationId);
-
-            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
-
-            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
-            if (application == null)
-            {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
-                return;
-            }
-            if (application.AddRoles.Count >= Constants.ApplicationAddRolesLimit)
-            {
-                await Context.Interaction.RespondOrFollowupAsync($"You have reached the application add role limit of {Constants.ApplicationAddRolesLimit}!", ephemeral: true);
-                return;
-            }
-
-            var selectionMenu = new SelectMenuBuilder()
-                .WithCustomId($"{Constants.ADD_APP_ADDITION_ROLE_SELECTION}:{owner},{Context.Interaction.Message.Id},{appId}")
-                .WithMaxValues(Constants.ApplicationAddRolesLimit - application.AddRoles.Count)
-                .WithType(ComponentType.RoleSelect);
-            var components = new ComponentBuilder()
-                .WithSelectMenu(selectionMenu);
-
-            await Context.Interaction.RespondOrFollowupAsync(components: components.Build(), ephemeral: true);
-        }
-
-        [ComponentInteraction($"{Constants.REMOVE_APP_ADDITION_ROLE}:*,*")]
-        public async Task RemoveAdditionRole(string author, string applicationId)
-        {
-            var owner = ulong.Parse(author);
-            var appId = Guid.Parse(applicationId);
-
-            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
-
-            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
-            if (application == null)
-            {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
-                return;
-            }
-            if (application.AddRoles.Count <= 0)
-            {
-                await Context.Interaction.RespondOrFollowupAsync($"There are no roles to remove!", ephemeral: true);
-                return;
-            }
-
-            var selectionMenu = new SelectMenuBuilder()
-                .WithCustomId($"{Constants.REMOVE_APP_ADDITION_ROLE_SELECTION}:{owner},{Context.Interaction.Message.Id},{appId}")
-                .WithMaxValues(Constants.ApplicationAddRolesLimit)
-                .WithType(ComponentType.RoleSelect);
-            var components = new ComponentBuilder()
-                .WithSelectMenu(selectionMenu);
-
-            await Context.Interaction.RespondOrFollowupAsync(components: components.Build(), ephemeral: true);
-        }
-
-        [ComponentInteraction($"{Constants.ADD_APP_REMOVAL_ROLE}:*,*")]
-        public async Task AddRemovalRole(string author, string applicationId)
-        {
-            var owner = ulong.Parse(author);
-            var appId = Guid.Parse(applicationId);
-
-            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
-
-            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
-            if (application == null)
-            {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
-                return;
-            }
-            if (application.RemoveRoles.Count >= Constants.ApplicationRemoveRolesLimit)
-            {
-                await Context.Interaction.RespondOrFollowupAsync($"You have reached the application remove role limit of {Constants.ApplicationAddRolesLimit}!", ephemeral: true);
-                return;
-            }
-
-            var selectionMenu = new SelectMenuBuilder()
-                .WithCustomId($"{Constants.ADD_APP_REMOVAL_ROLE_SELECTION}:{owner},{Context.Interaction.Message.Id},{appId}")
-                .WithMaxValues(Constants.ApplicationAddRolesLimit - application.RemoveRoles.Count)
-                .WithType(ComponentType.RoleSelect);
-            var components = new ComponentBuilder()
-                .WithSelectMenu(selectionMenu);
-
-            await Context.Interaction.RespondOrFollowupAsync(components: components.Build(), ephemeral: true);
-        }
-
-        [ComponentInteraction($"{Constants.REMOVE_APP_REMOVAL_ROLE}:*,*")]
-        public async Task RemoveRemovalRole(string author, string applicationId)
-        {
-            var owner = ulong.Parse(author);
-            var appId = Guid.Parse(applicationId);
-
-            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
-
-            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
-            if (application == null)
-            {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
-                return;
-            }
-            if (application.RemoveRoles.Count <= 0)
-            {
-                await Context.Interaction.RespondOrFollowupAsync($"There are no roles to remove!", ephemeral: true);
-                return;
-            }
-
-            var selectionMenu = new SelectMenuBuilder()
-                .WithCustomId($"{Constants.REMOVE_APP_REMOVAL_ROLE_SELECTION}:{owner},{Context.Interaction.Message.Id},{appId}")
-                .WithMaxValues(Constants.ApplicationAddRolesLimit)
-                .WithType(ComponentType.RoleSelect);
-            var components = new ComponentBuilder()
-                .WithSelectMenu(selectionMenu);
-
-            await Context.Interaction.RespondOrFollowupAsync(components: components.Build(), ephemeral: true);
-        }
-
-        [ComponentInteraction($"{Constants.SET_APP_ACCEPT_MESSAGE}:*,*")]
-        public async Task SetAcceptMessage(string author, string applicationId)
-        {
-            var owner = ulong.Parse(author);
-            var appId = Guid.Parse(applicationId);
-
-            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
-
-            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
-            if (application == null)
-            {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
-                return;
-            }
-
-            await RespondWithModalAsync<ApplicationMessageModal>($"{Constants.SET_APP_ACCEPT_MESSAGE_MODAL}:{Context.Interaction.Message.Id},{appId}", modifyModal: (modal) =>
-            {
-                modal.UpdateTextInput("message", application.AcceptMessage);
+                x.Embed = applicationList.Item1;
+                x.Components = applicationList.Item2;
             });
         }
 
-        [ComponentInteraction($"{Constants.SET_APP_SUBMISSION_CHANNEL}:*,*")]
-        public async Task SetSubmissionChannel(string author, string applicationId)
+        [ComponentInteraction($"{Constants.APPLICATION_LIST_CREATE}:*")]
+        public async Task ApplicationListCreate(string sAuthorId)
         {
-            var owner = ulong.Parse(author);
-            var appId = Guid.Parse(applicationId);
-
-            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
-
-            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
-            if (application == null)
+            var authorId = ulong.Parse(sAuthorId);
+            if (authorId != Context.User.Id)
             {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
+                await RespondAsync("You are not the owner of this application list!", ephemeral: true);
                 return;
             }
 
-            var selectionMenu = new SelectMenuBuilder()
-                .WithCustomId($"{Constants.SET_APP_SUBMISSION_CHANNEL_SELECTION}:{owner},{Context.Interaction.Message.Id},{appId}")
-                .WithType(ComponentType.ChannelSelect)
-                .WithChannelTypes(ChannelType.Text);
-            var components = new ComponentBuilder()
-                .WithSelectMenu(selectionMenu);
-
-            await Context.Interaction.RespondOrFollowupAsync(components: components.Build(), ephemeral: true);
+            await RespondWithModalAsync<CreateApplicationModal>($"{Constants.APPLICATION_MODAL_CREATE}");
         }
 
-        [ComponentInteraction($"{Constants.SET_APP_RETRIES}:*,*")]
-        public async Task SetRetries(string author, string applicationId)
+        [ComponentInteraction($"{Constants.APPLICATION_EDIT_CREATE_QUESTION}:*,*")]
+        public async Task ApplicationCreateQuestion(string sAuthorId, string sApplicationId)
         {
-            var owner = ulong.Parse(author);
-            var appId = Guid.Parse(applicationId);
-
-            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
-
-            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
-            if (application == null)
+            var authorId = ulong.Parse(sAuthorId);
+            var applicationId = Guid.Parse(sApplicationId);
+            if (authorId != Context.User.Id)
             {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
+                await RespondAsync("You are not the owner of this application list!", ephemeral: true);
                 return;
             }
 
-            await RespondWithModalAsync<ApplicationRetriesModal>($"{Constants.SET_APP_RETRIES_MODAL}:{Context.Interaction.Message.Id},{appId}", modifyModal: (modal) =>
+            await RespondWithModalAsync<ApplicationQuestionModal>($"{Constants.APPLICATION_MODAL_CREATE_QUESTION}:{applicationId}");
+        }
+
+        [ComponentInteraction($"{Constants.APPLICATION_EDIT_NAVIGATE_QUESTIONS}:*,*,*")]
+        public async Task ApplicationNavigateQuestions(string sAuthorId, string sApplicationId, string sPage)
+        {
+            var authorId = ulong.Parse(sAuthorId);
+            var applicationId = Guid.Parse(sApplicationId);
+            var page = int.Parse(sPage);
+            if (authorId != Context.User.Id)
             {
-                modal.UpdateTextInput("retries", application.Retries.ToString());
+                await RespondAsync("You are not the owner of this application list!", ephemeral: true);
+                return;
+            }
+
+            if (page < 0)
+            {
+                await RespondAsync("Page must be greater than or equal to zero", ephemeral: true);
+                return;
+            }
+
+            var applications = (await database.Servers
+                .Include(x => x.ApplicationSettings)
+                .ThenInclude(x => x.Applications)
+                .ThenInclude(application => application.Questions)
+                .FirstAsync(x => x.Id == Context.Guild.Id)).ApplicationSettings.Applications;
+            var application = applications.FirstOrDefault(x => x.Id == applicationId);
+
+            if (application == null)
+            {
+                await RespondAsync($"Application with id {applicationId} was not found!", ephemeral: true);
+                return;
+            }
+
+            await DeferAsync();
+
+            //Don't really care if it fails.
+            var applicationEditor = Utils.CreateApplicationQuestionEditor(application, page, Context.User);
+            _ = Context.Interaction.Message.ModifyAsync(x =>
+            {
+                x.Embed = applicationEditor.Item1;
+                x.Components = applicationEditor.Item2;
             });
         }
 
-        [ComponentInteraction($"{Constants.SET_APP_FAIL_ACTION}:*,*")]
-        public async Task SetDenyAction(string author, string applicationId)
+        [ComponentInteraction($"{Constants.APPLICATION_EDIT_ACTIONS}:*,*")]
+        public async Task ApplicationEditActions(string sAuthorId, string sApplicationId)
         {
-            var owner = ulong.Parse(author);
-            var appId = Guid.Parse(applicationId);
-
-            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
-
-            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
-            if (application == null)
+            var authorId = ulong.Parse(sAuthorId);
+            var applicationId = Guid.Parse(sApplicationId);
+            if (authorId != Context.User.Id)
             {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
+                await RespondAsync("You are not the owner of this application list!", ephemeral: true);
                 return;
             }
 
-            var selectionMenu = new SelectMenuBuilder()
-                .WithCustomId($"{Constants.SET_APP_FAIL_ACTION_SELECTION}:{owner},{Context.Interaction.Message.Id},{appId}");
-            
+            var applications = (await database.Servers
+                .Include(x => x.ApplicationSettings)
+                .ThenInclude(x => x.Applications)
+                .FirstAsync(x => x.Id == Context.Guild.Id)).ApplicationSettings.Applications;
+            var application = applications.FirstOrDefault(x => x.Id == applicationId);
 
-            foreach (int i in Enum.GetValues(typeof(ApplicationFailAction)))
-            {
-                selectionMenu.AddOption(Enum.GetName(typeof(ApplicationFailAction), i), i.ToString());
-            }
-            
-            var components = new ComponentBuilder()
-                .WithSelectMenu(selectionMenu);
-            
-            await Context.Interaction.RespondOrFollowupAsync(components: components.Build(), ephemeral: true);
-        }
-
-        [ComponentInteraction($"{Constants.SWITCH_TO_APP_QUESTIONS}:*,*")]
-        public async Task SwitchToQuestions(string author, string applicationId)
-        {
-            var owner = ulong.Parse(author);
-            var appId = Guid.Parse(applicationId);
-
-            if (!await Context.Interaction.CheckAuthorAsync(owner, "You are not the owner of this editor!", ephemeral: true)) return;
-
-            var application = await Database.GetApplicationById(Context.Guild.Id, appId);
             if (application == null)
             {
-                await Context.Interaction.RespondOrFollowupAsync($"The application with the id {appId} does not exist!", ephemeral: true);
+                await RespondAsync($"Application with id {applicationId} was not found!", ephemeral: true);
                 return;
             }
 
-            var embed = Utils.CreateApplicationEditorEmbed(application, Context.User);
-            var components = Utils.CreateApplicationEditorComponents(application, Context.User);
+            await DeferAsync();
 
-            await Context.Interaction.DeferSafelyAsync();
-            await ModifyOriginalResponseAsync(x => { x.Embed = embed.Build(); x.Components = components.Build(); });
+            //Don't really care if it fails.
+            var applicationEditor = Utils.CreateApplicationActionEditor(application, Context.User, Context.Guild);
+            _ = Context.Interaction.Message.ModifyAsync(x =>
+            {
+                x.Embed = applicationEditor.Item1;
+                x.Components = applicationEditor.Item2;
+            });
         }
-        #endregion
+        
+        [ComponentInteraction($"{Constants.APPLICATION_EDIT_SET_RETRIES}:*,*")]
+        public async Task ApplicationEditSetRetries(string sAuthorId, string sApplicationId)
+        {
+            var authorId = ulong.Parse(sAuthorId);
+            var applicationId = Guid.Parse(sApplicationId);
+            if (authorId != Context.User.Id)
+            {
+                await RespondAsync("You are not the owner of this application list!", ephemeral: true);
+                return;
+            }
+
+            var applications = (await database.Servers
+                .Include(x => x.ApplicationSettings)
+                .ThenInclude(x => x.Applications)
+                .FirstAsync(x => x.Id == Context.Guild.Id)).ApplicationSettings.Applications;
+            var application = applications.FirstOrDefault(x => x.Id == applicationId);
+
+            if (application == null)
+            {
+                await RespondAsync($"Application with id {applicationId} was not found!", ephemeral: true);
+                return;
+            }
+
+            await RespondWithModalAsync<ApplicationRetriesModal>($"{Constants.APPLICATION_MODAL_SET_RETRIES}:{applicationId}",
+                modifyModal: modal => modal.UpdateTextInput("retries", application.Retries));
+        }
+
+        [ComponentInteraction($"{Constants.APPLICATION_EDIT_QUESTIONS}:*,*")]
+        public async Task ApplicationEditQuestions(string sAuthorId, string sApplicationId)
+        {
+            var authorId = ulong.Parse(sAuthorId);
+            var applicationId = Guid.Parse(sApplicationId);
+            if (authorId != Context.User.Id)
+            {
+                await RespondAsync("You are not the owner of this application list!", ephemeral: true);
+                return;
+            }
+
+            var applications = (await database.Servers
+                .Include(x => x.ApplicationSettings)
+                .ThenInclude(x => x.Applications)
+                .ThenInclude(application => application.Questions)
+                .FirstAsync(x => x.Id == Context.Guild.Id)).ApplicationSettings.Applications;
+            var application = applications.FirstOrDefault(x => x.Id == applicationId);
+
+            if (application == null)
+            {
+                await RespondAsync($"Application with id {applicationId} was not found!", ephemeral: true);
+                return;
+            }
+
+            await DeferAsync();
+
+            //Don't really care if it fails.
+            var applicationEditor = Utils.CreateApplicationQuestionEditor(application, 0, Context.User);
+            _ = Context.Interaction.Message.ModifyAsync(x =>
+            {
+                x.Embed = applicationEditor.Item1;
+                x.Components = applicationEditor.Item2;
+            });
+        }
     }
 }

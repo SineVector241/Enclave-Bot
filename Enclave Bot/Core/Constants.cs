@@ -1,67 +1,68 @@
-﻿using Discord;
+﻿using System.Diagnostics.CodeAnalysis;
+using Discord;
 
 namespace Enclave_Bot.Core
 {
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     public static class Constants
     {
         //Other
         public static readonly Color PrimaryColor = Color.DarkOrange;
         public static readonly Color SecondaryColor = Color.LightOrange;
         public static readonly Color ErrorColor = Color.Red;
-
-        //Limits
-        public const int ListLimit = 15;
-        public const int TitleLimit = 60;
-        public const int ValueLimit = 120;
-        public const int DescriptionLimit = 1000;
-
-        public const int ApplicationsLimit = 20;
-        public const int ApplicationQuestionsLimit = 50;
-        public const int ApplicationAddRolesLimit = 10;
-        public const int ApplicationRemoveRolesLimit = 10;
-
+        
+        //Embed Limits
+        public const int EMBED_TITLE_CHARACTER_LIMIT = 256;
+        public const int EMBED_DESCRIPTION_CHARACTER_LIMIT = 4096;
+        public const int EMBED_FIELDS_LIMIT = 10;
+        public const int EMBED_FIELD_NAME_CHARACTER_LIMIT = 256;
+        public const int EMBED_FIELD_VALUE_CHARACTER_LIMIT = 1024;
+        public const int EMBED_FOOTER_EMBED_CHARACTER_LIMIT = 2048;
+        public const int EMBED_AUTHOR_NAME_CHARACTER_LIMIT = 256;
+        
+        //Select Menu Limits
+        public const int SELECT_MENU_PLACEHOLDER_CHARACTER_LIMIT = 150;
+        public const int SELECT_MENU_OPTIONS_LIMIT = 25;
+        public const int SELECT_MENU_OPTION_LABEL_CHARACTER_LIMIT = 100;
+        public const int SELECT_MENU_OPTION_VALUE_CHARACTER_LIMIT = 100;
+        public const int SELECT_MENU_OPTION_DESCRIPTION_CHARACTER_LIMIT = 100;
+        
+        //Application Limits
+        public const int APPLICATION_TITLE_CHARACTER_LIMIT = 100;
+        public const int APPLICATION_QUESTION_CHARACTER_LIMIT = 120;
+        public const int APPLICATION_QUESTION_ANSWER_CHARACTER_LIMIT = 200;
+        
         //App Component ID's
-        public const string ADD_APP_QUESTION = "AAQ";
-        public const string ADD_APP_QUESTION_MODAL = "AAQM";
-        
-        public const string REMOVE_APP_QUESTION = "RAQ";
-        public const string REMOVE_APP_QUESTION_SELECTION = "RAQS";
-        
-        public const string EDIT_APP_QUESTION = "EAQ";
-        public const string EDIT_APP_QUESTION_SELECTION = "EAQS";
-        public const string EDIT_APP_QUESTION_MODAL = "EAQM";
+        public const string APPLICATION_LIST_NAVIGATE = "ALN";
+        public const string APPLICATION_LIST_CREATE = "ALC";
+        public const string APPLICATION_LIST_EDIT = "ALE";
+        public const string APPLICATION_LIST_DELETE = "ALD";
 
-        public const string APP_QUESTIONS_NEXT_PAGE = "AQNP";
-        public const string APP_QUESTIONS_PREVIOUS_PAGE = "AQPP";
+        public const string APPLICATION_EDIT_QUESTIONS = "AEQ";
+        public const string APPLICATION_EDIT_NAVIGATE_QUESTIONS = "AENQ";
+        public const string APPLICATION_EDIT_CREATE_QUESTION = "AEAQ";
+        public const string APPLICATION_EDIT_EDIT_QUESTION = "AEEQ";
+        public const string APPLICATION_EDIT_DELETE_QUESTION = "AEDQ";
 
-        public const string ADD_APP_ADDITION_ROLE = "AAAR";
-        public const string ADD_APP_ADDITION_ROLE_SELECTION = "AAARS";
-        
-        public const string REMOVE_APP_ADDITION_ROLE = "RAAR";
-        public const string REMOVE_APP_ADDITION_ROLE_SELECTION = "RAARS";
-        
-        public const string ADD_APP_REMOVAL_ROLE = "AARR";
-        public const string ADD_APP_REMOVAL_ROLE_SELECTION = "AARRS";
-        
-        public const string REMOVE_APP_REMOVAL_ROLE = "RARR";
-        public const string REMOVE_APP_REMOVAL_ROLE_SELECTION = "RARRS";
-        
-        public const string SET_APP_ACCEPT_MESSAGE = "SAAM";
-        public const string SET_APP_ACCEPT_MESSAGE_MODAL = "SAAMM";
-        
-        public const string SET_APP_SUBMISSION_CHANNEL = "SASC";
-        public const string SET_APP_SUBMISSION_CHANNEL_SELECTION = "SASCS";
-        
-        public const string SET_APP_RETRIES = "SAR";
-        public const string SET_APP_RETRIES_MODAL = "SARM";
-        
-        public const string SET_APP_FAIL_ACTION = "SAFA";
-        public const string SET_APP_FAIL_ACTION_SELECTION = "SADAS";
-        
-        public const string SWITCH_TO_APP_ACTIONS = "STAA";
-        public const string SWITCH_TO_APP_QUESTIONS = "STAQ";
+        public const string APPLICATION_EDIT_ACTIONS = "AEA";
+        public const string APPLICATION_EDIT_SET_SUBMISSION_CHANNEL = "AESSC";
+        public const string APPLICATION_EDIT_SET_ADD_ROLES = "AEAAR";
+        public const string APPLICATION_EDIT_SET_REMOVE_ROLES = "AEARR";
+        public const string APPLICATION_EDIT_SET_RETRIES = "AESR";
+        public const string APPLICATION_EDIT_SET_FAIL_MODE = "AESFM";
 
-        public const string APP_LIST_NEXT_PAGE = "ALNP";
-        public const string APP_LIST_PREVIOUS_PAGE = "ALPP";
+        public const string APPLICATION_MODAL_CREATE = "AMC";
+        public const string APPLICATION_MODAL_CREATE_QUESTION = "AMCQ";
+        public const string APPLICATION_MODAL_EDIT_QUESTION = "AMEQ";
+        public const string APPLICATION_MODAL_SET_RETRIES = "AMSR";
+        
+        //Server Settings Component ID's
+        public const string SERVER_SETTINGS_SET_STAFF_ROLES = "SSSSR";
+        
+        //Server Actions Component ID's
+        public const string SERVER_ACTION_LIST_NAVIGATE = "SALN";
+        public const string SERVER_ACTION_LIST_CREATE = "SALC";
+        public const string SERVER_ACTION_LIST_EDIT = "SALE";
+        public const string SERVER_ACTION_LIST_DELETE = "SALD";
     }
 }
