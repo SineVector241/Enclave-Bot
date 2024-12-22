@@ -32,6 +32,9 @@ namespace Enclave_Bot.Core
         public const int APPLICATION_QUESTION_CHARACTER_LIMIT = 120;
         public const int APPLICATION_QUESTION_ANSWER_CHARACTER_LIMIT = 200;
         
+        //Server Action Limits
+        public const int SERVER_ACTION_TITLE_CHARACTER_LIMIT = 100;
+        
         //App Component ID's
         public const string APPLICATION_LIST_NAVIGATE = "ALN";
         public const string APPLICATION_LIST_CREATE = "ALC";
@@ -64,5 +67,7 @@ namespace Enclave_Bot.Core
         public const string SERVER_ACTION_LIST_CREATE = "SALC";
         public const string SERVER_ACTION_LIST_EDIT = "SALE";
         public const string SERVER_ACTION_LIST_DELETE = "SALD";
+        
+        public const string SERVER_ACTION_MODAL_CREATE = "SAMC";
     }
 }

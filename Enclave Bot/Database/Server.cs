@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Discord;
 using Enclave_Bot.Core;
 
 namespace Enclave_Bot.Database
@@ -19,7 +18,7 @@ namespace Enclave_Bot.Database
         [Required] public ServerActionsSettings ServerActionsSettings { get; init; } = new();
         
         [Timestamp]
-        public byte[]? Version { get; set; }
+        public byte[]? Version { get; init; }
     }
     
     #region Server Settings
@@ -28,10 +27,10 @@ namespace Enclave_Bot.Database
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public Guid Id { get; set; }
         
-        [Required] public List<ulong> StaffRoles { get; set; } = [];
+        [Required] [MaxLength(Constants.SELECT_MENU_OPTIONS_LIMIT)] public List<ulong> StaffRoles { get; set; } = [];
         
         [Timestamp]
-        public byte[]? Version { get; set; }
+        public byte[]? Version { get; init; }
     }
     #endregion
 
@@ -46,7 +45,7 @@ namespace Enclave_Bot.Database
         public ulong? DefaultChannel { get; set; }
         
         [Timestamp]
-        public byte[]? Version { get; set; }
+        public byte[]? Version { get; init; }
     }
 
     [PrimaryKey(nameof(Id))]
@@ -55,7 +54,7 @@ namespace Enclave_Bot.Database
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public Guid Id { get; set; }
         
         [Timestamp]
-        public byte[]? Version { get; set; }
+        public byte[]? Version { get; init; }
     }
     #endregion
 
@@ -68,7 +67,7 @@ namespace Enclave_Bot.Database
         [Required] public List<Application> Applications { get; set; } = [];
         
         [Timestamp]
-        public byte[]? Version { get; set; }
+        public byte[]? Version { get; init; }
     }
 
     [PrimaryKey(nameof(Id))]
@@ -80,15 +79,15 @@ namespace Enclave_Bot.Database
         [Required] [MaxLength(Constants.EMBED_TITLE_CHARACTER_LIMIT)] public string Name { get; set; } = string.Empty;
         [Required] [MaxLength(Constants.EMBED_DESCRIPTION_CHARACTER_LIMIT)] public string AcceptMessage { get; set; } = string.Empty;
         [Required] public List<ApplicationQuestion> Questions { get; set; } = [];
-        [Required] public List<ulong> AddRoles { get; set; } = [];
-        [Required] public List<ulong> RemoveRoles { get; set; } = [];
+        [Required] [MaxLength(Constants.SELECT_MENU_OPTIONS_LIMIT)] public List<ulong> AddRoles { get; set; } = [];
+        [Required] [MaxLength(Constants.SELECT_MENU_OPTIONS_LIMIT)] public List<ulong> RemoveRoles { get; set; } = [];
         [Required] public byte Retries { get; set; }
         [Required] public ApplicationFailAction FailAction { get; set; }
         
         public ulong? SubmissionChannel { get; set; }
         
         [Timestamp]
-        public byte[]? Version { get; set; }
+        public byte[]? Version { get; init; }
     }
 
     [PrimaryKey(nameof(Id))]
@@ -102,7 +101,7 @@ namespace Enclave_Bot.Database
         [Required] public bool Required { get; set; }
         
         [Timestamp]
-        public byte[]? Version { get; set; }
+        public byte[]? Version { get; init; }
     }
     #endregion
     
@@ -115,7 +114,7 @@ namespace Enclave_Bot.Database
         [Required] public List<ServerActionGroup> ActionGroups { get; set; } = [];
         
         [Timestamp]
-        public byte[]? Version { get; set; }
+        public byte[]? Version { get; init; }
     }
 
     [PrimaryKey(nameof(Id))]
@@ -123,12 +122,12 @@ namespace Enclave_Bot.Database
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public Guid Id { get; set; }
         
+        [Required] [MaxLength(Constants.EMBED_TITLE_CHARACTER_LIMIT)] public string Name { get; set; } = string.Empty;
         [Required] public required ServerActionsSettings ServerActionsSettings { get; set; }
-        
         [Required] public List<ServerAction> Actions { get; set; } = [];
         
         [Timestamp]
-        public byte[]? Version { get; set; }
+        public byte[]? Version { get; init; }
     }
 
     [PrimaryKey(nameof(Id))]
@@ -138,13 +137,19 @@ namespace Enclave_Bot.Database
         
         [Required] public required ServerActionGroup ActionGroup { get; set; }
         
-        [Required] public List<ulong> RequiredRoles { get; set; } = [];
+        [Required] [MaxLength(Constants.SELECT_MENU_OPTIONS_LIMIT)] public List<ulong> AllOfRoles { get; set; } = [];
         
-        [Required] public GuildPermission RequiredPermissions { get; set; } = ulong.MinValue;
+        [Required] [MaxLength(Constants.SELECT_MENU_OPTIONS_LIMIT)] public List<ulong> AnyOfRoles { get; set; } = [];
+        
+        [Required] [MaxLength(Constants.SELECT_MENU_OPTIONS_LIMIT)] public List<ulong> NoneOfRoles { get; set; } = [];
+        
+        [Required] [MaxLength(1000)] public string? Data { get; set; }
         
         [Timestamp]
-        public byte[]? Version { get; set; }
+        public byte[]? Version { get; init; }
     }
+    
+    
     #endregion
 
     public enum ApplicationFailAction
@@ -159,5 +164,12 @@ namespace Enclave_Bot.Database
         Timeout12Hours,
         Timeout1Day,
         Timeout1Week
+    }
+
+    public enum ActionType
+    {
+        AddRoles,
+        RemoveRoles,
+        SendApplication
     }
 }

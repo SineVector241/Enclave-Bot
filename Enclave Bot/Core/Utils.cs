@@ -246,5 +246,51 @@ namespace Enclave_Bot.Core
             return (embed.Build(), components.Build());
         }
         #endregion
+        
+        #region Server Actions Utils
+
+        public static (Embed, MessageComponent) CreateServerActionsList(ServerActionGroup[] actions, int page, IUser author)
+        {
+            var embed = new EmbedBuilder()
+                .WithTitle("Actions")
+                .WithColor(Constants.PrimaryColor)
+                .WithAuthor(author);
+            var editSelectMenu = new SelectMenuBuilder()
+                .WithCustomId($"{Constants.SERVER_ACTION_LIST_EDIT}:{author.Id}")
+                .WithPlaceholder("Edit action");
+            var deleteSelectMenu = new SelectMenuBuilder()
+                .WithCustomId($"{Constants.SERVER_ACTION_LIST_DELETE}:{author.Id}")
+                .WithPlaceholder("Delete action");
+            var components = new ComponentBuilder();
+            
+            var limit = Math.Min(Constants.EMBED_FIELDS_LIMIT, Constants.SELECT_MENU_OPTIONS_LIMIT);
+            var i = page * Constants.EMBED_FIELDS_LIMIT;
+            while (i < actions.Length && i < (page + 1) * limit)
+            {
+                var application = actions.ElementAt(i);
+                embed.AddField(application.Name.Truncate(Constants.EMBED_FIELD_NAME_CHARACTER_LIMIT),
+                    $"`{application.Id}`".Truncate(Constants.EMBED_FIELD_VALUE_CHARACTER_LIMIT));
+                editSelectMenu.AddOption(application.Name.Truncate(Constants.SELECT_MENU_OPTION_LABEL_CHARACTER_LIMIT), application.Id.ToString(),
+                    application.Id.ToString());
+                deleteSelectMenu.AddOption(application.Name.Truncate(Constants.SELECT_MENU_OPTION_LABEL_CHARACTER_LIMIT), application.Id.ToString(),
+                    application.Id.ToString());
+                i++;
+            }
+
+            if (editSelectMenu.Options.Count > 0)
+                components.WithSelectMenu(editSelectMenu);
+            if (deleteSelectMenu.Options.Count > 0)
+                components.WithSelectMenu(deleteSelectMenu);
+
+
+            components.WithButton("Create", $"{Constants.SERVER_ACTION_LIST_CREATE}:{author.Id}", ButtonStyle.Success, new Emoji("\u2795"));
+            if (i > limit)
+                components.WithButton("Previous page", $"{Constants.SERVER_ACTION_LIST_NAVIGATE}:{author.Id},{page - 1}", ButtonStyle.Primary, new Emoji("◀️"));
+            if (i < actions.Length)
+                components.WithButton("Next page", $"{Constants.SERVER_ACTION_LIST_NAVIGATE}:{author.Id},{page + 1}", ButtonStyle.Primary, new Emoji("▶️"));
+
+            return (embed.Build(), components.Build());
+        }
+        #endregion
     }
 }
