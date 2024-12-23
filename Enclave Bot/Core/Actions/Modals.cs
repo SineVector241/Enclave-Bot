@@ -10,41 +10,41 @@ namespace Enclave_Bot.Core.Actions
     [IsStaff]
     public class Modals(DatabaseContext database) : InteractionModuleBase<SocketInteractionContext<SocketModal>>
     {
-        [ModalInteraction($"{Constants.SERVER_ACTION_MODAL_CREATE}")]
-        public async Task CreateApplication(CreateActionModal modal)
+        [ModalInteraction($"{Constants.SERVER_ACTION_GROUP_MODAL_CREATE}")]
+        public async Task CreateServerActionGroup(CreateActionGroupModal modal)
         {
-            if (modal.Name.Length > Constants.SERVER_ACTION_TITLE_CHARACTER_LIMIT)
+            if (modal.Name.Length > Constants.SERVER_ACTION_GROUP_TITLE_CHARACTER_LIMIT)
             {
-                await RespondAsync($"Name can only be {Constants.SERVER_ACTION_TITLE_CHARACTER_LIMIT} characters!", ephemeral: true);
+                await RespondAsync($"Name can only be {Constants.SERVER_ACTION_GROUP_TITLE_CHARACTER_LIMIT} characters!", ephemeral: true);
                 return;
             }
 
             var serverActionSettings = (await database.Servers
-                .Include(x => x.ServerActionsSettings)
+                .Include(x => x.ActionsSettings)
                 .ThenInclude(x => x.ActionGroups)
-                .FirstAsync(x => x.Id == Context.Guild.Id)).ServerActionsSettings;
-            var serverActions = serverActionSettings.ActionGroups;
+                .FirstAsync(x => x.Id == Context.Guild.Id)).ActionsSettings;
+            var actionGroups = serverActionSettings.ActionGroups;
             
-            serverActions.Add(new ServerActionGroup { ServerActionsSettings = serverActionSettings, Name = modal.Name });
+            actionGroups.Add(new ActionGroup { ActionsSettings = serverActionSettings, Name = modal.Name });
             await database.SaveChangesAsync();
-            await RespondAsync($"Created action {modal.Name}.", ephemeral: true);
+            await RespondAsync($"Created action group {modal.Name}.", ephemeral: true);
             
             //Don't really care if it fails.
-            var applicationList = Utils.CreateServerActionsList(serverActions.ToArray(), 0, Context.User);
+            var actionGroupsList = Utils.CreateActionGroupsList(actionGroups.ToArray(), 0, Context.User);
             _ = Context.Interaction.Message.ModifyAsync(x =>
             {
-                x.Embed = applicationList.Item1;
-                x.Components = applicationList.Item2;
+                x.Embed = actionGroupsList.Item1;
+                x.Components = actionGroupsList.Item2;
             });
         }
     }
     
-    public class CreateActionModal : IModal
+    public class CreateActionGroupModal : IModal
     {
-        public string Title => "Create Action";
+        public string Title => "Create Action Group";
 
         [InputLabel("Name")]
-        [ModalTextInput("name", maxLength: Constants.APPLICATION_TITLE_CHARACTER_LIMIT)]
+        [ModalTextInput("name", maxLength: Constants.SERVER_ACTION_GROUP_TITLE_CHARACTER_LIMIT)]
         public string Name { get; set; } = string.Empty;
     }
 }

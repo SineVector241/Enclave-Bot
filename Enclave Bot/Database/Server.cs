@@ -11,11 +11,9 @@ namespace Enclave_Bot.Database
         [Required] public required ulong Id { get; init; }
 
         [Required] public ServerSettings Settings { get; init; } = new();
-        
         [Required] public LogSettings LogSettings { get; init; } = new();
         [Required] public ApplicationSettings ApplicationSettings { get; init; } = new();
-
-        [Required] public ServerActionsSettings ServerActionsSettings { get; init; } = new();
+        [Required] public ActionsSettings ActionsSettings { get; init; } = new();
         
         [Timestamp]
         public byte[]? Version { get; init; }
@@ -107,23 +105,23 @@ namespace Enclave_Bot.Database
     
     #region Server Action
     [PrimaryKey(nameof(Id))]
-    public class ServerActionsSettings
+    public class ActionsSettings
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public Guid Id { get; set; }
         
-        [Required] public List<ServerActionGroup> ActionGroups { get; set; } = [];
+        [Required] public List<ActionGroup> ActionGroups { get; set; } = [];
         
         [Timestamp]
         public byte[]? Version { get; init; }
     }
 
     [PrimaryKey(nameof(Id))]
-    public class ServerActionGroup
+    public class ActionGroup
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public Guid Id { get; set; }
         
         [Required] [MaxLength(Constants.EMBED_TITLE_CHARACTER_LIMIT)] public string Name { get; set; } = string.Empty;
-        [Required] public required ServerActionsSettings ServerActionsSettings { get; set; }
+        [Required] public required ActionsSettings ActionsSettings { get; set; }
         [Required] public List<ServerAction> Actions { get; set; } = [];
         
         [Timestamp]
@@ -135,7 +133,9 @@ namespace Enclave_Bot.Database
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public Guid Id { get; set; }
         
-        [Required] public required ServerActionGroup ActionGroup { get; set; }
+        [Required] public required ActionGroup ActionGroup { get; set; }
+        
+        [Required] [MaxLength(Constants.EMBED_TITLE_CHARACTER_LIMIT)] public string Name { get; set; } = string.Empty;
         
         [Required] [MaxLength(Constants.SELECT_MENU_OPTIONS_LIMIT)] public List<ulong> AllOfRoles { get; set; } = [];
         
