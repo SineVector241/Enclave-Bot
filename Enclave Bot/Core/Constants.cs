@@ -34,6 +34,7 @@ namespace Enclave_Bot.Core
         
         //Server Action Limits
         public const int SERVER_ACTION_GROUP_TITLE_CHARACTER_LIMIT = 100;
+        public const int SERVER_ACTION_TITLE_CHARACTER_LIMIT = 100;
         
         //App Component ID's
         public const string APPLICATION_LIST_NAVIGATE = "ALN";
@@ -73,6 +74,18 @@ namespace Enclave_Bot.Core
         public const string SERVER_ACTION_LIST_EDIT = "SALE";
         public const string SERVER_ACTION_LIST_DELETE = "SALD";
         
+        public const string SERVER_ACTION_EDIT_SETTINGS = "SAES";
+        public const string SERVER_ACTION_EDIT_ACTION_GROUP = "SAEAG";
+        public const string SERVER_ACTION_EDIT_SETTINGS_SET_ACTION_TYPE = "SAESSAT";
+        public const string SERVER_ACTION_EDIT_SETTINGS_SET_ANY_OF_ROLES = "SAESSANOR";
+        public const string SERVER_ACTION_EDIT_SETTINGS_SET_ALL_OF_ROLES = "SAESSALOR";
+        public const string SERVER_ACTION_EDIT_SETTINGS_SET_NONE_OF_ROLES = "SAESSNOOR";
+        
+        public const string SERVER_ACTION_EDIT_0_SET_ADD_ROLES = "SAE0SAR";
+        public const string SERVER_ACTION_EDIT_1_SET_REMOVE_ROLES = "SAE1SRR";
+        public const string SERVER_ACTION_EDIT_2_SET_APPLICATION = "SAE2SA";
+        
         public const string SERVER_ACTION_GROUP_MODAL_CREATE = "SAGMC";
+        public const string SERVER_ACTION_MODAL_CREATE = "SAMC";
     }
 }

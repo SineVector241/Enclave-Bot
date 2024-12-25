@@ -58,7 +58,7 @@ namespace Enclave_Bot.Core.Applications
         public async Task ApplicationCreateQuestion(string sAuthorId, string sApplicationId)
         {
             var authorId = ulong.Parse(sAuthorId);
-            var applicationId = Guid.Parse(sApplicationId);
+            var applicationId = long.Parse(sApplicationId);
             if (authorId != Context.User.Id)
             {
                 await RespondAsync("You are not the owner of this application list!", ephemeral: true);
@@ -72,7 +72,7 @@ namespace Enclave_Bot.Core.Applications
         public async Task ApplicationNavigateQuestions(string sAuthorId, string sApplicationId, string sPage)
         {
             var authorId = ulong.Parse(sAuthorId);
-            var applicationId = Guid.Parse(sApplicationId);
+            var applicationId = long.Parse(sApplicationId);
             var page = int.Parse(sPage);
             if (authorId != Context.User.Id)
             {
@@ -114,7 +114,7 @@ namespace Enclave_Bot.Core.Applications
         public async Task ApplicationEditActions(string sAuthorId, string sApplicationId)
         {
             var authorId = ulong.Parse(sAuthorId);
-            var applicationId = Guid.Parse(sApplicationId);
+            var applicationId = long.Parse(sApplicationId);
             if (authorId != Context.User.Id)
             {
                 await RespondAsync("You are not the owner of this application list!", ephemeral: true);
@@ -148,7 +148,7 @@ namespace Enclave_Bot.Core.Applications
         public async Task ApplicationEditSetRetries(string sAuthorId, string sApplicationId)
         {
             var authorId = ulong.Parse(sAuthorId);
-            var applicationId = Guid.Parse(sApplicationId);
+            var applicationId = long.Parse(sApplicationId);
             if (authorId != Context.User.Id)
             {
                 await RespondAsync("You are not the owner of this application list!", ephemeral: true);
@@ -175,7 +175,7 @@ namespace Enclave_Bot.Core.Applications
         public async Task ApplicationEditQuestions(string sAuthorId, string sApplicationId)
         {
             var authorId = ulong.Parse(sAuthorId);
-            var applicationId = Guid.Parse(sApplicationId);
+            var applicationId = long.Parse(sApplicationId);
             if (authorId != Context.User.Id)
             {
                 await RespondAsync("You are not the owner of this application list!", ephemeral: true);

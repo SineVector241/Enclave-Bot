@@ -83,18 +83,25 @@ namespace Enclave_Bot
         //Important for the bots framework
         private async Task InteractionCreated(SocketInteraction interaction)
         {
-            await _database.CreateUserIfNotExistsAsync(interaction.User);
-            var user = await _database.Users.FirstAsync(u => u.Id == interaction.User.Id);
-            user.LastActive = DateTime.UtcNow;
-            user.Name = interaction.User.Username;
-
-            if (interaction.GuildId != null)
+            try
             {
-                var guild = _client.GetGuild(interaction.GuildId.Value);
-                await _database.CreateServerIfNotExistsAsync(guild);
-            }
+                await _database.CreateUserIfNotExistsAsync(interaction.User);
+                var user = await _database.Users.FirstAsync(u => u.Id == interaction.User.Id);
+                user.LastActive = DateTime.UtcNow;
+                user.Name = interaction.User.Username;
 
-            await _database.SaveChangesAsync();
+                if (interaction.GuildId != null)
+                {
+                    var guild = _client.GetGuild(interaction.GuildId.Value);
+                    await _database.CreateServerIfNotExistsAsync(guild);
+                }
+
+                await _database.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
 
         private async Task ButtonExecuted(SocketMessageComponent interaction)

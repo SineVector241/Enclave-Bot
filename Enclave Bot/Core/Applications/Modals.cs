@@ -41,7 +41,7 @@ namespace Enclave_Bot.Core.Applications
         [ModalInteraction($"{Constants.APPLICATION_MODAL_CREATE_QUESTION}:*")]
         public async Task CreateApplicationQuestion(string sApplicationId, ApplicationQuestionModal modal)
         {
-            var applicationId = Guid.Parse(sApplicationId);
+            var applicationId = long.Parse(sApplicationId);
             
             if (modal.Question.Length > Constants.APPLICATION_QUESTION_CHARACTER_LIMIT)
             {
@@ -103,8 +103,8 @@ namespace Enclave_Bot.Core.Applications
         [ModalInteraction($"{Constants.APPLICATION_MODAL_EDIT_QUESTION}:*,*")]
         public async Task EditApplicationQuestion(string sApplicationId, string sQuestionId, ApplicationQuestionModal modal)
         {
-            var applicationId = Guid.Parse(sApplicationId);
-            var questionId = Guid.Parse(sQuestionId);
+            var applicationId = long.Parse(sApplicationId);
+            var questionId = long.Parse(sQuestionId);
 
             if (modal.Question.Length > Constants.APPLICATION_QUESTION_CHARACTER_LIMIT)
             {
@@ -165,7 +165,7 @@ namespace Enclave_Bot.Core.Applications
         [ModalInteraction($"{Constants.APPLICATION_MODAL_SET_RETRIES}:*")]
         public async Task SetFailAmount(string sApplicationId, ApplicationRetriesModal modal)
         {
-            var applicationId = Guid.Parse(sApplicationId);
+            var applicationId = long.Parse(sApplicationId);
             if (!byte.TryParse(modal.Retries, out var retries))
             {
                 await RespondAsync($"{modal.Retries} is not a valid number. The value must be between {byte.MinValue} and {byte.MaxValue}!", ephemeral: true);

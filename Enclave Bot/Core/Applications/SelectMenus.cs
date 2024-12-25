@@ -14,7 +14,7 @@ namespace Enclave_Bot.Core.Applications
         public async Task EditApplication(string sAuthorId, string[] sApplicationId)
         {
             var authorId = ulong.Parse(sAuthorId);
-            var applicationId = Guid.Parse(sApplicationId[0]);
+            var applicationId = long.Parse(sApplicationId[0]);
             if (authorId != Context.User.Id)
             {
                 await RespondAsync("You are not the owner of this application list!", ephemeral: true);
@@ -54,7 +54,7 @@ namespace Enclave_Bot.Core.Applications
         public async Task DeleteApplication(string sAuthorId, string[] sApplicationId)
         {
             var authorId = ulong.Parse(sAuthorId);
-            var applicationId = Guid.Parse(sApplicationId[0]);
+            var applicationId = long.Parse(sApplicationId[0]);
             if (authorId != Context.User.Id)
             {
                 await RespondAsync("You are not the owner of this application list!", ephemeral: true);
@@ -97,8 +97,8 @@ namespace Enclave_Bot.Core.Applications
         public async Task EditApplicationQuestion(string sAuthorId, string sApplicationId, string[] sQuestionId)
         {
             var authorId = ulong.Parse(sAuthorId);
-            var applicationId = Guid.Parse(sApplicationId);
-            var questionId = Guid.Parse(sQuestionId[0]);
+            var applicationId = long.Parse(sApplicationId);
+            var questionId = long.Parse(sQuestionId[0]);
             if (authorId != Context.User.Id)
             {
                 await RespondAsync("You are not the owner of this application list!", ephemeral: true);
@@ -140,8 +140,8 @@ namespace Enclave_Bot.Core.Applications
         public async Task DeleteApplicationQuestion(string sAuthorId, string sApplicationId, string[] sQuestionId)
         {
             var authorId = ulong.Parse(sAuthorId);
-            var applicationId = Guid.Parse(sApplicationId);
-            var questionId = Guid.Parse(sQuestionId[0]);
+            var applicationId = long.Parse(sApplicationId);
+            var questionId = long.Parse(sQuestionId[0]);
             if (authorId != Context.User.Id)
             {
                 await RespondAsync("You are not the owner of this application list!", ephemeral: true);
@@ -185,7 +185,7 @@ namespace Enclave_Bot.Core.Applications
         public async Task SetSubmissionChannel(string sAuthorId, string sApplicationId, ITextChannel[] channel)
         {
             var authorId = ulong.Parse(sAuthorId);
-            var applicationId = Guid.Parse(sApplicationId);
+            var applicationId = long.Parse(sApplicationId);
             if (authorId != Context.User.Id)
             {
                 await RespondAsync("You are not the owner of this application list!", ephemeral: true);
@@ -221,7 +221,7 @@ namespace Enclave_Bot.Core.Applications
         public async Task SetAddRoles(string sAuthorId, string sApplicationId, IRole[] roles)
         {
             var authorId = ulong.Parse(sAuthorId);
-            var applicationId = Guid.Parse(sApplicationId);
+            var applicationId = long.Parse(sApplicationId);
             if (authorId != Context.User.Id)
             {
                 await RespondAsync("You are not the owner of this application list!", ephemeral: true);
@@ -257,7 +257,7 @@ namespace Enclave_Bot.Core.Applications
         public async Task SetRemoveRoles(string sAuthorId, string sApplicationId, IRole[] roles)
         {
             var authorId = ulong.Parse(sAuthorId);
-            var applicationId = Guid.Parse(sApplicationId);
+            var applicationId = long.Parse(sApplicationId);
             if (authorId != Context.User.Id)
             {
                 await RespondAsync("You are not the owner of this application list!", ephemeral: true);
@@ -293,7 +293,7 @@ namespace Enclave_Bot.Core.Applications
         public async Task SetFailMode(string sAuthorId, string sApplicationId, string[] sFailMode)
         {
             var authorId = ulong.Parse(sAuthorId);
-            var applicationId = Guid.Parse(sApplicationId);
+            var applicationId = long.Parse(sApplicationId);
             var failMode = (ApplicationFailAction)int.Parse(sFailMode[0]);
             if (authorId != Context.User.Id)
             {

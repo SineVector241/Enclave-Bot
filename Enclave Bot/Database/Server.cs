@@ -23,7 +23,7 @@ namespace Enclave_Bot.Database
     [PrimaryKey(nameof(Id))]
     public class ServerSettings
     {
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public Guid Id { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public long Id { get; set; }
         
         [Required] [MaxLength(Constants.SELECT_MENU_OPTIONS_LIMIT)] public List<ulong> StaffRoles { get; set; } = [];
         
@@ -36,7 +36,7 @@ namespace Enclave_Bot.Database
     [PrimaryKey(nameof(Id))]
     public class LogSettings
     {
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public Guid Id { get; set; } 
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public long Id { get; set; } 
         
         [Required] public List<LogSetting> Settings { get; set; } = [];
         
@@ -49,7 +49,7 @@ namespace Enclave_Bot.Database
     [PrimaryKey(nameof(Id))]
     public class LogSetting
     {
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public Guid Id { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public long Id { get; set; }
         
         [Timestamp]
         public byte[]? Version { get; init; }
@@ -60,7 +60,7 @@ namespace Enclave_Bot.Database
     [PrimaryKey(nameof(Id))]
     public class ApplicationSettings
     {
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public Guid Id { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public long Id { get; set; }
 
         [Required] public List<Application> Applications { get; set; } = [];
         
@@ -71,7 +71,7 @@ namespace Enclave_Bot.Database
     [PrimaryKey(nameof(Id))]
     public class Application
     {
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public Guid Id { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public long Id { get; set; }
         [Required] public required ApplicationSettings ApplicationSettings { get; set; }
         
         [Required] [MaxLength(Constants.EMBED_TITLE_CHARACTER_LIMIT)] public string Name { get; set; } = string.Empty;
@@ -91,7 +91,7 @@ namespace Enclave_Bot.Database
     [PrimaryKey(nameof(Id))]
     public class ApplicationQuestion
     {
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public Guid Id { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public long Id { get; set; }
         [Required] public required Application Application { get; set; }
 
         [Required] [MaxLength(Constants.EMBED_FIELD_NAME_CHARACTER_LIMIT)] public string Question { get; set; } = string.Empty;
@@ -107,7 +107,7 @@ namespace Enclave_Bot.Database
     [PrimaryKey(nameof(Id))]
     public class ActionsSettings
     {
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public Guid Id { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public long Id { get; set; }
         
         [Required] public List<ActionGroup> ActionGroups { get; set; } = [];
         
@@ -118,7 +118,7 @@ namespace Enclave_Bot.Database
     [PrimaryKey(nameof(Id))]
     public class ActionGroup
     {
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public Guid Id { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public long Id { get; set; }
         
         [Required] [MaxLength(Constants.EMBED_TITLE_CHARACTER_LIMIT)] public string Name { get; set; } = string.Empty;
         [Required] public required ActionsSettings ActionsSettings { get; set; }
@@ -131,10 +131,11 @@ namespace Enclave_Bot.Database
     [PrimaryKey(nameof(Id))]
     public class ServerAction
     {
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public Guid Id { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] [Required] public long Id { get; set; }
         
         [Required] public required ActionGroup ActionGroup { get; set; }
-        
+
+        [Required] public ActionType Type { get; set; } = ActionType.AddRoles;
         [Required] [MaxLength(Constants.EMBED_TITLE_CHARACTER_LIMIT)] public string Name { get; set; } = string.Empty;
         
         [Required] [MaxLength(Constants.SELECT_MENU_OPTIONS_LIMIT)] public List<ulong> AllOfRoles { get; set; } = [];
@@ -143,13 +144,11 @@ namespace Enclave_Bot.Database
         
         [Required] [MaxLength(Constants.SELECT_MENU_OPTIONS_LIMIT)] public List<ulong> NoneOfRoles { get; set; } = [];
         
-        [Required] [MaxLength(1000)] public string? Data { get; set; }
+        [MaxLength(1000)] public string? Data { get; set; }
         
         [Timestamp]
         public byte[]? Version { get; init; }
     }
-    
-    
     #endregion
 
     public enum ApplicationFailAction
